@@ -52,7 +52,7 @@ nav input[type="checkbox"] {
 .nav-toggle-label span::after {
     display: block;
     width: 28px;
-    height: 3px;
+    height: 2px;
     background: #e6e6e6;
     border-radius: 2px;
     position: relative;
@@ -189,10 +189,15 @@ footer {
 @media (max-width: 768px) {
     nav {
         padding: 0 16px;
+        justify-content: flex-end;
     }
 
     .nav-toggle-label {
-        display: block;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-left: auto;
+        padding: 18px 0;
     }
 
     .nav-links {
@@ -238,5 +243,65 @@ footer {
 
     .dashboard-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    gap: 24px;
+    align-items: stretch;
+}
+
+.admin-access-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.admin-access-content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.admin-access-content p {
+    line-height: 1.6;
+    color: #d4d4d4;
+}
+
+.admin-button {
+    display: inline-block;
+    width: fit-content;
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #111111;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.admin-button:hover {
+    transform: translateY(-2px);
+    opacity: 0.85;
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .latest-change-card {
+        order: 1;
+    }
+
+    .admin-access-card {
+        order: 2;
+    }
+
+    .admin-button {
+        width: 100%;
+        text-align: center;
     }
 }
