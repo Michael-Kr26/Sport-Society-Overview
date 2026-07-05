@@ -1,11 +1,3 @@
-const latestChange = {
-    who: 'Leroy geruild met Denise',
-    date: '04-07-2026',
-    reason: 'Evenement met zoon',
-    location: 'Sport Society Achterveld',
-    status: 'Open'
-};
-
 function renderLatestChange(change) {
     const container = document.getElementById('latest-change-content');
 
@@ -18,32 +10,36 @@ function renderLatestChange(change) {
         return;
     }
 
+    const employeeText = change.employee2
+        ? `${change.employee} / ${change.employee2}`
+        : change.employee;
+
     container.innerHTML = `
-        <p><span class="field-label">Wie:</span> ${change.who}</p>
-        <p><span class="field-label">Datum:</span> ${change.date}</p>
+        <p><span class="field-label">Wie:</span> ${employeeText}</p>
+        <p><span class="field-label">Datum wijziging:</span> ${change.date}</p>
+        <p><span class="field-label">Datum doorgegeven:</span> ${change.reportedDate}</p>
+        <p><span class="field-label">Type:</span> ${change.type}</p>
         <p><span class="field-label">Waarom:</span> ${change.reason}</p>
         <p><span class="field-label">Locatie:</span> ${change.location}</p>
         <p><span class="field-label">Status:</span> <span class="status-pill">${change.status}</span></p>
     `;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    renderLatestChange(latestChange);
-});
-
-/*
-Toekomstige API-koppeling:
-
 async function loadLatestChange() {
     try {
-        const response = await fetch('/api/roosterwijzigingen/latest');
+        const response = await fetch('/api/changes/latest');
 
-        if (!response.ok) {
-            throw new Error('Laatste roosterwijziging kon niet worden opgehaald.');
+        if (response.status === 404) {
+            renderLatestChange(null);
+            return;
         }
 
-        const latestChangeFromDatabase = await response.json();
-        renderLatestChange(latestChangeFromDatabase);
+        if (!response.ok) {
+            throw new Error('Laatste wijziging kon niet worden opgehaald.');
+        }
+
+        const latestChange = await response.json();
+        renderLatestChange(latestChange);
     } catch (error) {
         console.error(error);
         renderLatestChange(null);
@@ -51,4 +47,3 @@ async function loadLatestChange() {
 }
 
 document.addEventListener('DOMContentLoaded', loadLatestChange);
-*/
