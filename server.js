@@ -7,6 +7,14 @@ const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
+const allowedStatuses = ['Open', 'In behandeling', 'Afgerond'];
+
+function userCanUpdateStatus(req) {
+    const demoRole = req.header('X-Demo-Role');
+
+    return demoRole === 'admin';
+}
+
 const dataDir = path.join(__dirname, 'data');
 const dbPath = path.join(dataDir, 'sport-society.db');
 
@@ -199,6 +207,57 @@ app.get('/api/changes', (req, res) => {
         }
 
         res.json(rows);
+    });
+});
+
+app.patch('/api/changes/:id/status', (req, res) => {
+    if (!userCanUpdateStatus(req)) {
+        return res.status(403).json({
+            message: 'Alleen admins mogen statussen aanpassen.'
+        });
+    }
+
+    const changeId = Number(req.params.id);
+    const { status } = req.body;
+
+    if (!Number.isInteger(changeId) || changeId <= 0) {
+        return res.status(400).json({
+            message: 'Ongeldig wijziging-ID.'
+        });
+    }
+
+    if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({
+            message: 'Ongeldige status.'
+        });
+    }
+
+    const query = `
+        UPDATE changes
+        SET status = ?
+        WHERE id = ?
+    `;
+
+    db.run(query, [status, changeId], function (error) {
+        if (error) {
+            console.error('Status kon niet worden aangepast:', error.message);
+
+            return res.status(500).json({
+                message: 'Status kon niet worden aangepast.'
+            });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({
+                message: 'Wijziging niet gevonden.'
+            });
+        }
+
+        res.json({
+            message: 'Status bijgewerkt.',
+            id: changeId,
+            status
+        });
     });
 });
 

@@ -1,5 +1,13 @@
+const currentUserRole = 'admin';
+
+const allowedStatuses = ['Open', 'In behandeling', 'Afgerond'];
+
 const searchForm = document.getElementById('cml-search-form');
 const tableBody = document.getElementById('changes-table-body');
+
+function userCanUpdateStatus() {
+    return currentUserRole === 'admin';
+}
 
 function formatDate(dateString) {
     if (!dateString) {
@@ -42,6 +50,43 @@ function escapeHtml(value) {
         .replaceAll("'", '&#039;');
 }
 
+function renderStatusCell(change) {
+    const statusClass = getStatusClass(change.status);
+
+    if (!userCanUpdateStatus()) {
+        return `
+            <span class="status-pill ${statusClass}">
+                ${escapeHtml(change.status)}
+            </span>
+        `;
+    }
+
+    const statusOptions = allowedStatuses.map((status) => `
+        <option value="${escapeHtml(status)}" ${status === change.status ? 'selected' : ''}>
+            ${escapeHtml(status)}
+        </option>
+    `).join('');
+
+    return `
+        <select
+            class="status-select ${statusClass}"
+            data-change-id="${change.id}"
+            data-previous-status="${escapeHtml(change.status)}"
+            aria-label="Status aanpassen"
+        >
+            ${statusOptions}
+        </select>
+    `;
+}
+
+function attachStatusUpdateListeners() {
+    const statusSelects = document.querySelectorAll('.status-select');
+
+    statusSelects.forEach((select) => {
+        select.addEventListener('change', handleStatusChange);
+    });
+}
+
 function renderChanges(changes) {
     if (!tableBody) {
         return;
@@ -58,26 +103,20 @@ function renderChanges(changes) {
         return;
     }
 
-    tableBody.innerHTML = changes.map((change) => {
-        const statusClass = getStatusClass(change.status);
+    tableBody.innerHTML = changes.map((change) => `
+        <tr>
+            <td>${formatDate(change.date)}</td>
+            <td>${formatDate(change.reportedDate)}</td>
+            <td>${escapeHtml(change.location)}</td>
+            <td>${escapeHtml(change.employee)}</td>
+            <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
+            <td>${escapeHtml(change.type)}</td>
+            <td>${renderStatusCell(change)}</td>
+            <td>${escapeHtml(change.createdBy)}</td>
+        </tr>
+    `).join('');
 
-        return `
-            <tr>
-                <td>${formatDate(change.date)}</td>
-                <td>${formatDate(change.reportedDate)}</td>
-                <td>${escapeHtml(change.location)}</td>
-                <td>${escapeHtml(change.employee)}</td>
-                <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
-                <td>${escapeHtml(change.type)}</td>
-                <td>
-                    <span class="status-pill ${statusClass}">
-                        ${escapeHtml(change.status)}
-                    </span>
-                </td>
-                <td>${escapeHtml(change.createdBy)}</td>
-            </tr>
-        `;
-    }).join('');
+    attachStatusUpdateListeners();
 }
 
 function buildQueryString() {
@@ -110,6 +149,48 @@ function buildQueryString() {
     }
 
     return params.toString();
+}
+
+async function updateChangeStatus(changeId, status) {
+    const response = await fetch(`/api/changes/${changeId}/status`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Demo-Role': currentUserRole
+        },
+        body: JSON.stringify({ status })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+            message: 'Status kon niet worden aangepast.'
+        }));
+
+        throw new Error(errorData.message || 'Status kon niet worden aangepast.');
+    }
+
+    return response.json();
+}
+
+async function handleStatusChange(event) {
+    const select = event.target;
+    const changeId = select.dataset.changeId;
+    const previousStatus = select.dataset.previousStatus;
+    const newStatus = select.value;
+
+    select.disabled = true;
+
+    try {
+        await updateChangeStatus(changeId, newStatus);
+        await loadChanges();
+    } catch (error) {
+        console.error(error);
+
+        select.value = previousStatus;
+        select.disabled = false;
+
+        alert(error.message);
+    }
 }
 
 async function loadChanges() {
