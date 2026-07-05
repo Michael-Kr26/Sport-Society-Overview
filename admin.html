@@ -6,6 +6,11 @@
     <title>Sport Society - Admin</title>
 </head>
 <body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Data Analysis for Sport Society</p>
+    </header>
+    
     <nav>
         <input type="checkbox" id="nav-toggle">
         <label for="nav-toggle" class="nav-toggle-label">
@@ -20,6 +25,8 @@
     </nav>
 
     <main>
+
+
         <section class="dashboard-card">
             <div class="card-header">
                 <p class="card-label">Change Management</p>
@@ -28,13 +35,13 @@
 
             <form id="change-form" class="admin-form">
                 <label>
-                    Datum
+                    Datum van wijziging
                     <input type="date" id="change-date" required>
                 </label>
 
                 <label>
-                    Maand
-                    <input type="number" id="change-month" min="1" max="12" required>
+                    Datum doorgegeven
+                    <input type="date" id="change-date" required>
                 </label>
 
                 <label>
@@ -50,8 +57,13 @@
                 </label>
 
                 <label>
-                    Medewerker
-                    <input type="text" id="change-employee" placeholder="Bijv. Leroy" required>
+                    Medewerker 1
+                    <input type="text" id="change-employee" placeholder="Bijv. Vigo" required>
+                </label>
+
+                <label>
+                    Medewerker 2
+                    <input type="text" id="change-employee2" placeholder="Bijv. Olav" required>
                 </label>
 
                 <label>
@@ -96,7 +108,7 @@
                 </label>
 
                 <button type="submit" class="admin-button">
-                    Wijziging opslaan
+                    Wijziging doorvoeren
                 </button>
 
                 <p id="form-message" class="empty-state"></p>

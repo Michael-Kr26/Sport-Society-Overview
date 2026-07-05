@@ -1,7 +1,7 @@
 const latestChange = {
     who: 'Leroy geruild met Denise',
-    date: '04-07',
-    reason: 'Evenementje met zoon',
+    date: '04-07-2026',
+    reason: 'Evenement met zoon',
     location: 'Sport Society Achterveld',
     status: 'Open'
 };
