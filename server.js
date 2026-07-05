@@ -107,6 +107,101 @@ app.post('/api/changes', (req, res) => {
     });
 });
 
+app.get('/api/changes', (req, res) => {
+    const { name, month, location, type, status } = req.query;
+
+    let query = `
+        SELECT
+            id,
+            change_date AS date,
+            reported_date AS reportedDate,
+            location,
+            employee_1 AS employee,
+            employee_2 AS employee2,
+            change_type AS type,
+            reason,
+            status,
+            created_by AS createdBy,
+            created_at AS createdAt
+        FROM changes
+        WHERE 1 = 1
+    `;
+
+    const values = [];
+
+    if (name) {
+        query += `
+            AND (
+                LOWER(employee_1) LIKE LOWER(?)
+                OR LOWER(employee_2) LIKE LOWER(?)
+            )
+        `;
+
+        values.push(`%${name}%`, `%${name}%`);
+    }
+
+    if (month) {
+        query += `
+            AND substr(change_date, 6, 2) = ?
+        `;
+
+        values.push(month);
+    }
+
+    if (location) {
+        query += `
+            AND location = ?
+        `;
+
+        values.push(location);
+    }
+
+    if (type) {
+        query += `
+            AND change_type = ?
+        `;
+
+        values.push(type);
+    }
+
+    if (status) {
+        query += `
+            AND status = ?
+        `;
+
+        values.push(status);
+    }
+
+    query += `
+        ORDER BY
+            CASE
+                WHEN date(change_date) >= date('now') THEN 0
+                ELSE 1
+            END,
+            CASE
+                WHEN date(change_date) >= date('now') THEN date(change_date)
+            END ASC,
+            CASE
+                WHEN date(change_date) < date('now') THEN date(change_date)
+            END DESC,
+            created_at DESC,
+            id DESC
+        LIMIT 200
+    `;
+
+    db.all(query, values, (error, rows) => {
+        if (error) {
+            console.error('Roosterwijzigingen konden niet worden opgehaald:', error.message);
+
+            return res.status(500).json({
+                message: 'Roosterwijzigingen konden niet worden opgehaald.'
+            });
+        }
+
+        res.json(rows);
+    });
+});
+
 app.get('/api/changes/latest', (req, res) => {
     const query = `
         SELECT

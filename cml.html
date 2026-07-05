@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
+    <script src="cml.js" defer></script>
     <title>Sport Society - Roosterwijzigingen</title>
 </head>
 <body>
@@ -32,19 +33,14 @@
                 <h2>Roosterwijzigingen</h2>
             </div>
 
-            <form class="cml-search-bar">
+            <form id="cml-search-form" class="cml-search-bar">
                 <label>
                     Naam
                     <input type="search" id="search-name" placeholder="Zoek op medewerker">
                 </label>
 
                 <label>
-                    Datum
-                    <input type="date" id="search-date">
-                </label>
-
-                <label>
-                    Maand
+                    Maand wijziging
                     <select id="search-month">
                         <option value="">Alle maanden</option>
                         <option value="01">Januari</option>
@@ -74,6 +70,34 @@
                     </select>
                 </label>
 
+                <label>
+                    Type melding
+                    <select id="search-type">
+                        <option value="">Alle types</option>
+                        <option>Dienstwissel</option>
+                        <option>Ziekmelding</option>
+                        <option>Vervanging</option>
+                        <option>Vrij wegens overuren</option>
+                        <option>Extra dienst</option>
+                        <option>Openstaande dienst</option>
+                        <option>Tijdswijziging</option>
+                        <option>Locatiewijziging</option>
+                        <option>Dienst vervallen</option>
+                        <option>Dienst toegevoegd</option>
+                        <option>Overige wijziging</option>
+                    </select>
+                </label>
+
+                <label>
+                    Status
+                    <select id="search-status">
+                        <option value="">Alle statussen</option>
+                        <option>Open</option>
+                        <option>In behandeling</option>
+                        <option>Afgerond</option>
+                    </select>
+                </label>
+
                 <button type="submit" class="admin-button">
                     Zoeken
                 </button>
@@ -90,7 +114,7 @@
                 <table class="cml-table">
                     <thead>
                         <tr>
-                            <th>Datum</th>
+                            <th>Datum wijziging</th>
                             <th>Doorgegeven</th>
                             <th>Locatie</th>
                             <th>Medewerker 1</th>
@@ -103,7 +127,7 @@
                     <tbody id="changes-table-body">
                         <tr>
                             <td colspan="8" class="empty-state">
-                                Nog geen roosterwijzigingen geladen.
+                                Roosterwijzigingen laden...
                             </td>
                         </tr>
                     </tbody>
