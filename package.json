@@ -21,6 +21,7 @@
   "homepage": "https://github.com/Michael-Kr26/Sport-Society-Overview#readme",
   "dependencies": {
     "cors": "^2.8.6",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "sqlite3": "^6.0.1"
   }
