@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="roster.css">
+    <script src="roster.js" defer></script>
+    <title>Sport Society - Rooster</title>
+</head>
+<body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Rooster preview voor Sport Society</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label">
+            <span></span>
+        </label>
+
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="roster.html">Rooster</a>
+            <a href="cml.html">Roosterwijzigingen</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html">Admin login</a>
+        </div>
+    </nav>
+
+    <main class="roster-page">
+        <section class="roster-card roster-intro">
+            <div>
+                <p class="roster-label">Rooster preview</p>
+                <h2>Rooster controleren</h2>
+                <p>
+                    Zoek op medewerker om te controleren of diensten, locaties,
+                    afwezigheden en overgenomen diensten goed uit Excel worden gelezen.
+                </p>
+            </div>
+        </section>
+
+        <section class="roster-card">
+            <form id="roster-filter-form" class="roster-filter-bar">
+                <label>
+                    Medewerker
+                    <input
+                        type="search"
+                        id="employee-filter"
+                        placeholder="Bijvoorbeeld Michael"
+                        autocomplete="off"
+                    >
+                </label>
+
+                <label>
+                    Type
+                    <select id="type-filter">
+                        <option value="">Alles</option>
+                        <option value="shift">Diensten</option>
+                        <option value="absence">Afwezigheid</option>
+                        <option value="special">Bijzonder</option>
+                    </select>
+                </label>
+
+                <label>
+                    Locatie
+                    <select id="location-filter">
+                        <option value="">Alle locaties</option>
+                        <option>Barneveld</option>
+                        <option>Achterveld</option>
+                        <option>Voorthuizen</option>
+                        <option>Wekerom</option>
+                        <option>Harskamp</option>
+                    </select>
+                </label>
+
+                <label>
+                    Status
+                    <select id="status-filter">
+                        <option value="">Alle statussen</option>
+                        <option>Werkdienst</option>
+                        <option>Betaald verlof / vakantie</option>
+                        <option>Ziek</option>
+                        <option>Feestdag</option>
+                        <option>Tijd voor tijd</option>
+                    </select>
+                </label>
+
+                <button type="submit" class="admin-button">Zoeken</button>
+                <button type="button" id="reset-roster-filters" class="roster-secondary-button">
+                    Reset
+                </button>
+            </form>
+        </section>
+
+        <section id="roster-summary" class="roster-summary" aria-live="polite">
+            <article class="roster-summary-card">
+                <span class="summary-value">-</span>
+                <span class="summary-label">Items</span>
+            </article>
+        </section>
+
+        <section class="roster-card">
+            <div class="roster-results-header">
+                <div>
+                    <p class="roster-label">Resultaten</p>
+                    <h2>Roosteritems</h2>
+                </div>
+
+                <p id="roster-result-count" class="roster-result-count">
+                    Laden...
+                </p>
+            </div>
+
+            <div id="roster-results" class="roster-results">
+                <p class="empty-state">Rooster laden...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
+    </footer>
+</body>
+</html>

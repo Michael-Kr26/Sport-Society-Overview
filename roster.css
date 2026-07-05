@@ -1,0 +1,277 @@
+.roster-page {
+    max-width: 1200px;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
+.roster-card {
+    background-color: #1b1b1b;
+    color: #e6e6e6;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.roster-intro {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.roster-label {
+    margin: 0 0 6px;
+    color: #b8b8b8;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.roster-filter-bar {
+    display: grid;
+    grid-template-columns: 1.4fr repeat(3, minmax(150px, 1fr)) auto auto;
+    gap: 16px;
+    align-items: end;
+}
+
+.roster-filter-bar label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.roster-filter-bar input,
+.roster-filter-bar select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    background-color: #121212;
+    color: #ffffff;
+    font: inherit;
+}
+
+.roster-secondary-button {
+    display: inline-block;
+    width: fit-content;
+    padding: 11px 16px;
+    border: 1px solid rgba(230, 230, 230, 0.18);
+    border-radius: 8px;
+    background-color: transparent;
+    color: #e6e6e6;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.roster-secondary-button:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.roster-summary {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.roster-summary-card {
+    background-color: #1b1b1b;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.summary-value {
+    display: block;
+    color: #ffffff;
+    font-size: 1.55rem;
+    font-weight: 900;
+}
+
+.summary-label {
+    display: block;
+    margin-top: 4px;
+    color: #b8b8b8;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.roster-results-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: start;
+    margin-bottom: 20px;
+}
+
+.roster-result-count {
+    color: #b8b8b8;
+    font-weight: 700;
+}
+
+.roster-results {
+    display: grid;
+    gap: 16px;
+}
+
+.roster-day {
+    border: 1px solid rgba(230, 230, 230, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #141414;
+}
+
+.roster-day-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    background-color: #202020;
+}
+
+.roster-day-header h3 {
+    margin: 0;
+    color: #ffffff;
+}
+
+.roster-day-header span {
+    color: #b8b8b8;
+    font-weight: 700;
+}
+
+.roster-items {
+    display: grid;
+}
+
+.roster-item {
+    display: grid;
+    grid-template-columns: 120px 1fr 160px 190px;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(230, 230, 230, 0.08);
+}
+
+.roster-time {
+    color: #ffffff;
+    font-weight: 900;
+}
+
+.roster-employee {
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.roster-meta {
+    color: #b8b8b8;
+    font-size: 0.88rem;
+}
+
+.roster-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.roster-pill.location-barneveld {
+    color: #e6e6e6;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.roster-pill.location-achterveld {
+    color: #fff3a8;
+    background-color: rgba(255, 221, 0, 0.16);
+    border-color: rgba(255, 221, 0, 0.35);
+}
+
+.roster-pill.location-voorthuizen {
+    color: #e4c4ff;
+    background-color: rgba(145, 82, 210, 0.18);
+    border-color: rgba(145, 82, 210, 0.38);
+}
+
+.roster-pill.location-wekerom {
+    color: #b8e7ff;
+    background-color: rgba(0, 176, 240, 0.16);
+    border-color: rgba(0, 176, 240, 0.36);
+}
+
+.roster-pill.location-harskamp {
+    color: #c9f7c9;
+    background-color: rgba(146, 208, 80, 0.16);
+    border-color: rgba(146, 208, 80, 0.36);
+}
+
+.roster-pill.status-absence {
+    color: #ffb8b8;
+    background-color: rgba(255, 0, 0, 0.14);
+    border-color: rgba(255, 0, 0, 0.32);
+}
+
+.roster-pill.status-sick {
+    color: #ffd7a8;
+    background-color: rgba(255, 192, 0, 0.14);
+    border-color: rgba(255, 192, 0, 0.34);
+}
+
+.roster-pill.status-special {
+    color: #bff5d2;
+    background-color: rgba(0, 176, 80, 0.14);
+    border-color: rgba(0, 176, 80, 0.34);
+}
+
+.roster-pill.status-tvt {
+    color: #ffc8ef;
+    background-color: rgba(255, 0, 208, 0.14);
+    border-color: rgba(255, 0, 208, 0.34);
+}
+
+.roster-note {
+    color: #d4d4d4;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+@media (max-width: 980px) {
+    .roster-filter-bar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .roster-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .roster-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 640px) {
+    .roster-filter-bar,
+    .roster-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .roster-results-header,
+    .roster-day-header {
+        flex-direction: column;
+    }
+
+    .roster-filter-bar .admin-button,
+    .roster-secondary-button {
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -1,3 +1,4 @@
+const fs = require('fs');
 const ExcelJS = require('exceljs');
 const path = require('path');
 
@@ -435,6 +436,26 @@ function parseWorksheet(worksheet, sheetInfo) {
     };
 }
 
+function savePreviewFile(items, unknownColors, missingSheets) {
+    const outputPath = path.join(__dirname, 'data', 'imports', 'roster-preview.json');
+
+    const previewData = {
+        generatedAt: new Date().toISOString(),
+        totalItems: items.length,
+        unknownColors,
+        missingSheets,
+        items
+    };
+
+    fs.mkdirSync(path.dirname(outputPath), {
+        recursive: true
+    });
+
+    fs.writeFileSync(outputPath, JSON.stringify(previewData, null, 2), 'utf8');
+
+    console.log(`\nRooster-preview opgeslagen: ${outputPath}`);
+}
+
 function printSummary(items, unknownColors, missingSheets) {
     const totals = items.reduce((summary, item) => {
         summary.total += 1;
@@ -536,7 +557,7 @@ async function main() {
         allItems.push(...result.items);
         allUnknownColors.push(...result.unknownColors);
     }
-
+    savePreviewFile(allItems, allUnknownColors, missingSheets);
     printSummary(allItems, allUnknownColors, missingSheets);
 }
 

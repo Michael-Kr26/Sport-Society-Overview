@@ -299,6 +299,38 @@ app.get('/api/changes/latest', (req, res) => {
     });
 });
 
+app.get('/api/roster-preview', (req, res) => {
+    const previewPath = path.join(__dirname, 'data', 'imports', 'roster-preview.json');
+
+    if (!fs.existsSync(previewPath)) {
+        return res.status(404).json({
+            message: 'Nog geen rooster-preview gevonden. Draai eerst npm run import:roster.'
+        });
+    }
+
+    fs.readFile(previewPath, 'utf8', (error, fileContent) => {
+        if (error) {
+            console.error('Rooster-preview kon niet worden gelezen:', error.message);
+
+            return res.status(500).json({
+                message: 'Rooster-preview kon niet worden gelezen.'
+            });
+        }
+
+        try {
+            const previewData = JSON.parse(fileContent);
+
+            res.json(previewData);
+        } catch (parseError) {
+            console.error('Rooster-preview bevat geen geldige JSON:', parseError.message);
+
+            res.status(500).json({
+                message: 'Rooster-preview bevat geen geldige JSON.'
+            });
+        }
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Sport Society Overview draait op http://localhost:${PORT}`);
 });
