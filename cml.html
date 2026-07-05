@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Sport Society - Roosterwijzigingen</title>
+</head>
+<body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Roosterwijzigingen overzicht</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label">
+            <span></span>
+        </label>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="cml.html">Roosterwijzigingen</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="admin.html">Admin</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="dashboard-card">
+            <div class="card-header">
+                <p class="card-label">Change Management Log</p>
+                <h2>Roosterwijzigingen</h2>
+            </div>
+
+            <form class="cml-search-bar">
+                <label>
+                    Naam
+                    <input type="search" id="search-name" placeholder="Zoek op medewerker">
+                </label>
+
+                <label>
+                    Datum
+                    <input type="date" id="search-date">
+                </label>
+
+                <label>
+                    Maand
+                    <select id="search-month">
+                        <option value="">Alle maanden</option>
+                        <option value="01">Januari</option>
+                        <option value="02">Februari</option>
+                        <option value="03">Maart</option>
+                        <option value="04">April</option>
+                        <option value="05">Mei</option>
+                        <option value="06">Juni</option>
+                        <option value="07">Juli</option>
+                        <option value="08">Augustus</option>
+                        <option value="09">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </label>
+
+                <label>
+                    Locatie
+                    <select id="search-location">
+                        <option value="">Alle locaties</option>
+                        <option>Achterveld</option>
+                        <option>Barneveld</option>
+                        <option>Voorthuizen</option>
+                        <option>Wekerom</option>
+                        <option>Harskamp</option>
+                    </select>
+                </label>
+
+                <button type="submit" class="admin-button">
+                    Zoeken
+                </button>
+            </form>
+        </section>
+
+        <section class="dashboard-card cml-results-card">
+            <div class="card-header">
+                <p class="card-label">Resultaten</p>
+                <h2>Overzicht wijzigingen</h2>
+            </div>
+
+            <div class="cml-table-wrapper">
+                <table class="cml-table">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Doorgegeven</th>
+                            <th>Locatie</th>
+                            <th>Medewerker 1</th>
+                            <th>Medewerker 2</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Ingevoerd door</th>
+                        </tr>
+                    </thead>
+                    <tbody id="changes-table-body">
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                Nog geen roosterwijzigingen geladen.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
+    </footer>
+</body>
+</html>
