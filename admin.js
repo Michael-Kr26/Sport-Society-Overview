@@ -7,7 +7,7 @@ form.addEventListener('submit', (event) => {
     const newChange = {
         id: Date.now(),
         date: document.getElementById('change-date').value,
-        week: document.getElementById('change-week').value,
+        reportedDate: document.getElementById('change-reported-date').value,
         location: document.getElementById('change-location').value,
         employee: document.getElementById('change-employee').value,
         employee2: document.getElementById('change-employee2').value,
