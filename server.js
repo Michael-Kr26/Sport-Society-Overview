@@ -24,6 +24,13 @@ if (!fs.existsSync(dataDir)) {
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/data/imports', (req, res) => {
+    res.status(403).json({
+        message: 'Importbestanden zijn niet publiek toegankelijk.'
+    });
+});
+
 app.use(express.static(__dirname));
 
 const db = new sqlite3.Database(dbPath, (error) => {
