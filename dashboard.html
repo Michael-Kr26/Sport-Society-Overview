@@ -27,67 +27,116 @@
         </div>
     </nav>
 
-    <main class="dashboard-page">
-        <section class="dashboard-card intro-card">
-            <div class="card-header">
-                <p class="card-label">KPI Dashboard</p>
-                <h2>Dashboard in voorbereiding</h2>
+    <main class="kpi-page">
+        <section class="kpi-hero">
+            <div class="kpi-hero-content">
+                <p class="kpi-eyebrow">KPI Dashboard</p>
+                <h2>Managementoverzicht in voorbereiding</h2>
+                <p>
+                    Deze pagina wordt later het centrale overzicht voor roosterbezetting,
+                    roosterwijzigingen, locaties en medewerkerinzichten.
+                </p>
+
+                <div class="kpi-actions">
+                    <a href="roster.html" class="admin-button">Bekijk rooster</a>
+                    <a href="cml.html" class="kpi-secondary-link">Bekijk roosterwijzigingen</a>
+                </div>
+            </div>
+
+            <aside class="kpi-status-panel">
+                <p class="kpi-status-label">Status</p>
+                <h3>Opbouwfase</h3>
+                <p>
+                    De structuur staat klaar. De echte KPI-data wordt later gekoppeld
+                    aan rooster- en wijzigingsdata.
+                </p>
+            </aside>
+        </section>
+
+        <section class="kpi-overview-grid" aria-label="Dashboard modules">
+            <article class="kpi-module-card">
+                <div class="kpi-module-header">
+                    <p class="kpi-eyebrow">Rooster</p>
+                    <span class="kpi-module-status">Later</span>
+                </div>
+
+                <h3>Roosterbezetting</h3>
+                <p>
+                    Inzicht in geplande diensten, bezetting per dag en openstaande diensten.
+                </p>
+
+                <ul>
+                    <li>Diensten per locatie</li>
+                    <li>Openstaande diensten</li>
+                    <li>Drukste dagen</li>
+                </ul>
+            </article>
+
+            <article class="kpi-module-card">
+                <div class="kpi-module-header">
+                    <p class="kpi-eyebrow">Change Management</p>
+                    <span class="kpi-module-status">Later</span>
+                </div>
+
+                <h3>Roosterwijzigingen</h3>
+                <p>
+                    Overzicht van wijzigingen, statussen, ziekte, vervangingen en afgeronde meldingen.
+                </p>
+
+                <ul>
+                    <li>Open meldingen</li>
+                    <li>Wijzigingen per maand</li>
+                    <li>Afgeronde wijzigingen</li>
+                </ul>
+            </article>
+
+            <article class="kpi-module-card">
+                <div class="kpi-module-header">
+                    <p class="kpi-eyebrow">Locaties</p>
+                    <span class="kpi-module-status">Later</span>
+                </div>
+
+                <h3>Locatie-overzicht</h3>
+                <p>
+                    Vergelijking tussen Barneveld, Achterveld, Voorthuizen, Wekerom en Harskamp.
+                </p>
+
+                <ul>
+                    <li>Bezetting per locatie</li>
+                    <li>Wijzigingen per locatie</li>
+                    <li>Roosterdruk per vestiging</li>
+                </ul>
+            </article>
+
+            <article class="kpi-module-card">
+                <div class="kpi-module-header">
+                    <p class="kpi-eyebrow">Medewerkers</p>
+                    <span class="kpi-module-status">Later</span>
+                </div>
+
+                <h3>Medewerkerinzichten</h3>
+                <p>
+                    Praktische inzichten per medewerker, gebaseerd op diensten en roosterwijzigingen.
+                </p>
+
+                <ul>
+                    <li>Diensten per medewerker</li>
+                    <li>Afwezigheden</li>
+                    <li>Overgenomen diensten</li>
+                </ul>
+            </article>
+        </section>
+
+        <section class="kpi-roadmap-card">
+            <div>
+                <p class="kpi-eyebrow">Volgende stap</p>
+                <h3>Dashboard wordt gekoppeld na rooster-database</h3>
             </div>
 
             <p>
-                Op deze pagina komen later de belangrijkste KPI's en managementinzichten
-                van Sport Society te staan.
+                Eerst wordt het rooster inhoudelijk gecontroleerd en daarna opgeslagen in SQLite.
+                Zodra die basis klopt, kunnen de KPI's automatisch uit de database worden opgebouwd.
             </p>
-        </section>
-
-        <section class="dashboard-grid" aria-label="Dashboard onderdelen">
-            <article class="dashboard-card">
-                <div class="card-header">
-                    <p class="card-label">Rooster</p>
-                    <h2>Roosterbezetting</h2>
-                </div>
-
-                <p>
-                    Later tonen we hier inzichten over geplande diensten, locaties,
-                    bezetting en openstaande diensten.
-                </p>
-            </article>
-
-            <article class="dashboard-card">
-                <div class="card-header">
-                    <p class="card-label">Change Management</p>
-                    <h2>Roosterwijzigingen</h2>
-                </div>
-
-                <p>
-                    Later tonen we hier aantallen wijzigingen, open statussen,
-                    ziekte, vervangingen en afgeronde meldingen.
-                </p>
-            </article>
-
-            <article class="dashboard-card">
-                <div class="card-header">
-                    <p class="card-label">Locaties</p>
-                    <h2>Locatie-overzicht</h2>
-                </div>
-
-                <p>
-                    Later tonen we hier data per locatie: Barneveld, Achterveld,
-                    Voorthuizen, Wekerom en Harskamp.
-                </p>
-            </article>
-
-            <article class="dashboard-card">
-                <div class="card-header">
-                    <p class="card-label">Medewerkers</p>
-                    <h2>Medewerker-inzichten</h2>
-                </div>
-
-                <p>
-                    Later tonen we hier praktische inzichten per medewerker, zoals
-                    diensten, wijzigingen en afwezigheden.
-                </p>
-            </article>
         </section>
     </main>
 
