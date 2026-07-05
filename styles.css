@@ -28,6 +28,7 @@ header {
     text-align: center;
 }
 
+/* Navigation */
 nav {
     background-color: #1e1e1e;
     width: 100vw;
@@ -97,7 +98,7 @@ nav a:hover {
     color: #ffffff;
 }
 
-/* Main content cards and page wrapper */
+/* Shared layout and cards */
 main {
     max-width: 1000px;
     margin: 20px auto;
@@ -108,27 +109,12 @@ main {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* Home/dashboard layout */
-main.dashboard-page {
-    background: transparent;
-    box-shadow: none;
-    padding: 0;
-}
-
 .dashboard-card {
     background-color: #1b1b1b;
     color: #e6e6e6;
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.intro-card {
-    margin-bottom: 20px;
-}
-
-.latest-change-card {
-    min-height: 170px;
 }
 
 .card-header {
@@ -144,26 +130,17 @@ main.dashboard-page {
     text-transform: uppercase;
 }
 
-.change-details {
-    display: grid;
-    gap: 6px;
-}
-
-.field-label {
-    color: #ffffff;
-    font-weight: 700;
-}
-
-.cml-table {
-    min-width: 1100px;
+.empty-state {
+    color: #b8b8b8;
+    font-style: italic;
 }
 
 .status-pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 128px;
-    padding: 6px 12px;
+    min-width: 92px;
+    padding: 5px 10px;
     border-radius: 999px;
     font-size: 0.78rem;
     font-weight: 800;
@@ -173,24 +150,15 @@ main.dashboard-page {
     border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.empty-state {
-    color: #b8b8b8;
-    font-style: italic;
+/* Home/dashboard */
+main.dashboard-page {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
 }
 
-/* Footer bar */
-footer {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    background-color: #181818;
-    color: #e6e6e6;
-    text-align: center;
-    padding: 10px;
-    z-index: 1000;
-    font-family: monospace;
+.intro-card {
+    margin-bottom: 20px;
 }
 
 .dashboard-grid {
@@ -198,6 +166,20 @@ footer {
     grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
     gap: 24px;
     align-items: stretch;
+}
+
+.latest-change-card {
+    min-height: 170px;
+}
+
+.change-details {
+    display: grid;
+    gap: 6px;
+}
+
+.field-label {
+    color: #ffffff;
+    font-weight: 700;
 }
 
 .admin-access-card {
@@ -217,6 +199,7 @@ footer {
     line-height: 1.6;
 }
 
+/* Admin */
 .admin-button {
     display: inline-block;
     width: fit-content;
@@ -278,7 +261,108 @@ footer {
     margin-top: 8px;
 }
 
-/* Mobile adaptations for smaller screens */
+/* Change Management Log */
+.cml-search-bar {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(150px, 1fr)) auto;
+    gap: 16px;
+    align-items: end;
+    margin-top: 20px;
+}
+
+.cml-search-bar label {
+    display: grid;
+    gap: 8px;
+    color: #f5f5f5;
+    font-weight: 700;
+}
+
+.cml-search-bar input,
+.cml-search-bar select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    background-color: #121212;
+    color: #e6e6e6;
+    font: inherit;
+}
+
+.cml-search-bar input:focus,
+.cml-search-bar select:focus {
+    outline: none;
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+
+.cml-results-card {
+    margin-top: 20px;
+}
+
+.cml-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.cml-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+.cml-table th,
+.cml-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+    vertical-align: top;
+}
+
+.cml-table th {
+    color: #ffffff;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.cml-table td {
+    color: #d4d4d4;
+}
+
+.status-pill.status-open {
+    color: #ffd2a1;
+    background-color: rgba(255, 149, 0, 0.14);
+    border-color: rgba(255, 149, 0, 0.36);
+}
+
+.status-pill.status-progress {
+    color: #b8d7ff;
+    background-color: rgba(45, 127, 249, 0.14);
+    border-color: rgba(45, 127, 249, 0.36);
+}
+
+.status-pill.status-done {
+    color: #b9f6c4;
+    background-color: rgba(45, 180, 90, 0.14);
+    border-color: rgba(45, 180, 90, 0.36);
+}
+
+/* Footer */
+footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #181818;
+    color: #e6e6e6;
+    text-align: center;
+    padding: 10px;
+    z-index: 1000;
+    font-family: monospace;
+}
+
+/* Mobile */
 @media (max-width: 768px) {
     nav {
         padding: 0 16px;
@@ -354,77 +438,7 @@ footer {
     .admin-form {
         gap: 16px;
     }
-}
 
-/* Change Management Log */
-.cml-search-bar {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(150px, 1fr)) auto;
-    gap: 16px;
-    align-items: end;
-    margin-top: 20px;
-}
-
-.cml-search-bar label {
-    display: grid;
-    gap: 8px;
-    color: #f5f5f5;
-    font-weight: 700;
-}
-
-.cml-search-bar input,
-.cml-search-bar select {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 10px;
-    background-color: #121212;
-    color: #e6e6e6;
-    font: inherit;
-}
-
-.cml-search-bar input:focus,
-.cml-search-bar select:focus {
-    outline: none;
-    border-color: #ffffff;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
-}
-
-.cml-results-card {
-    margin-top: 20px;
-}
-
-.cml-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-}
-
-.cml-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 900px;
-}
-
-.cml-table th,
-.cml-table td {
-    padding: 14px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: left;
-    vertical-align: top;
-}
-
-.cml-table th {
-    color: #ffffff;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-
-.cml-table td {
-    color: #d4d4d4;
-}
-
-@media (max-width: 768px) {
     .cml-search-bar {
         grid-template-columns: 1fr;
     }
@@ -432,34 +446,4 @@ footer {
     .cml-search-bar .admin-button {
         width: 100%;
     }
-}
-.status-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 92px;
-    padding: 5px 10px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.status-pill.status-open {
-    color: #ffd2a1;
-    background-color: rgba(255, 149, 0, 0.14);
-    border-color: rgba(255, 149, 0, 0.36);
-}
-
-.status-pill.status-progress {
-    color: #b8d7ff;
-    background-color: rgba(45, 127, 249, 0.14);
-    border-color: rgba(45, 127, 249, 0.36);
-}
-
-.status-pill.status-done {
-    color: #b9f6c4;
-    background-color: rgba(45, 180, 90, 0.14);
-    border-color: rgba(45, 180, 90, 0.36);
 }
