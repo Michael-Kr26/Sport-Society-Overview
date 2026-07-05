@@ -58,7 +58,7 @@ app.post('/api/changes', (req, res) => {
         createdBy
     } = req.body;
 
-    if (!date || !reportedDate || !location || !employee || !type || !reason || !status || !createdBy) {
+    if (!date || !reportedDate || !location || !employee || !type || !status || !createdBy) {
         return res.status(400).json({
             message: 'Niet alle verplichte velden zijn ingevuld.'
         });
@@ -86,7 +86,7 @@ app.post('/api/changes', (req, res) => {
         employee,
         employee2 || '',
         type,
-        reason,
+        reason || '',
         status,
         createdBy
     ];
