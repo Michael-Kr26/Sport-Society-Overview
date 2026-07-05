@@ -35,6 +35,27 @@ function formatDate(dateString) {
     return `${day}-${month}-${year}`;
 }
 
+function getTodayDateString() {
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+function getRosterItemKey(item) {
+    return [
+        item.sourceSheet || '',
+        item.sourceCell || '',
+        item.rosterDate || '',
+        item.employeeName || '',
+        item.startTime || '',
+        item.endTime || ''
+    ].join('|');
+}
+
 function getLocationClass(location) {
     if (location === 'Achterveld') {
         return 'location-achterveld';
@@ -99,9 +120,25 @@ function getTimeText(item) {
     return item.itemType === 'shift' ? 'Tijd onbekend' : 'Hele dag';
 }
 
+function isCurrentOrFutureItem(item) {
+    return String(item.rosterDate || '') >= getTodayDateString();
+}
+
 function sortRosterItems(items) {
     return [...items].sort((a, b) => {
-        const dateCompare = String(a.rosterDate).localeCompare(String(b.rosterDate));
+        const aDate = String(a.rosterDate || '');
+        const bDate = String(b.rosterDate || '');
+
+        const aIsCurrentOrFuture = isCurrentOrFutureItem(a);
+        const bIsCurrentOrFuture = isCurrentOrFutureItem(b);
+
+        if (aIsCurrentOrFuture !== bIsCurrentOrFuture) {
+            return aIsCurrentOrFuture ? -1 : 1;
+        }
+
+        const dateCompare = aIsCurrentOrFuture
+            ? aDate.localeCompare(bDate)
+            : bDate.localeCompare(aDate);
 
         if (dateCompare !== 0) {
             return dateCompare;
@@ -118,8 +155,11 @@ function getFilteredItems() {
     const statusValue = statusFilter.value;
 
     return rosterItems.filter((item) => {
+        const employeeName = String(item.employeeName || '').toLowerCase();
+
         const employeeMatches = !employeeValue
-            || String(item.employeeName || '').toLowerCase().includes(employeeValue);
+            || employeeName.includes(employeeValue)
+            || item.employeeName === 'ALL';
 
         const typeMatches = !typeValue || item.itemType === typeValue;
         const locationMatches = !locationValue || item.location === locationValue;
@@ -130,15 +170,24 @@ function getFilteredItems() {
 }
 
 function groupItemsByDate(items) {
-    return items.reduce((groups, item) => {
-        if (!groups[item.rosterDate]) {
-            groups[item.rosterDate] = [];
+    const groups = new Map();
+
+    items.forEach((item) => {
+        if (!groups.has(item.rosterDate)) {
+            groups.set(item.rosterDate, []);
         }
 
-        groups[item.rosterDate].push(item);
+        groups.get(item.rosterDate).push(item);
+    });
 
-        return groups;
-    }, {});
+    return groups;
+}
+
+function getNextShift(items) {
+    return items.find((item) => (
+        item.itemType === 'shift'
+        && isCurrentOrFutureItem(item)
+    ));
 }
 
 function renderSummary(items) {
@@ -176,8 +225,50 @@ function renderSummary(items) {
     `;
 }
 
+function renderRosterItem(item, nextShiftKey) {
+    const isNextShift = getRosterItemKey(item) === nextShiftKey;
+
+    return `
+        <div class="roster-item ${isNextShift ? 'is-next-shift' : ''}">
+            <div class="roster-time">
+                ${escapeHtml(getTimeText(item))}
+            </div>
+
+            <div>
+                <div class="roster-employee">
+                    ${escapeHtml(item.employeeName)}
+
+                    ${isNextShift ? `
+                        <span class="next-shift-label">
+                            Eerstvolgende dienst
+                        </span>
+                    ` : ''}
+                </div>
+
+                ${item.note ? `
+                    <div class="roster-note">
+                        ${escapeHtml(item.note)}
+                    </div>
+                ` : ''}
+            </div>
+
+            <div>
+                ${getPrimaryPill(item)}
+            </div>
+
+            <div class="roster-meta">
+                Type: ${escapeHtml(item.itemType)}
+                <br>
+                Status: ${escapeHtml(item.status)}
+            </div>
+        </div>
+    `;
+}
+
 function renderRosterItems(items) {
     const sortedItems = sortRosterItems(items);
+    const nextShift = getNextShift(sortedItems);
+    const nextShiftKey = nextShift ? getRosterItemKey(nextShift) : null;
 
     renderSummary(sortedItems);
 
@@ -194,7 +285,7 @@ function renderRosterItems(items) {
 
     const groupedItems = groupItemsByDate(sortedItems);
 
-    resultsContainer.innerHTML = Object.entries(groupedItems).map(([date, dayItems]) => {
+    resultsContainer.innerHTML = Array.from(groupedItems.entries()).map(([date, dayItems]) => {
         const dayName = dayItems[0]?.dayName || '';
 
         return `
@@ -205,40 +296,7 @@ function renderRosterItems(items) {
                 </div>
 
                 <div class="roster-items">
-                    ${dayItems.map((item) => `
-                        <div class="roster-item">
-                            <div class="roster-time">
-                                ${escapeHtml(getTimeText(item))}
-                            </div>
-
-                            <div>
-                                <div class="roster-employee">
-                                    ${escapeHtml(item.employeeName)}
-                                </div>
-
-                                <div class="roster-meta">
-                                    Bronplek: ${escapeHtml(item.sourceSlotEmployee || '-')}
-                                    · ${escapeHtml(item.sourceSheet || '-')}!${escapeHtml(item.sourceCell || '-')}
-                                </div>
-
-                                ${item.note ? `
-                                    <div class="roster-note">
-                                        ${escapeHtml(item.note)}
-                                    </div>
-                                ` : ''}
-                            </div>
-
-                            <div>
-                                ${getPrimaryPill(item)}
-                            </div>
-
-                            <div class="roster-meta">
-                                Type: ${escapeHtml(item.itemType)}
-                                <br>
-                                Status: ${escapeHtml(item.status)}
-                            </div>
-                        </div>
-                    `).join('')}
+                    ${dayItems.map((item) => renderRosterItem(item, nextShiftKey)).join('')}
                 </div>
             </article>
         `;

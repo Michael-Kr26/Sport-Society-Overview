@@ -275,3 +275,23 @@
         text-align: center;
     }
 }
+
+.roster-item.is-next-shift {
+    background-color: rgba(45, 127, 249, 0.08);
+    border-left: 4px solid rgba(45, 127, 249, 0.65);
+    padding-left: 12px;
+}
+
+.next-shift-label {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background-color: rgba(45, 127, 249, 0.16);
+    color: #b8d7ff;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
