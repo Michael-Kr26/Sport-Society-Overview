@@ -14,6 +14,22 @@ function formatDate(dateString) {
     return `${day}-${month}-${year}`;
 }
 
+function getStatusClass(status) {
+    if (status === 'Open') {
+        return 'status-open';
+    }
+
+    if (status === 'In behandeling') {
+        return 'status-progress';
+    }
+
+    if (status === 'Afgerond') {
+        return 'status-done';
+    }
+
+    return '';
+}
+
 function renderLatestChange(change) {
     const container = document.getElementById('latest-change-content');
 
@@ -37,7 +53,7 @@ function renderLatestChange(change) {
         <p><span class="field-label">Type:</span> ${change.type}</p>
         <p><span class="field-label">Waarom:</span> ${change.reason || '-'}</p>
         <p><span class="field-label">Locatie:</span> ${change.location}</p>
-        <p><span class="field-label">Status:</span> <span class="status-pill">${change.status}</span></p>
+        <p><span class="field-label">Status:</span> <span class="status-pill ${getStatusClass(change.status)}">${change.status}</span></p>
     `;
 }
 
