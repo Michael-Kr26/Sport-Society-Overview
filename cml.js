@@ -168,30 +168,32 @@ function renderChanges(changes) {
     }
 
     tableBody.innerHTML = changes.map((change) => {
-    const reason = change.reason ? escapeHtml(change.reason) : 'Geen beschrijving ingevuld.';
+        const reason = change.reason ? escapeHtml(change.reason) : 'Geen beschrijving ingevuld.';
 
-    return `
-        <tr>
-            <td>${formatDate(change.date)}</td>
-            <td>${formatDate(change.reportedDate)}</td>
-            <td>${escapeHtml(change.location)}</td>
-            <td>${escapeHtml(change.employee)}</td>
-            <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
-            <td>${escapeHtml(change.type)}</td>
-            <td>${renderStatusCell(change)}</td>
-            <td>${escapeHtml(change.createdBy)}</td>
-            <td class="cml-action-cell">${renderActionCell(change)}</td>
-        </tr>
-        <tr class="cml-details-row" data-details-row="${change.id}" hidden>
-            <td colspan="9">
-                <div class="cml-details-content">
-                    <strong>Beschrijving / reden</strong>
-                    <p>${reason}</p>
-                </div>
-            </td>
-        </tr>
-    `;
-}).join('');
+        return `
+            <tr>
+                <td>${formatDate(change.date)}</td>
+                <td>${formatDate(change.reportedDate)}</td>
+                <td>${escapeHtml(change.location)}</td>
+                <td>${escapeHtml(change.employee)}</td>
+                <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
+                <td>${escapeHtml(change.type)}</td>
+                <td>${renderStatusCell(change)}</td>
+                <td>${escapeHtml(change.createdBy)}</td>
+                <td class="cml-action-cell">${renderActionCell(change)}</td>
+            </tr>
+            <tr class="cml-details-row" data-details-row="${change.id}" hidden>
+                <td colspan="9">
+                    <div class="cml-details-content">
+                        <strong>Beschrijving / reden</strong>
+                        <p>${reason}</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    attachTableActionListeners();
 }
 
 function buildQueryString() {
@@ -321,11 +323,11 @@ function handleDetailsToggle(event) {
 
     const isHidden = detailsRow.hidden;
 
-        detailsRow.hidden = !isHidden;
-            button.setAttribute('aria-expanded', String(isHidden));
-            button.classList.toggle('is-active', isHidden);
-            button.title = isHidden ? 'Beschrijving verbergen' : 'Beschrijving tonen';
-            button.setAttribute(
+    detailsRow.hidden = !isHidden;
+    button.setAttribute('aria-expanded', String(isHidden));
+    button.classList.toggle('is-active', isHidden);
+    button.title = isHidden ? 'Beschrijving verbergen' : 'Beschrijving tonen';
+    button.setAttribute(
         'aria-label',
         isHidden ? 'Beschrijving verbergen' : 'Beschrijving tonen'
     );
