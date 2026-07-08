@@ -1,8 +1,12 @@
 const fs = require('fs');
-const ExcelJS = require('exceljs');
 const path = require('path');
+const crypto = require('crypto');
+const ExcelJS = require('exceljs');
+const sqlite3 = require('sqlite3').verbose();
 
 const workbookPath = process.argv[2] || path.join(__dirname, 'data', 'imports', 'rooster.xlsx');
+const dataDir = path.join(__dirname, 'data');
+const dbPath = path.join(dataDir, 'sport-society.db');
 
 const REQUIRED_SHEETS = [
     'Jan 26',
@@ -109,7 +113,6 @@ function getFillKey(cell) {
 
 function parseSheetInfo(sheetName) {
     const normalized = sheetName.toLowerCase().replace(/\s+/g, '');
-
     const monthKey = Object.keys(MONTHS).find((key) => normalized.startsWith(key));
 
     if (!monthKey) {
@@ -322,6 +325,24 @@ function isGlobalSpecialStatus(status, text) {
     return status === 'Feestdag' || normalized.includes('gesloten');
 }
 
+function createSourceHash(item) {
+    const hashInput = [
+        item.rosterDate,
+        item.employeeName,
+        item.itemType,
+        item.location || '',
+        item.startTime || '',
+        item.endTime || '',
+        item.status,
+        item.note || ''
+    ].join('|');
+
+    return crypto
+        .createHash('sha256')
+        .update(hashInput)
+        .digest('hex');
+}
+
 function parseWorksheet(worksheet, sheetInfo) {
     const employeeByColumn = getEmployeeByColumn(worksheet);
     const items = [];
@@ -372,7 +393,7 @@ function parseWorksheet(worksheet, sheetInfo) {
                     ? 'ALL'
                     : sourceEmployee;
 
-                items.push({
+                const item = {
                     sourceSheet: worksheet.name,
                     sourceCell: cell.address,
                     rosterDate,
@@ -387,7 +408,10 @@ function parseWorksheet(worksheet, sheetInfo) {
                     note: parsedTime && parsedTime.extraText ? parsedTime.extraText : null,
                     rawText,
                     colorKey
-                });
+                };
+
+                item.sourceHash = createSourceHash(item);
+                items.push(item);
 
                 continue;
             }
@@ -411,7 +435,7 @@ function parseWorksheet(worksheet, sheetInfo) {
                 skippedColumns.add(columnNumber + 1);
             }
 
-            items.push({
+            const item = {
                 sourceSheet: worksheet.name,
                 sourceCell: cell.address,
                 rosterDate,
@@ -426,7 +450,10 @@ function parseWorksheet(worksheet, sheetInfo) {
                 note: takeoverName ? `Overgenomen dienst van ${sourceEmployee}` : null,
                 rawText,
                 colorKey
-            });
+            };
+
+            item.sourceHash = createSourceHash(item);
+            items.push(item);
         }
     }
 
@@ -434,6 +461,156 @@ function parseWorksheet(worksheet, sheetInfo) {
         items,
         unknownColors: Array.from(unknownColors)
     };
+}
+
+function run(db, query, params = []) {
+    return new Promise((resolve, reject) => {
+        db.run(query, params, function (error) {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            resolve(this);
+        });
+    });
+}
+
+function closeDatabase(db) {
+    return new Promise((resolve, reject) => {
+        db.close((error) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            resolve();
+        });
+    });
+}
+
+async function createDatabaseTables(db) {
+    await run(db, `
+        CREATE TABLE IF NOT EXISTS roster_imports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            source_type TEXT NOT NULL,
+            source_file TEXT,
+            source_url TEXT,
+            imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            status TEXT NOT NULL,
+            items_found INTEGER NOT NULL DEFAULT 0,
+            changes_detected INTEGER NOT NULL DEFAULT 0,
+            error_message TEXT
+        )
+    `);
+
+    await run(db, `
+        CREATE TABLE IF NOT EXISTS roster_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            import_id INTEGER,
+            roster_date TEXT NOT NULL,
+            day_name TEXT,
+            employee_name TEXT NOT NULL,
+            source_slot_employee TEXT,
+            item_type TEXT NOT NULL,
+            location TEXT,
+            start_time TEXT,
+            end_time TEXT,
+            status TEXT NOT NULL,
+            note TEXT,
+            source_sheet TEXT,
+            source_cell TEXT,
+            source_hash TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (import_id) REFERENCES roster_imports(id)
+        )
+    `);
+}
+
+async function saveItemsToDatabase(items) {
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, {
+            recursive: true
+        });
+    }
+
+    const db = new sqlite3.Database(dbPath);
+
+    try {
+        await createDatabaseTables(db);
+
+        await run(db, 'BEGIN TRANSACTION');
+
+        const importResult = await run(db, `
+            INSERT INTO roster_imports (
+                source_type,
+                source_file,
+                status,
+                items_found,
+                changes_detected
+            )
+            VALUES (?, ?, ?, ?, ?)
+        `, [
+            'local_excel',
+            path.basename(workbookPath),
+            'success',
+            items.length,
+            0
+        ]);
+
+        const importId = importResult.lastID;
+
+        await run(db, 'DELETE FROM roster_items');
+
+        const insertQuery = `
+            INSERT INTO roster_items (
+                import_id,
+                roster_date,
+                day_name,
+                employee_name,
+                source_slot_employee,
+                item_type,
+                location,
+                start_time,
+                end_time,
+                status,
+                note,
+                source_sheet,
+                source_cell,
+                source_hash
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        for (const item of items) {
+            await run(db, insertQuery, [
+                importId,
+                item.rosterDate,
+                item.dayName,
+                item.employeeName,
+                item.sourceSlotEmployee || null,
+                item.itemType,
+                item.location || null,
+                item.startTime || null,
+                item.endTime || null,
+                item.status,
+                item.note || null,
+                item.sourceSheet || null,
+                item.sourceCell || null,
+                item.sourceHash
+            ]);
+        }
+
+        await run(db, 'COMMIT');
+
+        console.log(`\nRooster opgeslagen in SQLite: ${items.length} items`);
+        console.log(`Import ID: ${importId}`);
+    } catch (error) {
+        await run(db, 'ROLLBACK').catch(() => {});
+        throw error;
+    } finally {
+        await closeDatabase(db);
+    }
 }
 
 function savePreviewFile(items, unknownColors, missingSheets) {
@@ -513,23 +690,6 @@ function printSummary(items, unknownColors, missingSheets) {
         console.log('\n=== Onbekende kleuren / cellen om te controleren ===');
         console.table(unknownColors.slice(0, 25));
     }
-
-    console.log('\n=== Eerste 50 roosteritems ===');
-    console.table(items.slice(0, 50).map((item) => ({
-        datum: item.rosterDate,
-        dag: item.dayName,
-        medewerker: item.employeeName,
-        bronplek: item.sourceSlotEmployee,
-        type: item.itemType,
-        locatie: item.location,
-        start: item.startTime,
-        eind: item.endTime,
-        status: item.status,
-        notitie: item.note,
-        sheet: item.sourceSheet,
-        cel: item.sourceCell,
-        kleur: item.colorKey
-    })));
 }
 
 async function main() {
@@ -557,7 +717,9 @@ async function main() {
         allItems.push(...result.items);
         allUnknownColors.push(...result.unknownColors);
     }
+
     savePreviewFile(allItems, allUnknownColors, missingSheets);
+    await saveItemsToDatabase(allItems);
     printSummary(allItems, allUnknownColors, missingSheets);
 }
 
