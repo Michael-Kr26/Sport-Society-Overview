@@ -206,8 +206,8 @@ app.get('/api/changes', (req, res) => {
     }
 
     if (month) {
-        query += `
-            AND substr(change_date, 1, 7) = ?
+    query += `
+        AND substr(change_date, 6, 2) = ?
         `;
 
         values.push(month);
