@@ -103,12 +103,8 @@ function renderStatusCell(change) {
     `;
 }
 
-function renderDeleteCell(change) {
-    if (!userCanDeleteChange()) {
-        return '<span class="cml-action-placeholder">-</span>';
-    }
-
-    return `
+function renderActionCell(change) {
+    const deleteButton = userCanDeleteChange() ? `
         <button
             type="button"
             class="delete-change-button"
@@ -118,12 +114,29 @@ function renderDeleteCell(change) {
         >
             🗑
         </button>
+    ` : '';
+
+    return `
+        <div class="cml-action-buttons">
+            <button
+                type="button"
+                class="details-toggle-button"
+                data-change-id="${change.id}"
+                aria-expanded="false"
+                aria-label="Beschrijving tonen"
+                title="Beschrijving tonen"
+            >
+                i
+            </button>
+            ${deleteButton}
+        </div>
     `;
 }
 
 function attachTableActionListeners() {
     const statusSelects = document.querySelectorAll('.status-select');
     const deleteButtons = document.querySelectorAll('.delete-change-button');
+    const detailsButtons = document.querySelectorAll('.details-toggle-button');
 
     statusSelects.forEach((select) => {
         select.addEventListener('change', handleStatusChange);
@@ -131,6 +144,10 @@ function attachTableActionListeners() {
 
     deleteButtons.forEach((button) => {
         button.addEventListener('click', handleDeleteChange);
+    });
+
+    detailsButtons.forEach((button) => {
+        button.addEventListener('click', handleDetailsToggle);
     });
 }
 
@@ -150,7 +167,10 @@ function renderChanges(changes) {
         return;
     }
 
-    tableBody.innerHTML = changes.map((change) => `
+    tableBody.innerHTML = changes.map((change) => {
+    const reason = change.reason ? escapeHtml(change.reason) : 'Geen beschrijving ingevuld.';
+
+    return `
         <tr>
             <td>${formatDate(change.date)}</td>
             <td>${formatDate(change.reportedDate)}</td>
@@ -160,11 +180,18 @@ function renderChanges(changes) {
             <td>${escapeHtml(change.type)}</td>
             <td>${renderStatusCell(change)}</td>
             <td>${escapeHtml(change.createdBy)}</td>
-            <td class="cml-action-cell">${renderDeleteCell(change)}</td>
+            <td class="cml-action-cell">${renderActionCell(change)}</td>
         </tr>
-    `).join('');
-
-    attachTableActionListeners();
+        <tr class="cml-details-row" data-details-row="${change.id}" hidden>
+            <td colspan="9">
+                <div class="cml-details-content">
+                    <strong>Beschrijving / reden</strong>
+                    <p>${reason}</p>
+                </div>
+            </td>
+        </tr>
+    `;
+}).join('');
 }
 
 function buildQueryString() {
@@ -283,6 +310,27 @@ async function handleDeleteChange(event) {
     }
 }
 
+function handleDetailsToggle(event) {
+    const button = event.target.closest('.details-toggle-button');
+    const changeId = button.dataset.changeId;
+    const detailsRow = document.querySelector(`[data-details-row="${changeId}"]`);
+
+    if (!detailsRow) {
+        return;
+    }
+
+    const isHidden = detailsRow.hidden;
+
+        detailsRow.hidden = !isHidden;
+            button.setAttribute('aria-expanded', String(isHidden));
+            button.classList.toggle('is-active', isHidden);
+            button.title = isHidden ? 'Beschrijving verbergen' : 'Beschrijving tonen';
+            button.setAttribute(
+        'aria-label',
+        isHidden ? 'Beschrijving verbergen' : 'Beschrijving tonen'
+    );
+}
+
 async function loadChanges() {
     if (!permissions.canViewCml) {
         tableBody.innerHTML = `
@@ -307,7 +355,7 @@ async function loadChanges() {
 
         const changes = await response.json();
 
-        renderChanges(changes);
+    renderChanges(changes);
     } catch (error) {
         console.error(error);
 
