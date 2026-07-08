@@ -334,7 +334,7 @@ main.dashboard-page {
 /* Change Management Log */
 .cml-search-bar {
     display: grid;
-    grid-template-columns: repeat(5, minmax(150px, 1fr)) auto;
+    grid-template-columns: repeat(5, minmax(140px, 1fr)) auto;
     gap: 16px;
     align-items: end;
     margin-top: 20px;
@@ -371,11 +371,12 @@ main.dashboard-page {
 
 .cml-table-wrapper {
     width: 100%;
-    overflow-x: visible;
+    overflow-x: auto;
 }
 
 .cml-table {
     width: 100%;
+    min-width: 1120px;
     border-collapse: collapse;
     table-layout: fixed;
 }
@@ -384,12 +385,12 @@ main.dashboard-page {
 .cml-table td:nth-child(1),
 .cml-table th:nth-child(2),
 .cml-table td:nth-child(2) {
-    width: 10%;
+    width: 11%;
 }
 
 .cml-table th:nth-child(3),
 .cml-table td:nth-child(3) {
-    width: 10%;
+    width: 11%;
 }
 
 .cml-table th:nth-child(4),
@@ -406,7 +407,7 @@ main.dashboard-page {
 
 .cml-table th:nth-child(7),
 .cml-table td:nth-child(7) {
-    width: 15%;
+    width: 14%;
 }
 
 .cml-table th:nth-child(8),
@@ -416,13 +417,15 @@ main.dashboard-page {
 
 .cml-table th:nth-child(9),
 .cml-table td:nth-child(9) {
-    width: 5%;
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
     text-align: center;
 }
 
 .cml-table th,
 .cml-table td {
-    padding: 12px 8px;
+    padding: 12px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     text-align: left;
     vertical-align: middle;
@@ -441,6 +444,8 @@ main.dashboard-page {
 }
 
 .cml-action-cell {
+    white-space: nowrap;
+    overflow-wrap: normal;
     text-align: center;
 }
 
@@ -480,104 +485,6 @@ main:has(.cml-results-card) {
 
 .cml-action-buttons {
     display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: center;
-}
-
-.details-toggle-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    border-radius: 50%;
-    background-color: #ffffff;
-    color: #111111;
-    font-weight: 900;
-    font-family: Arial, sans-serif;
-    font-style: italic;
-    cursor: pointer;
-    line-height: 1;
-    white-space: nowrap;
-    overflow-wrap: normal;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
-}
-
-.cml-action-buttons {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-}
-
-.cml-action-cell {
-    white-space: nowrap;
-    overflow-wrap: normal;
-}
-
-.details-toggle-button:hover {
-    transform: translateY(-1px);
-    opacity: 0.85;
-}
-
-.details-toggle-button.is-active {
-    background-color: #d7ff3f;
-    border-color: #d7ff3f;
-    color: #111111;
-}
-
-.details-toggle-button:hover {
-    background: #f3f4f6;
-}
-
-.cml-details-row td {
-    background: #f9fafb;
-    border-top: none;
-}
-
-.cml-details-content {
-    padding: 0.9rem 1rem;
-    text-align: left;
-}
-
-.cml-details-content strong {
-    display: block;
-    margin-bottom: 0.35rem;
-}
-
-.cml-details-content p {
-    margin: 0;
-    line-height: 1.5;
-}
-
-.cml-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-}
-
-.cml-table {
-    min-width: 1150px;
-}
-
-.cml-table th:nth-child(9),
-.cml-table td:nth-child(9) {
-    width: 96px;
-    min-width: 96px;
-    max-width: 96px;
-    text-align: center;
-}
-
-.cml-action-cell {
-    white-space: nowrap;
-    overflow-wrap: normal;
-    text-align: center;
-}
-
-.cml-action-buttons {
-    display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -607,6 +514,7 @@ main:has(.cml-results-card) {
 .details-toggle-button:hover {
     transform: translateY(-1px);
     opacity: 0.85;
+    background-color: #f3f4f6;
 }
 
 .details-toggle-button.is-active {
@@ -785,6 +693,111 @@ footer {
 
     .cml-search-bar .admin-button {
         width: 100%;
+    }
+
+    .cml-results-card {
+        overflow: hidden;
+    }
+
+    .cml-table-wrapper {
+        overflow-x: visible;
+    }
+
+    .cml-table,
+    .cml-table thead,
+    .cml-table tbody,
+    .cml-table tr,
+    .cml-table th,
+    .cml-table td {
+        display: block;
+    }
+
+    .cml-table {
+        min-width: 0;
+    }
+
+    .cml-table thead {
+        display: none;
+    }
+
+    .cml-table tbody {
+        display: grid;
+        gap: 14px;
+    }
+
+    .cml-table tr {
+        width: 100%;
+    }
+
+    .cml-table .cml-data-row {
+        display: grid;
+        gap: 10px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .cml-table .cml-data-row td {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 0;
+        border-bottom: none;
+    }
+
+    .cml-table .cml-data-row td::before {
+        content: attr(data-label);
+        color: #9c9c9c;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .cml-table .cml-data-row td.cml-action-cell {
+        margin-top: 2px;
+        align-items: stretch;
+    }
+
+    .cml-table .cml-data-row td.cml-action-cell::before {
+        text-align: left;
+    }
+
+    .cml-action-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .cml-table .status-pill,
+    .cml-table .status-select,
+    .cml-table .cml-location-pill {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .cml-details-row td {
+        margin-top: -4px;
+        padding: 0;
+        border-bottom: none;
+        background: transparent;
+    }
+
+    .cml-details-content {
+        padding: 14px 16px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: none;
+        border-radius: 0 0 14px 14px;
+        background-color: #121212;
+    }
+
+    .cml-details-row[hidden] {
+        display: none;
+    }
+
+    .cml-table .empty-state {
+        padding: 16px 0;
     }
 }
 

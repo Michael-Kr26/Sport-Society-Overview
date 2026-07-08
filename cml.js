@@ -146,7 +146,7 @@ function renderActionCell(change) {
             aria-label="Wijziging verwijderen"
             title="Wijziging verwijderen"
         >
-            🗑
+            &#128465;
         </button>
     ` : '';
 
@@ -205,16 +205,16 @@ function renderChanges(changes) {
         const reason = change.reason ? escapeHtml(change.reason) : 'Geen beschrijving ingevuld.';
 
         return `
-            <tr>
-                <td>${formatDate(change.date)}</td>
-                <td>${formatDate(change.reportedDate)}</td>
-                <td>${renderLocationCell(change.location)}</td>
-                <td>${escapeHtml(change.employee)}</td>
-                <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
-                <td>${escapeHtml(change.type)}</td>
-                <td>${renderStatusCell(change)}</td>
-                <td>${escapeHtml(change.createdBy)}</td>
-                <td class="cml-action-cell">${renderActionCell(change)}</td>
+            <tr class="cml-data-row">
+                <td data-label="Datum wijziging">${formatDate(change.date)}</td>
+                <td data-label="Doorgegeven">${formatDate(change.reportedDate)}</td>
+                <td data-label="Locatie">${renderLocationCell(change.location)}</td>
+                <td data-label="Medewerker 1">${escapeHtml(change.employee)}</td>
+                <td data-label="Medewerker 2">${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
+                <td data-label="Type">${escapeHtml(change.type)}</td>
+                <td data-label="Status">${renderStatusCell(change)}</td>
+                <td data-label="Ingevoerd door">${escapeHtml(change.createdBy)}</td>
+                <td class="cml-action-cell" data-label="Acties">${renderActionCell(change)}</td>
             </tr>
             <tr class="cml-details-row" data-details-row="${change.id}" hidden>
                 <td colspan="9">
@@ -228,7 +228,6 @@ function renderChanges(changes) {
     }).join('');
 
     attachTableActionListeners();
-    
 }
 
 function buildQueryString() {
@@ -380,6 +379,7 @@ async function loadChanges() {
 
         return;
     }
+
     try {
         const queryString = buildQueryString();
         const url = queryString ? `/api/changes?${queryString}` : '/api/changes';
@@ -392,7 +392,7 @@ async function loadChanges() {
 
         const changes = await response.json();
 
-    renderChanges(changes);
+        renderChanges(changes);
     } catch (error) {
         console.error(error);
 
