@@ -43,19 +43,39 @@ const db = new sqlite3.Database(dbPath, (error) => {
 });
 
 db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS changes (
+        db.run(`
+        CREATE TABLE IF NOT EXISTS roster_imports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            change_date TEXT NOT NULL,
-            reported_date TEXT NOT NULL,
-            location TEXT NOT NULL,
-            employee_1 TEXT NOT NULL,
-            employee_2 TEXT,
-            change_type TEXT NOT NULL,
-            reason TEXT NOT NULL,
+            source_type TEXT NOT NULL,
+            source_file TEXT,
+            source_url TEXT,
+            imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             status TEXT NOT NULL,
-            created_by TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            items_found INTEGER NOT NULL DEFAULT 0,
+            changes_detected INTEGER NOT NULL DEFAULT 0,
+            error_message TEXT
+        )
+    `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS roster_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            import_id INTEGER,
+            roster_date TEXT NOT NULL,
+            day_name TEXT,
+            employee_name TEXT NOT NULL,
+            source_slot_employee TEXT,
+            item_type TEXT NOT NULL,
+            location TEXT,
+            start_time TEXT,
+            end_time TEXT,
+            status TEXT NOT NULL,
+            note TEXT,
+            source_sheet TEXT,
+            source_cell TEXT,
+            source_hash TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (import_id) REFERENCES roster_imports(id)
         )
     `);
 });
@@ -122,23 +142,35 @@ app.post('/api/changes', (req, res) => {
     });
 });
 
-app.get('/api/changes', (req, res) => {
-    const { name, month, location, type, status } = req.query;
+app.get('/api/roster', (req, res) => {
+    const {
+        name,
+        location,
+        type,
+        status,
+        from,
+        to
+    } = req.query;
 
     let query = `
         SELECT
             id,
-            change_date AS date,
-            reported_date AS reportedDate,
+            import_id AS importId,
+            roster_date AS rosterDate,
+            day_name AS dayName,
+            employee_name AS employeeName,
+            source_slot_employee AS sourceSlotEmployee,
+            item_type AS itemType,
             location,
-            employee_1 AS employee,
-            employee_2 AS employee2,
-            change_type AS type,
-            reason,
+            start_time AS startTime,
+            end_time AS endTime,
             status,
-            created_by AS createdBy,
+            note,
+            source_sheet AS sourceSheet,
+            source_cell AS sourceCell,
+            source_hash AS sourceHash,
             created_at AS createdAt
-        FROM changes
+        FROM roster_items
         WHERE 1 = 1
     `;
 
@@ -147,20 +179,12 @@ app.get('/api/changes', (req, res) => {
     if (name) {
         query += `
             AND (
-                LOWER(employee_1) LIKE LOWER(?)
-                OR LOWER(employee_2) LIKE LOWER(?)
+                LOWER(employee_name) LIKE LOWER(?)
+                OR employee_name = 'ALL'
             )
         `;
 
-        values.push(`%${name}%`, `%${name}%`);
-    }
-
-    if (month) {
-        query += `
-            AND substr(change_date, 6, 2) = ?
-        `;
-
-        values.push(month);
+        values.push(`%${name}%`);
     }
 
     if (location) {
@@ -173,7 +197,7 @@ app.get('/api/changes', (req, res) => {
 
     if (type) {
         query += `
-            AND change_type = ?
+            AND item_type = ?
         `;
 
         values.push(type);
@@ -187,29 +211,45 @@ app.get('/api/changes', (req, res) => {
         values.push(status);
     }
 
+    if (from) {
+        query += `
+            AND date(roster_date) >= date(?)
+        `;
+
+        values.push(from);
+    }
+
+    if (to) {
+        query += `
+            AND date(roster_date) <= date(?)
+        `;
+
+        values.push(to);
+    }
+
     query += `
         ORDER BY
             CASE
-                WHEN date(change_date) >= date('now') THEN 0
+                WHEN date(roster_date) >= date('now') THEN 0
                 ELSE 1
             END,
             CASE
-                WHEN date(change_date) >= date('now') THEN date(change_date)
+                WHEN date(roster_date) >= date('now') THEN date(roster_date)
             END ASC,
             CASE
-                WHEN date(change_date) < date('now') THEN date(change_date)
+                WHEN date(roster_date) < date('now') THEN date(roster_date)
             END DESC,
-            created_at DESC,
-            id DESC
-        LIMIT 200
+            start_time ASC,
+            employee_name ASC
+        LIMIT 1000
     `;
 
     db.all(query, values, (error, rows) => {
         if (error) {
-            console.error('Roosterwijzigingen konden niet worden opgehaald:', error.message);
+            console.error('Rooster kon niet worden opgehaald:', error.message);
 
             return res.status(500).json({
-                message: 'Roosterwijzigingen konden niet worden opgehaald.'
+                message: 'Rooster kon niet worden opgehaald.'
             });
         }
 
