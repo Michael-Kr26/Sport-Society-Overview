@@ -43,7 +43,23 @@ const db = new sqlite3.Database(dbPath, (error) => {
 });
 
 db.serialize(() => {
-        db.run(`
+    db.run(`
+        CREATE TABLE IF NOT EXISTS changes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            change_date TEXT NOT NULL,
+            reported_date TEXT NOT NULL,
+            location TEXT NOT NULL,
+            employee_1 TEXT NOT NULL,
+            employee_2 TEXT,
+            change_type TEXT NOT NULL,
+            reason TEXT,
+            status TEXT NOT NULL,
+            created_by TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    db.run(`
         CREATE TABLE IF NOT EXISTS roster_imports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             source_type TEXT NOT NULL,

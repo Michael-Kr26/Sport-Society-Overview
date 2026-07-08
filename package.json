@@ -4,9 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-  "test": "echo \"Error: no test specified\" && exit 1",
-  "start": "node server.js",
-  "import:roster": "node import-roster.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "import:roster": "node import-roster.js"
   },
   "repository": {
     "type": "git",
@@ -22,8 +22,11 @@
   "homepage": "https://github.com/Michael-Kr26/Sport-Society-Overview#readme",
   "dependencies": {
     "cors": "^2.8.6",
-    "exceljs": "^4.4.0",
+    "exceljs": "^3.4.0",
     "express": "^5.2.1",
     "sqlite3": "^6.0.1"
+  },
+  "allowScripts": {
+    "sqlite3@6.0.1": true
   }
 }
