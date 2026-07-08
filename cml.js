@@ -1,4 +1,21 @@
-const currentUserRole = 'admin';
+const currentUserRole = localStorage.getItem('demoRole') || 'employee';
+
+const rolePermissions = {
+    employee: {
+        canViewCml: false,
+        canUpdateChangeStatus: false
+    },
+    manager: {
+        canViewCml: true,
+        canUpdateChangeStatus: false
+    },
+    admin: {
+        canViewCml: true,
+        canUpdateChangeStatus: true
+    }
+};
+
+const permissions = rolePermissions[currentUserRole] || rolePermissions.employee;
 
 const allowedStatuses = ['Open', 'In behandeling', 'Afgerond'];
 
@@ -6,7 +23,7 @@ const searchForm = document.getElementById('cml-search-form');
 const tableBody = document.getElementById('changes-table-body');
 
 function userCanUpdateStatus() {
-    return currentUserRole === 'admin';
+    return permissions.canUpdateChangeStatus;
 }
 
 function formatDate(dateString) {
@@ -194,6 +211,17 @@ async function handleStatusChange(event) {
 }
 
 async function loadChanges() {
+        if (!permissions.canViewCml) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="empty-state">
+                    Je hebt geen toegang tot het roosterwijzigingenoverzicht.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
     try {
         const queryString = buildQueryString();
         const url = queryString ? `/api/changes?${queryString}` : '/api/changes';
