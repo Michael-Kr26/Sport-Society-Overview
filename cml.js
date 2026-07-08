@@ -3,15 +3,18 @@ const currentUserRole = localStorage.getItem('demoRole') || 'employee';
 const rolePermissions = {
     employee: {
         canViewCml: false,
-        canUpdateChangeStatus: false
+        canUpdateChangeStatus: false,
+        canDeleteChange: false
     },
     manager: {
         canViewCml: true,
-        canUpdateChangeStatus: false
+        canUpdateChangeStatus: false,
+        canDeleteChange: false
     },
     admin: {
         canViewCml: true,
-        canUpdateChangeStatus: true
+        canUpdateChangeStatus: true,
+        canDeleteChange: true
     }
 };
 
@@ -24,6 +27,10 @@ const tableBody = document.getElementById('changes-table-body');
 
 function userCanUpdateStatus() {
     return permissions.canUpdateChangeStatus;
+}
+
+function userCanDeleteChange() {
+    return permissions.canDeleteChange;
 }
 
 function formatDate(dateString) {
@@ -96,11 +103,34 @@ function renderStatusCell(change) {
     `;
 }
 
-function attachStatusUpdateListeners() {
+function renderDeleteCell(change) {
+    if (!userCanDeleteChange()) {
+        return '<span class="cml-action-placeholder">-</span>';
+    }
+
+    return `
+        <button
+            type="button"
+            class="delete-change-button"
+            data-change-id="${change.id}"
+            aria-label="Wijziging verwijderen"
+            title="Wijziging verwijderen"
+        >
+            🗑
+        </button>
+    `;
+}
+
+function attachTableActionListeners() {
     const statusSelects = document.querySelectorAll('.status-select');
+    const deleteButtons = document.querySelectorAll('.delete-change-button');
 
     statusSelects.forEach((select) => {
         select.addEventListener('change', handleStatusChange);
+    });
+
+    deleteButtons.forEach((button) => {
+        button.addEventListener('click', handleDeleteChange);
     });
 }
 
@@ -112,7 +142,7 @@ function renderChanges(changes) {
     if (!changes || changes.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="empty-state">
+                <td colspan="9" class="empty-state">
                     Geen roosterwijzigingen gevonden.
                 </td>
             </tr>
@@ -130,10 +160,11 @@ function renderChanges(changes) {
             <td>${escapeHtml(change.type)}</td>
             <td>${renderStatusCell(change)}</td>
             <td>${escapeHtml(change.createdBy)}</td>
+            <td class="cml-action-cell">${renderDeleteCell(change)}</td>
         </tr>
     `).join('');
 
-    attachStatusUpdateListeners();
+    attachTableActionListeners();
 }
 
 function buildQueryString() {
@@ -189,6 +220,25 @@ async function updateChangeStatus(changeId, status) {
     return response.json();
 }
 
+async function deleteChange(changeId) {
+    const response = await fetch(`/api/changes/${changeId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-Demo-Role': currentUserRole
+        }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+            message: 'Wijziging kon niet worden verwijderd.'
+        }));
+
+        throw new Error(errorData.message || 'Wijziging kon niet worden verwijderd.');
+    }
+
+    return response.json();
+}
+
 async function handleStatusChange(event) {
     const select = event.target;
     const changeId = select.dataset.changeId;
@@ -210,11 +260,34 @@ async function handleStatusChange(event) {
     }
 }
 
+async function handleDeleteChange(event) {
+    const button = event.target.closest('.delete-change-button');
+    const changeId = button.dataset.changeId;
+
+    const confirmed = confirm('Weet je zeker dat je deze roosterwijziging definitief wilt verwijderen?');
+
+    if (!confirmed) {
+        return;
+    }
+
+    button.disabled = true;
+
+    try {
+        await deleteChange(changeId);
+        await loadChanges();
+    } catch (error) {
+        console.error(error);
+
+        button.disabled = false;
+        alert(error.message);
+    }
+}
+
 async function loadChanges() {
         if (!permissions.canViewCml) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="empty-state">
+                <td colspan="9" class="empty-state">
                     Je hebt geen toegang tot het roosterwijzigingenoverzicht.
                 </td>
             </tr>
@@ -240,7 +313,7 @@ async function loadChanges() {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="empty-state">
+                <td colspan="9" class="empty-state">
                     Er ging iets mis bij het laden van de roosterwijzigingen.
                 </td>
             </tr>

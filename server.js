@@ -346,6 +346,48 @@ app.patch('/api/changes/:id/status', (req, res) => {
     });
 });
 
+app.delete('/api/changes/:id', (req, res) => {
+    if (!userCanUpdateStatus(req)) {
+        return res.status(403).json({
+            message: 'Alleen admins mogen roosterwijzigingen verwijderen.'
+        });
+    }
+
+    const changeId = Number(req.params.id);
+
+    if (!Number.isInteger(changeId) || changeId <= 0) {
+        return res.status(400).json({
+            message: 'Ongeldig wijziging-ID.'
+        });
+    }
+
+    const query = `
+        DELETE FROM changes
+        WHERE id = ?
+    `;
+
+    db.run(query, [changeId], function (error) {
+        if (error) {
+            console.error('Wijziging kon niet worden verwijderd:', error.message);
+
+            return res.status(500).json({
+                message: 'Wijziging kon niet worden verwijderd.'
+            });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({
+                message: 'Wijziging niet gevonden.'
+            });
+        }
+
+        res.json({
+            message: 'Wijziging verwijderd.',
+            id: changeId
+        });
+    });
+});
+
 app.get('/api/roster', (req, res) => {
     const {
         name,
