@@ -53,9 +53,13 @@ const SPECIAL_STATUS_BY_COLOR = {
     FFFFC000: 'Ziek',
     FF00B050: 'Feestdag',
     THEME_5: 'Feestdag',
-    FFFF00D0: 'Tijd voor tijd'
+    FFFF00D0: 'Tijd voor tijd',
+    THEME_4: 'Ouderschapsverlof',
+    FF0000FF: 'Ouderschapsverlof',
+    FF002060: 'Ouderschapsverlof',
+    FF0070C0: 'Ouderschapsverlof',
+    FF1F4E78: 'Ouderschapsverlof'
 };
-
 function cleanText(value) {
     if (value === null || value === undefined) {
         return '';
