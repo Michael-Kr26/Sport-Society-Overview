@@ -21,7 +21,9 @@
   },
   "homepage": "https://github.com/Michael-Kr26/Sport-Society-Overview#readme",
   "dependencies": {
+    "@azure/identity": "^4.13.1",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "exceljs": "^3.4.0",
     "express": "^5.2.1",
     "sqlite3": "^6.0.1"
