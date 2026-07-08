@@ -1,3 +1,19 @@
+const demoRole = localStorage.getItem('demoRole') || 'employee';
+
+const rolePermissions = {
+    employee: {
+        canViewRosterSummary: false
+    },
+    manager: {
+        canViewRosterSummary: true
+    },
+    admin: {
+        canViewRosterSummary: true
+    }
+};
+
+const permissions = rolePermissions[demoRole] || rolePermissions.employee;
+
 const filterForm = document.getElementById('roster-filter-form');
 const employeeFilter = document.getElementById('employee-filter');
 const typeFilter = document.getElementById('type-filter');
@@ -191,6 +207,10 @@ function getNextShift(items) {
 }
 
 function renderSummary(items) {
+        if (!permissions.canViewRosterSummary) {
+        summaryContainer.innerHTML = '';
+        return;
+    }
     const total = items.length;
     const shifts = items.filter((item) => item.itemType === 'shift').length;
     const absences = items.filter((item) => item.itemType === 'absence').length;
