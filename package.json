@@ -9,7 +9,7 @@
   "import:roster": "node import-roster.js",
   "download:roster": "node download-roster.js",
   "sync:roster": "node download-roster.js && node import-roster.js data/imports/live-rooster.xlsx"
-},
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Michael-Kr26/Sport-Society-Overview.git"
