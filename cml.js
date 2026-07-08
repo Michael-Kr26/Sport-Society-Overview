@@ -49,6 +49,15 @@ function formatDate(dateString) {
     return `${day}-${month}-${year}`;
 }
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
 function getStatusClass(status) {
     if (status === 'Open') {
         return 'status-open';
@@ -63,15 +72,6 @@ function getStatusClass(status) {
     }
 
     return '';
-}
-
-function escapeHtml(value) {
-    return String(value || '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
 }
 
 function getLocationClass(location) {
@@ -205,16 +205,16 @@ function renderChanges(changes) {
         const reason = change.reason ? escapeHtml(change.reason) : 'Geen beschrijving ingevuld.';
 
         return `
-            <tr class="cml-data-row">
-                <td data-label="Datum wijziging">${formatDate(change.date)}</td>
-                <td data-label="Doorgegeven">${formatDate(change.reportedDate)}</td>
-                <td data-label="Locatie">${renderLocationCell(change.location)}</td>
-                <td data-label="Medewerker 1">${escapeHtml(change.employee)}</td>
-                <td data-label="Medewerker 2">${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
-                <td data-label="Type">${escapeHtml(change.type)}</td>
-                <td data-label="Status">${renderStatusCell(change)}</td>
-                <td data-label="Ingevoerd door">${escapeHtml(change.createdBy)}</td>
-                <td class="cml-action-cell" data-label="Acties">${renderActionCell(change)}</td>
+            <tr>
+                <td>${formatDate(change.date)}</td>
+                <td>${formatDate(change.reportedDate)}</td>
+                <td>${renderLocationCell(change.location)}</td>
+                <td>${escapeHtml(change.employee)}</td>
+                <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
+                <td>${escapeHtml(change.type)}</td>
+                <td>${renderStatusCell(change)}</td>
+                <td>${escapeHtml(change.createdBy)}</td>
+                <td class="cml-action-cell">${renderActionCell(change)}</td>
             </tr>
             <tr class="cml-details-row" data-details-row="${change.id}" hidden>
                 <td colspan="9">
@@ -325,6 +325,11 @@ async function handleStatusChange(event) {
 
 async function handleDeleteChange(event) {
     const button = event.target.closest('.delete-change-button');
+
+    if (!button) {
+        return;
+    }
+
     const changeId = button.dataset.changeId;
 
     const confirmed = confirm('Weet je zeker dat je deze roosterwijziging definitief wilt verwijderen?');
@@ -348,6 +353,11 @@ async function handleDeleteChange(event) {
 
 function handleDetailsToggle(event) {
     const button = event.target.closest('.details-toggle-button');
+
+    if (!button) {
+        return;
+    }
+
     const changeId = button.dataset.changeId;
     const detailsRow = document.querySelector(`[data-details-row="${changeId}"]`);
 

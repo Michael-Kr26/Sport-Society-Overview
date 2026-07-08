@@ -451,6 +451,11 @@ main:has(.cml-results-card) {
     flex-wrap: nowrap;
 }
 
+.cml-table th:nth-child(2),
+.cml-table td:nth-child(2) {
+    display: none;
+}
+
 .details-toggle-button,
 .delete-change-button {
     display: inline-flex;
