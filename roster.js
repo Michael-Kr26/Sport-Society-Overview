@@ -303,32 +303,17 @@ function renderRosterItems(items) {
     }).join('');
 }
 
-async function loadRosterPreview() {
+async function loadRoster() {
     try {
-        const response = await fetch('/api/roster-preview');
-
-        if (response.status === 404) {
-            resultsContainer.innerHTML = `
-                <p class="empty-state">
-                    Nog geen rooster-preview gevonden. Draai eerst:
-                    <br>
-                    <strong>npm run import:roster</strong>
-                </p>
-            `;
-
-            resultCount.textContent = 'Geen preview beschikbaar';
-            renderSummary([]);
-
-            return;
-        }
+        const response = await fetch('/api/roster');
 
         if (!response.ok) {
-            throw new Error('Rooster-preview kon niet worden opgehaald.');
+            throw new Error('Rooster kon niet worden opgehaald.');
         }
 
         const data = await response.json();
 
-        rosterItems = Array.isArray(data.items) ? data.items : [];
+        rosterItems = Array.isArray(data) ? data : [];
 
         renderRosterItems(rosterItems);
     } catch (error) {
@@ -337,6 +322,9 @@ async function loadRosterPreview() {
         resultsContainer.innerHTML = `
             <p class="empty-state">
                 Er ging iets mis bij het laden van het rooster.
+                Draai eventueel eerst:
+                <br>
+                <strong>npm run import:roster</strong>
             </p>
         `;
 
@@ -359,4 +347,4 @@ resetButton.addEventListener('click', () => {
     renderRosterItems(rosterItems);
 });
 
-document.addEventListener('DOMContentLoaded', loadRosterPreview);
+document.addEventListener('DOMContentLoaded', loadRoster);

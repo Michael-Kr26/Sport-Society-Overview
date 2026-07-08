@@ -257,7 +257,7 @@ app.get('/api/roster', (req, res) => {
             END DESC,
             start_time ASC,
             employee_name ASC
-        LIMIT 1000
+        LIMIT 10000
     `;
 
     db.all(query, values, (error, rows) => {
