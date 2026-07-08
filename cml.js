@@ -284,7 +284,7 @@ async function handleDeleteChange(event) {
 }
 
 async function loadChanges() {
-        if (!permissions.canViewCml) {
+    if (!permissions.canViewCml) {
         tableBody.innerHTML = `
             <tr>
                 <td colspan="9" class="empty-state">
