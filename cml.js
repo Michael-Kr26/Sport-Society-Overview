@@ -74,6 +74,40 @@ function escapeHtml(value) {
         .replaceAll("'", '&#039;');
 }
 
+function getLocationClass(location) {
+    if (location === 'Achterveld') {
+        return 'location-achterveld';
+    }
+
+    if (location === 'Voorthuizen') {
+        return 'location-voorthuizen';
+    }
+
+    if (location === 'Wekerom') {
+        return 'location-wekerom';
+    }
+
+    if (location === 'Harskamp') {
+        return 'location-harskamp';
+    }
+
+    if (location === 'Barneveld') {
+        return 'location-barneveld';
+    }
+
+    return 'location-unknown';
+}
+
+function renderLocationCell(location) {
+    const label = location || '-';
+
+    return `
+        <span class="cml-location-pill ${getLocationClass(location)}">
+            ${escapeHtml(label)}
+        </span>
+    `;
+}
+
 function renderStatusCell(change) {
     const statusClass = getStatusClass(change.status);
 
@@ -174,7 +208,7 @@ function renderChanges(changes) {
             <tr>
                 <td>${formatDate(change.date)}</td>
                 <td>${formatDate(change.reportedDate)}</td>
-                <td>${escapeHtml(change.location)}</td>
+                <td>${renderLocationCell(change.location)}</td>
                 <td>${escapeHtml(change.employee)}</td>
                 <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
                 <td>${escapeHtml(change.type)}</td>
@@ -194,6 +228,7 @@ function renderChanges(changes) {
     }).join('');
 
     attachTableActionListeners();
+    
 }
 
 function buildQueryString() {
