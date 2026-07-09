@@ -73,8 +73,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            margin-top: 18px;
+            width: 100%;
+            margin: 18px 0 0;
+            padding: 0;
+            background: transparent;
         }
 
         .cml-pagination[hidden] {
@@ -82,6 +86,7 @@
         }
 
         .cml-pagination-summary {
+            margin: 0;
             color: #b8b8b8;
             font-size: 0.9rem;
             text-align: center;
@@ -93,6 +98,7 @@
             justify-content: center;
             flex-wrap: wrap;
             gap: 0;
+            max-width: 100%;
             border: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 10px;
             overflow: hidden;
@@ -101,14 +107,18 @@
 
         .cml-pagination-button,
         .cml-pagination-ellipsis {
-            min-width: 44px;
-            height: 40px;
-            padding: 0 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 42px;
+            height: 38px;
+            padding: 0 13px;
             border: none;
             border-right: 1px solid rgba(255, 255, 255, 0.14);
             background-color: #121212;
             color: #e6e6e6;
             font: inherit;
+            font-size: 0.9rem;
             font-weight: 800;
         }
 
@@ -139,9 +149,6 @@
         }
 
         .cml-pagination-ellipsis {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
             color: #9c9c9c;
         }
     </style>
@@ -277,7 +284,7 @@
                 </table>
             </div>
 
-            <nav id="cml-pagination" class="cml-pagination" aria-label="Paginering roosterwijzigingen" hidden></nav>
+            <div id="cml-pagination" class="cml-pagination" aria-label="Paginering roosterwijzigingen" hidden></div>
         </section>
     </main>
 
