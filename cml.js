@@ -21,7 +21,6 @@ const rolePermissions = {
 const permissions = rolePermissions[currentUserRole] || rolePermissions.employee;
 
 const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
-const PAGE_SIZE = 12;
 
 const searchForm = document.getElementById('cml-search-form');
 const tableBody = document.getElementById('changes-table-body');
@@ -51,6 +50,42 @@ function formatDate(dateString) {
     const [year, month, day] = parts;
 
     return `${day}-${month}-${year}`;
+}
+
+function parseIsoDate(dateString) {
+    if (!dateString) {
+        return null;
+    }
+
+    const parts = dateString.split('-').map(Number);
+
+    if (parts.length !== 3 || parts.some(Number.isNaN)) {
+        return null;
+    }
+
+    const [year, month, day] = parts;
+
+    return new Date(year, month - 1, day);
+}
+
+function getIsoWeekNumber(dateString) {
+    const date = parseIsoDate(dateString);
+
+    if (!date) {
+        return null;
+    }
+
+    const normalizedDate = new Date(date.getTime());
+    const dayNumber = (normalizedDate.getDay() + 6) % 7;
+
+    normalizedDate.setDate(normalizedDate.getDate() - dayNumber + 3);
+
+    const firstThursday = new Date(normalizedDate.getFullYear(), 0, 4);
+    const firstThursdayDayNumber = (firstThursday.getDay() + 6) % 7;
+
+    firstThursday.setDate(firstThursday.getDate() - firstThursdayDayNumber + 3);
+
+    return 1 + Math.round((normalizedDate - firstThursday) / (7 * 24 * 60 * 60 * 1000));
 }
 
 function escapeHtml(value) {
@@ -276,13 +311,15 @@ function renderPagination(pagination) {
         return;
     }
 
-    if (!pagination || pagination.totalItems === 0) {
+    if (!pagination || pagination.totalItems === 0 || !pagination.weekStart) {
         paginationContainer.hidden = true;
         paginationContainer.innerHTML = '';
         return;
     }
 
-    const { page, totalPages, totalItems, from, to } = pagination;
+    const { page, totalPages, totalItems, weekStart, weekEnd } = pagination;
+    const weekNumber = getIsoWeekNumber(weekStart);
+    const weekLabel = weekNumber ? `Week ${weekNumber}` : 'Week';
     const paginationItems = getVisiblePaginationItems(page, totalPages);
 
     const pageButtons = paginationItems.map((item) => {
@@ -298,7 +335,7 @@ function renderPagination(pagination) {
     paginationContainer.hidden = false;
     paginationContainer.innerHTML = `
         <p class="cml-pagination-summary">
-            ${from} tot ${to} van ${totalItems} resultaten
+            ${weekLabel} — ${formatDate(weekStart)} t/m ${formatDate(weekEnd)} • ${totalItems} wijziging${totalItems === 1 ? '' : 'en'}
         </p>
         <div class="cml-pagination-controls">
             ${renderPaginationButton('Vorige', page - 1, {
@@ -346,7 +383,6 @@ function buildQueryString() {
     }
 
     params.append('page', String(currentPage));
-    params.append('limit', String(PAGE_SIZE));
 
     return params.toString();
 }
