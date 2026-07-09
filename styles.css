@@ -193,6 +193,13 @@ main {
     border-color: rgba(45, 180, 90, 0.36);
 }
 
+.status-pill.status-archived,
+.status-select.status-archived {
+    color: #d4d4d4;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
 .status-select option {
     color: #111111;
     font-weight: 700;
@@ -210,11 +217,8 @@ main {
     background-color: rgba(45, 180, 90, 0.3);
 }
 
-.status-pill.status-archived,
-.status-select.status-archived {
-    color: #d4d4d4;
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.18);
+.status-select option[value="Archived"] {
+    background-color: rgba(180, 180, 180, 0.35);
 }
 
 /* Home/dashboard */
@@ -377,47 +381,45 @@ main:has(.cml-results-card) {
 
 .cml-table {
     width: 100%;
-    min-width: 1120px;
+    min-width: 1040px;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
 .cml-table th:nth-child(1),
-.cml-table td:nth-child(1),
+.cml-table td:nth-child(1) {
+    width: 11%;
+}
+
 .cml-table th:nth-child(2),
 .cml-table td:nth-child(2) {
-    width: 11%;
+    width: 12%;
 }
 
 .cml-table th:nth-child(3),
-.cml-table td:nth-child(3) {
-    width: 11%;
+.cml-table td:nth-child(3),
+.cml-table th:nth-child(4),
+.cml-table td:nth-child(4) {
+    width: 13%;
 }
 
-.cml-table th:nth-child(4),
-.cml-table td:nth-child(4),
 .cml-table th:nth-child(5),
 .cml-table td:nth-child(5) {
-    width: 12%;
+    width: 16%;
 }
 
 .cml-table th:nth-child(6),
 .cml-table td:nth-child(6) {
-    width: 14%;
+    width: 15%;
 }
 
 .cml-table th:nth-child(7),
 .cml-table td:nth-child(7) {
-    width: 14%;
+    width: 12%;
 }
 
 .cml-table th:nth-child(8),
 .cml-table td:nth-child(8) {
-    width: 12%;
-}
-
-.cml-table th:nth-child(9),
-.cml-table td:nth-child(9) {
     width: 96px;
     min-width: 96px;
     max-width: 96px;
@@ -456,11 +458,6 @@ main:has(.cml-results-card) {
     justify-content: center;
     gap: 8px;
     flex-wrap: nowrap;
-}
-
-.cml-table th:nth-child(2),
-.cml-table td:nth-child(2) {
-    display: none;
 }
 
 .details-toggle-button,
