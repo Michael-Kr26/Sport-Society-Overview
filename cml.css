@@ -1,3 +1,13 @@
+/* CML page layout */
+main:has(.cml-results-card) {
+    max-width: 1300px;
+}
+
+.cml-results-card {
+    margin-top: 20px;
+}
+
+/* Collapsible filters */
 .cml-filter-panel {
     margin-top: 18px;
 }
@@ -100,7 +110,9 @@
     text-transform: none;
 }
 
+/* Filter form */
 .cml-search-bar {
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
     align-items: end;
     gap: 14px;
@@ -108,15 +120,33 @@
 }
 
 .cml-search-bar label {
+    display: grid;
     min-width: 0;
+    gap: 8px;
+    color: #f5f5f5;
+    font-weight: 700;
 }
 
 .cml-search-bar input,
 .cml-search-bar select {
+    width: 100%;
     min-width: 0;
     height: 46px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    background-color: #121212;
+    color: #e6e6e6;
     overflow: hidden;
     text-overflow: ellipsis;
+    font: inherit;
+}
+
+.cml-search-bar input:focus,
+.cml-search-bar select:focus {
+    outline: none;
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
 .cml-search-bar .admin-button {
@@ -125,16 +155,81 @@
     margin-top: 0;
 }
 
+/* Table */
 .cml-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     background-color: #121212;
 }
 
+.cml-table {
+    width: 100%;
+    min-width: 1040px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.cml-table th:nth-child(1),
+.cml-table td:nth-child(1) {
+    width: 11%;
+}
+
+.cml-table th:nth-child(2),
+.cml-table td:nth-child(2) {
+    width: 12%;
+}
+
+.cml-table th:nth-child(3),
+.cml-table td:nth-child(3),
+.cml-table th:nth-child(4),
+.cml-table td:nth-child(4) {
+    width: 13%;
+}
+
+.cml-table th:nth-child(5),
+.cml-table td:nth-child(5) {
+    width: 16%;
+}
+
+.cml-table th:nth-child(6),
+.cml-table td:nth-child(6) {
+    width: 15%;
+}
+
+.cml-table th:nth-child(7),
+.cml-table td:nth-child(7) {
+    width: 12%;
+}
+
+.cml-table th:nth-child(8),
+.cml-table td:nth-child(8) {
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
+    text-align: center;
+}
+
 .cml-table th,
 .cml-table td {
-    overflow-wrap: normal;
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+    vertical-align: middle;
     line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.cml-table th {
+    color: #ffffff;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.cml-table td {
+    color: #d4d4d4;
 }
 
 .cml-table th:nth-child(1),
@@ -146,11 +241,128 @@
 .cml-table th:nth-child(8),
 .cml-table td:nth-child(8) {
     white-space: nowrap;
+    overflow-wrap: normal;
 }
 
+/* Status select */
+.status-select {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 150px;
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.status-select:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.status-select.status-open {
+    color: #ffd2a1;
+    background-color: rgba(255, 149, 0, 0.14);
+    border-color: rgba(255, 149, 0, 0.36);
+}
+
+.status-select.status-progress {
+    color: #b8d7ff;
+    background-color: rgba(45, 127, 249, 0.14);
+    border-color: rgba(45, 127, 249, 0.36);
+}
+
+.status-select.status-done {
+    color: #b9f6c4;
+    background-color: rgba(45, 180, 90, 0.14);
+    border-color: rgba(45, 180, 90, 0.36);
+}
+
+.status-select.status-archived {
+    color: #d4d4d4;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.status-select option {
+    color: #111111;
+    font-weight: 700;
+}
+
+.status-select option[value="Open"] {
+    background-color: rgba(255, 149, 0, 0.34);
+}
+
+.status-select option[value="In behandeling"] {
+    background-color: rgba(45, 127, 249, 0.3);
+}
+
+.status-select option[value="Afgerond"] {
+    background-color: rgba(45, 180, 90, 0.3);
+}
+
+.status-select option[value="Archived"] {
+    background-color: rgba(180, 180, 180, 0.35);
+}
+
+/* Actions */
+.cml-action-cell {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    text-align: center;
+}
+
+.cml-action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.delete-change-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 80, 80, 0.45);
+    border-radius: 10px;
+    background-color: rgba(255, 80, 80, 0.12);
+    color: #ff8a8a;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.delete-change-button:hover {
+    transform: translateY(-1px);
+    background-color: rgba(255, 80, 80, 0.22);
+}
+
+.delete-change-button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+    transform: none;
+}
+
+.cml-no-action {
+    color: #777777;
+}
+
+/* Details */
 .cml-details-row td {
     background-color: #151515;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
     padding-top: 0;
 }
 
@@ -159,12 +371,73 @@
     padding: 10px 14px;
     background-color: rgba(255, 255, 255, 0.03);
     border-radius: 0 10px 10px 0;
+    text-align: left;
+    color: #e6e6e6;
 }
 
-.cml-no-action {
-    color: #777777;
+.cml-details-content strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #ffffff;
 }
 
+.cml-details-content p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Location pills */
+.cml-location-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 96px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.cml-location-pill.location-barneveld {
+    color: #e6e6e6;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.cml-location-pill.location-achterveld {
+    color: #fff7a8;
+    background-color: rgba(255, 240, 0, 0.14);
+    border-color: rgba(255, 240, 0, 0.45);
+}
+
+.cml-location-pill.location-voorthuizen {
+    color: #ddb8ff;
+    background-color: rgba(112, 48, 160, 0.22);
+    border-color: rgba(180, 120, 230, 0.5);
+}
+
+.cml-location-pill.location-wekerom {
+    color: #aee9ff;
+    background-color: rgba(0, 176, 240, 0.16);
+    border-color: rgba(0, 176, 240, 0.5);
+}
+
+.cml-location-pill.location-harskamp {
+    color: #caffb8;
+    background-color: rgba(146, 208, 80, 0.16);
+    border-color: rgba(146, 208, 80, 0.5);
+}
+
+.cml-location-pill.location-unknown {
+    color: #d4d4d4;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Pagination */
 .cml-pagination {
     display: flex;
     flex-direction: column;
@@ -248,15 +521,16 @@
     color: #9c9c9c;
 }
 
+/* Mobile CML cards */
 @media (max-width: 760px) {
-    main:has(.cml-results-card),
-    main {
+    main:has(.cml-results-card) {
         max-width: calc(100% - 24px);
         padding: 12px;
     }
 
-    .dashboard-card {
-        padding: 16px;
+    .cml-results-card,
+    .cml-filter-panel {
+        width: 100%;
     }
 
     .cml-filter-summary {
