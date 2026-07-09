@@ -122,6 +122,7 @@ function populateWeekFilter() {
 
     const previousValue = weekFilter.value;
     const currentWeekStart = getIsoWeekStart(new Date());
+    const currentWeekStartValue = toIsoDate(currentWeekStart);
     const weekOptions = [
         {
             offset: -1,
@@ -158,7 +159,10 @@ function populateWeekFilter() {
 
     if ([...weekFilter.options].some((option) => option.value === previousValue)) {
         weekFilter.value = previousValue;
+        return;
     }
+
+    weekFilter.value = currentWeekStartValue;
 }
 
 function escapeHtml(value) {
