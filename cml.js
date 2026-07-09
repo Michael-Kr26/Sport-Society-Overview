@@ -70,8 +70,9 @@ function getStatusClass(status) {
     if (status === 'Afgerond') {
         return 'status-done';
     }
+
     if (status === 'Archived') {
-    return 'status-archived';
+        return 'status-archived';
     }
 
     return '';
@@ -196,7 +197,7 @@ function renderChanges(changes) {
     if (!changes || changes.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="9" class="empty-state">
+                <td colspan="8" class="empty-state">
                     Geen roosterwijzigingen gevonden.
                 </td>
             </tr>
@@ -210,7 +211,6 @@ function renderChanges(changes) {
         return `
             <tr>
                 <td>${formatDate(change.date)}</td>
-                <td>${formatDate(change.reportedDate)}</td>
                 <td>${renderLocationCell(change.location)}</td>
                 <td>${escapeHtml(change.employee)}</td>
                 <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
@@ -220,7 +220,7 @@ function renderChanges(changes) {
                 <td class="cml-action-cell">${renderActionCell(change)}</td>
             </tr>
             <tr class="cml-details-row" data-details-row="${change.id}" hidden>
-                <td colspan="9">
+                <td colspan="8">
                     <div class="cml-details-content">
                         <strong>Beschrijving / reden</strong>
                         <p>${reason}</p>
@@ -384,7 +384,7 @@ async function loadChanges() {
     if (!permissions.canViewCml) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="9" class="empty-state">
+                <td colspan="8" class="empty-state">
                     Je hebt geen toegang tot het roosterwijzigingenoverzicht.
                 </td>
             </tr>
@@ -411,7 +411,7 @@ async function loadChanges() {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="9" class="empty-state">
+                <td colspan="8" class="empty-state">
                     Er ging iets mis bij het laden van de roosterwijzigingen.
                 </td>
             </tr>
