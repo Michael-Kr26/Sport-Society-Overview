@@ -6,7 +6,23 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         .cml-search-bar {
-            grid-template-columns: repeat(6, minmax(140px, 1fr)) auto;
+            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+            align-items: end;
+        }
+
+        .cml-search-bar label {
+            min-width: 0;
+        }
+
+        .cml-search-bar input,
+        .cml-search-bar select {
+            min-width: 0;
+        }
+
+        .cml-search-bar .admin-button {
+            width: 100%;
+            min-height: 46px;
+            margin-top: 0;
         }
 
         .cml-pagination {
