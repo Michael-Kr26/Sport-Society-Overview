@@ -7,7 +7,7 @@ const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
-const ARCHIVE_AFTER_DAYS = 21;
+const ARCHIVE_AFTER_DAYS = 7;
 const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
 
 const dataDir = path.join(__dirname, 'data');
