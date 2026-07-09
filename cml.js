@@ -21,9 +21,13 @@ const rolePermissions = {
 const permissions = rolePermissions[currentUserRole] || rolePermissions.employee;
 
 const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
+const PAGE_SIZE = 12;
 
 const searchForm = document.getElementById('cml-search-form');
 const tableBody = document.getElementById('changes-table-body');
+const paginationContainer = document.getElementById('cml-pagination');
+
+let currentPage = 1;
 
 function userCanUpdateStatus() {
     return permissions.canUpdateChangeStatus;
@@ -233,6 +237,85 @@ function renderChanges(changes) {
     attachTableActionListeners();
 }
 
+function getVisiblePaginationItems(page, totalPages) {
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (page <= 3) {
+        return [1, 2, 3, 4, 5, 'ellipsis-end', totalPages];
+    }
+
+    if (page >= totalPages - 2) {
+        return [1, 'ellipsis-start', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+
+    return [1, 'ellipsis-start', page - 1, page, page + 1, 'ellipsis-end', totalPages];
+}
+
+function renderPaginationButton(label, page, options = {}) {
+    const isActive = options.isActive ? ' is-active' : '';
+    const disabled = options.disabled ? ' disabled' : '';
+    const ariaCurrent = options.isActive ? ' aria-current="page"' : '';
+
+    return `
+        <button
+            type="button"
+            class="cml-pagination-button${isActive}"
+            data-page="${page}"
+            ${disabled}
+            ${ariaCurrent}
+        >
+            ${label}
+        </button>
+    `;
+}
+
+function renderPagination(pagination) {
+    if (!paginationContainer) {
+        return;
+    }
+
+    if (!pagination || pagination.totalItems === 0) {
+        paginationContainer.hidden = true;
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    const { page, totalPages, totalItems, from, to } = pagination;
+    const paginationItems = getVisiblePaginationItems(page, totalPages);
+
+    const pageButtons = paginationItems.map((item) => {
+        if (typeof item === 'string') {
+            return '<span class="cml-pagination-ellipsis">...</span>';
+        }
+
+        return renderPaginationButton(String(item), item, {
+            isActive: item === page
+        });
+    }).join('');
+
+    paginationContainer.hidden = false;
+    paginationContainer.innerHTML = `
+        <p class="cml-pagination-summary">
+            ${from} tot ${to} van ${totalItems} resultaten
+        </p>
+        <div class="cml-pagination-controls">
+            ${renderPaginationButton('Vorige', page - 1, {
+                disabled: page <= 1
+            })}
+            ${pageButtons}
+            ${renderPaginationButton('Volgende', page + 1, {
+                disabled: page >= totalPages
+            })}
+        </div>
+    `;
+
+    paginationContainer.querySelectorAll('.cml-pagination-button').forEach((button) => {
+        button.addEventListener('click', handlePaginationClick);
+    });
+}
+
 function buildQueryString() {
     const params = new URLSearchParams();
 
@@ -261,6 +344,9 @@ function buildQueryString() {
     if (status) {
         params.append('status', status);
     }
+
+    params.append('page', String(currentPage));
+    params.append('limit', String(PAGE_SIZE));
 
     return params.toString();
 }
@@ -380,6 +466,28 @@ function handleDetailsToggle(event) {
     );
 }
 
+function handlePaginationClick(event) {
+    const button = event.target.closest('.cml-pagination-button');
+
+    if (!button || button.disabled) {
+        return;
+    }
+
+    const nextPage = Number(button.dataset.page);
+
+    if (!Number.isInteger(nextPage) || nextPage < 1 || nextPage === currentPage) {
+        return;
+    }
+
+    currentPage = nextPage;
+    loadChanges();
+
+    document.querySelector('.cml-results-card')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    });
+}
+
 async function loadChanges() {
     if (!permissions.canViewCml) {
         tableBody.innerHTML = `
@@ -389,23 +497,28 @@ async function loadChanges() {
                 </td>
             </tr>
         `;
-
+        renderPagination(null);
         return;
     }
 
     try {
         const queryString = buildQueryString();
-        const url = queryString ? `/api/changes?${queryString}` : '/api/changes';
-
-        const response = await fetch(url);
+        const response = await fetch(`/api/changes?${queryString}`);
 
         if (!response.ok) {
             throw new Error('Roosterwijzigingen konden niet worden opgehaald.');
         }
 
-        const changes = await response.json();
+        const responseData = await response.json();
+        const changes = Array.isArray(responseData) ? responseData : responseData.items;
+        const pagination = Array.isArray(responseData) ? null : responseData.pagination;
+
+        if (pagination && pagination.page !== currentPage) {
+            currentPage = pagination.page;
+        }
 
         renderChanges(changes);
+        renderPagination(pagination);
     } catch (error) {
         console.error(error);
 
@@ -416,11 +529,13 @@ async function loadChanges() {
                 </td>
             </tr>
         `;
+        renderPagination(null);
     }
 }
 
 searchForm.addEventListener('submit', (event) => {
     event.preventDefault();
+    currentPage = 1;
     loadChanges();
 });
 
