@@ -140,85 +140,44 @@ main {
     font-style: italic;
 }
 
-/* Status components */
-.status-pill,
-.status-select {
+/* Status pill components */
+.status-pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 132px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 999px;
     font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.02em;
     line-height: 1;
     white-space: nowrap;
-    border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.status-pill {
-    min-width: 132px;
-    padding: 5px 10px;
-}
-
-.status-select {
-    min-width: 150px;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-family: inherit;
-}
-
-.status-select:disabled {
-    cursor: wait;
-    opacity: 0.7;
-}
-
-.status-pill.status-open,
-.status-select.status-open {
+.status-pill.status-open {
     color: #ffd2a1;
     background-color: rgba(255, 149, 0, 0.14);
     border-color: rgba(255, 149, 0, 0.36);
 }
 
-.status-pill.status-progress,
-.status-select.status-progress {
+.status-pill.status-progress {
     color: #b8d7ff;
     background-color: rgba(45, 127, 249, 0.14);
     border-color: rgba(45, 127, 249, 0.36);
 }
 
-.status-pill.status-done,
-.status-select.status-done {
+.status-pill.status-done {
     color: #b9f6c4;
     background-color: rgba(45, 180, 90, 0.14);
     border-color: rgba(45, 180, 90, 0.36);
 }
 
-.status-pill.status-archived,
-.status-select.status-archived {
+.status-pill.status-archived {
     color: #d4d4d4;
     background-color: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.18);
-}
-
-.status-select option {
-    color: #111111;
-    font-weight: 700;
-}
-
-.status-select option[value="Open"] {
-    background-color: rgba(255, 149, 0, 0.34);
-}
-
-.status-select option[value="In behandeling"] {
-    background-color: rgba(45, 127, 249, 0.3);
-}
-
-.status-select option[value="Afgerond"] {
-    background-color: rgba(45, 180, 90, 0.3);
-}
-
-.status-select option[value="Archived"] {
-    background-color: rgba(180, 180, 180, 0.35);
 }
 
 /* Home/dashboard */
@@ -332,261 +291,6 @@ main.dashboard-page {
     margin-top: 8px;
 }
 
-/* Change Management Log */
-.cml-search-bar {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(140px, 1fr)) auto;
-    gap: 16px;
-    align-items: end;
-    margin-top: 20px;
-}
-
-.cml-search-bar label {
-    display: grid;
-    gap: 8px;
-    color: #f5f5f5;
-    font-weight: 700;
-}
-
-.cml-search-bar input,
-.cml-search-bar select {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 10px;
-    background-color: #121212;
-    color: #e6e6e6;
-    font: inherit;
-}
-
-.cml-search-bar input:focus,
-.cml-search-bar select:focus {
-    outline: none;
-    border-color: #ffffff;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
-}
-
-.cml-results-card {
-    margin-top: 20px;
-}
-
-main:has(.cml-results-card) {
-    max-width: 1300px;
-}
-
-.cml-table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-}
-
-.cml-table {
-    width: 100%;
-    min-width: 1040px;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.cml-table th:nth-child(1),
-.cml-table td:nth-child(1) {
-    width: 11%;
-}
-
-.cml-table th:nth-child(2),
-.cml-table td:nth-child(2) {
-    width: 12%;
-}
-
-.cml-table th:nth-child(3),
-.cml-table td:nth-child(3),
-.cml-table th:nth-child(4),
-.cml-table td:nth-child(4) {
-    width: 13%;
-}
-
-.cml-table th:nth-child(5),
-.cml-table td:nth-child(5) {
-    width: 16%;
-}
-
-.cml-table th:nth-child(6),
-.cml-table td:nth-child(6) {
-    width: 15%;
-}
-
-.cml-table th:nth-child(7),
-.cml-table td:nth-child(7) {
-    width: 12%;
-}
-
-.cml-table th:nth-child(8),
-.cml-table td:nth-child(8) {
-    width: 96px;
-    min-width: 96px;
-    max-width: 96px;
-    text-align: center;
-}
-
-.cml-table th,
-.cml-table td {
-    padding: 12px 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: left;
-    vertical-align: middle;
-    overflow-wrap: anywhere;
-}
-
-.cml-table th {
-    color: #ffffff;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-
-.cml-table td {
-    color: #d4d4d4;
-}
-
-.cml-action-cell {
-    white-space: nowrap;
-    overflow-wrap: normal;
-    text-align: center;
-}
-
-.cml-action-buttons {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-}
-
-.details-toggle-button,
-.delete-change-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    cursor: pointer;
-    line-height: 1;
-    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
-}
-
-.details-toggle-button {
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    border-radius: 50%;
-    background-color: #ffffff;
-    color: #111111;
-    font-weight: 900;
-    font-family: Arial, sans-serif;
-    font-style: italic;
-    white-space: nowrap;
-    overflow-wrap: normal;
-}
-
-.details-toggle-button:hover {
-    transform: translateY(-1px);
-    opacity: 0.85;
-    background-color: #f3f4f6;
-}
-
-.details-toggle-button.is-active {
-    background-color: #d7ff3f;
-    border-color: #d7ff3f;
-    color: #111111;
-}
-
-.delete-change-button {
-    border: 1px solid rgba(255, 80, 80, 0.45);
-    border-radius: 10px;
-    background-color: rgba(255, 80, 80, 0.12);
-    color: #ff8a8a;
-    font-size: 1rem;
-}
-
-.delete-change-button:hover {
-    transform: translateY(-1px);
-    background-color: rgba(255, 80, 80, 0.22);
-}
-
-.delete-change-button:disabled {
-    cursor: wait;
-    opacity: 0.6;
-    transform: none;
-}
-
-.cml-details-row td {
-    background-color: #121212;
-    border-top: none;
-}
-
-.cml-details-content {
-    padding: 0.9rem 1rem;
-    text-align: left;
-    color: #e6e6e6;
-}
-
-.cml-details-content strong {
-    display: block;
-    margin-bottom: 0.35rem;
-    color: #ffffff;
-}
-
-.cml-details-content p {
-    margin: 0;
-    line-height: 1.5;
-}
-
-.cml-location-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 96px;
-    padding: 5px 10px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 800;
-    line-height: 1;
-    white-space: nowrap;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.cml-location-pill.location-barneveld {
-    color: #e6e6e6;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.22);
-}
-
-.cml-location-pill.location-achterveld {
-    color: #fff7a8;
-    background-color: rgba(255, 240, 0, 0.14);
-    border-color: rgba(255, 240, 0, 0.45);
-}
-
-.cml-location-pill.location-voorthuizen {
-    color: #ddb8ff;
-    background-color: rgba(112, 48, 160, 0.22);
-    border-color: rgba(180, 120, 230, 0.5);
-}
-
-.cml-location-pill.location-wekerom {
-    color: #aee9ff;
-    background-color: rgba(0, 176, 240, 0.16);
-    border-color: rgba(0, 176, 240, 0.5);
-}
-
-.cml-location-pill.location-harskamp {
-    color: #caffb8;
-    background-color: rgba(146, 208, 80, 0.16);
-    border-color: rgba(146, 208, 80, 0.5);
-}
-
-.cml-location-pill.location-unknown {
-    color: #d4d4d4;
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.16);
-}
-
 /* Footer */
 footer {
     position: fixed;
@@ -677,18 +381,6 @@ footer {
 
     .admin-form {
         gap: 16px;
-    }
-
-    .cml-search-bar {
-        grid-template-columns: 1fr;
-    }
-
-    .cml-search-bar .admin-button {
-        width: 100%;
-    }
-
-    .cml-table-wrapper {
-        overflow-x: auto;
     }
 }
 
