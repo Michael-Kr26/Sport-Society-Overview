@@ -20,7 +20,7 @@ const rolePermissions = {
 
 const permissions = rolePermissions[currentUserRole] || rolePermissions.employee;
 
-const allowedStatuses = ['Open', 'In behandeling', 'Afgerond'];
+const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
 
 const searchForm = document.getElementById('cml-search-form');
 const tableBody = document.getElementById('changes-table-body');
@@ -69,6 +69,9 @@ function getStatusClass(status) {
 
     if (status === 'Afgerond') {
         return 'status-done';
+    }
+    if (status === 'Archived') {
+    return 'status-archived';
     }
 
     return '';

@@ -44,6 +44,25 @@ function userCanUpdateStatus(req) {
     return demoRole === 'admin';
 }
 
+function archiveOldCompletedChanges(callback = () => {}) {
+    const query = `
+        UPDATE changes
+        SET status = 'Archived'
+        WHERE status = 'Afgerond'
+          AND date(change_date) <= date('now', '-' || ? || ' days')
+    `;
+
+    db.run(query, [ARCHIVE_AFTER_DAYS], function (error) {
+        if (error) {
+            console.error('Wijzigingen konden niet automatisch worden gearchiveerd:', error.message);
+            callback(error);
+            return;
+        }
+
+        callback(null, this.changes);
+    });
+}
+
 db.serialize(() => {
     db.run(`
         CREATE TABLE IF NOT EXISTS changes (
