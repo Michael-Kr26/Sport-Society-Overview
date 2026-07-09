@@ -5,10 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <style>
+        .cml-filter-panel {
+            margin-top: 18px;
+        }
+
+        .cml-filter-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            width: 100%;
+            padding: 13px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
+            background-color: #121212;
+            color: #ffffff;
+            cursor: pointer;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            list-style: none;
+        }
+
+        .cml-filter-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .cml-filter-summary::after {
+            content: '+';
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background-color: #d7ff3f;
+            color: #111111;
+            font-size: 1.05rem;
+            line-height: 1;
+        }
+
+        .cml-filter-panel[open] .cml-filter-summary::after {
+            content: '-';
+        }
+
+        .cml-filter-summary-text {
+            display: grid;
+            gap: 3px;
+        }
+
+        .cml-filter-summary-hint {
+            color: #9c9c9c;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
         .cml-search-bar {
             grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
             align-items: end;
             gap: 14px;
+            margin-top: 14px;
         }
 
         .cml-search-bar label {
@@ -161,6 +220,11 @@
 
             .dashboard-card {
                 padding: 16px;
+            }
+
+            .cml-filter-summary {
+                align-items: flex-start;
+                padding: 12px 14px;
             }
 
             .cml-search-bar {
@@ -352,76 +416,85 @@
                 <h2>Roosterwijzigingen</h2>
             </div>
 
-            <form id="cml-search-form" class="cml-search-bar">
-                <label>
-                    Naam
-                    <input type="search" id="search-name" placeholder="Zoek op medewerker">
-                </label>
+            <details class="cml-filter-panel">
+                <summary class="cml-filter-summary">
+                    <span class="cml-filter-summary-text">
+                        <span>Filters</span>
+                        <span class="cml-filter-summary-hint">Naam, maand, locatie, type en status</span>
+                    </span>
+                </summary>
 
-                <label>
-                    Maand wijziging
-                    <select id="search-month">
-                        <option value="">Alle maanden</option>
-                        <option value="01">Januari</option>
-                        <option value="02">Februari</option>
-                        <option value="03">Maart</option>
-                        <option value="04">April</option>
-                        <option value="05">Mei</option>
-                        <option value="06">Juni</option>
-                        <option value="07">Juli</option>
-                        <option value="08">Augustus</option>
-                        <option value="09">September</option>
-                        <option value="10">Oktober</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
-                    </select>
-                </label>
+                <form id="cml-search-form" class="cml-search-bar">
+                    <label>
+                        Naam
+                        <input type="search" id="search-name" placeholder="Zoek op medewerker">
+                    </label>
 
-                <label>
-                    Locatie
-                    <select id="search-location">
-                        <option value="">Alle locaties</option>
-                        <option>Achterveld</option>
-                        <option>Barneveld</option>
-                        <option>Voorthuizen</option>
-                        <option>Wekerom</option>
-                        <option>Harskamp</option>
-                    </select>
-                </label>
+                    <label>
+                        Maand wijziging
+                        <select id="search-month">
+                            <option value="">Alle maanden</option>
+                            <option value="01">Januari</option>
+                            <option value="02">Februari</option>
+                            <option value="03">Maart</option>
+                            <option value="04">April</option>
+                            <option value="05">Mei</option>
+                            <option value="06">Juni</option>
+                            <option value="07">Juli</option>
+                            <option value="08">Augustus</option>
+                            <option value="09">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </label>
 
-                <label>
-                    Type melding
-                    <select id="search-type">
-                        <option value="">Alle types</option>
-                        <option>Dienstwissel</option>
-                        <option>Ziekmelding</option>
-                        <option>Vervanging</option>
-                        <option>Vrij wegens overuren</option>
-                        <option>Extra dienst</option>
-                        <option>Openstaande dienst</option>
-                        <option>Tijdswijziging</option>
-                        <option>Locatiewijziging</option>
-                        <option>Dienst vervallen</option>
-                        <option>Dienst toegevoegd</option>
-                        <option>Overige wijziging</option>
-                    </select>
-                </label>
+                    <label>
+                        Locatie
+                        <select id="search-location">
+                            <option value="">Alle locaties</option>
+                            <option>Achterveld</option>
+                            <option>Barneveld</option>
+                            <option>Voorthuizen</option>
+                            <option>Wekerom</option>
+                            <option>Harskamp</option>
+                        </select>
+                    </label>
 
-                <label>
-                    Status
-                    <select id="search-status">
-                        <option value="">Actieve statussen</option>
-                        <option>Open</option>
-                        <option>In behandeling</option>
-                        <option>Afgerond</option>
-                        <option>Archived</option>
-                    </select>
-                </label>
+                    <label>
+                        Type melding
+                        <select id="search-type">
+                            <option value="">Alle types</option>
+                            <option>Dienstwissel</option>
+                            <option>Ziekmelding</option>
+                            <option>Vervanging</option>
+                            <option>Vrij wegens overuren</option>
+                            <option>Extra dienst</option>
+                            <option>Openstaande dienst</option>
+                            <option>Tijdswijziging</option>
+                            <option>Locatiewijziging</option>
+                            <option>Dienst vervallen</option>
+                            <option>Dienst toegevoegd</option>
+                            <option>Overige wijziging</option>
+                        </select>
+                    </label>
 
-                <button type="submit" class="admin-button">
-                    Zoeken
-                </button>
-            </form>
+                    <label>
+                        Status
+                        <select id="search-status">
+                            <option value="">Actieve statussen</option>
+                            <option>Open</option>
+                            <option>In behandeling</option>
+                            <option>Afgerond</option>
+                            <option>Archived</option>
+                        </select>
+                    </label>
+
+                    <button type="submit" class="admin-button">
+                        Zoeken
+                    </button>
+                </form>
+            </details>
         </section>
 
         <section class="dashboard-card cml-results-card">
