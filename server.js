@@ -8,7 +8,6 @@ const app = express();
 const PORT = 3000;
 
 const ARCHIVE_AFTER_DAYS = 7;
-const CHANGES_PAGE_SIZE = 12;
 const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
 
 const dataDir = path.join(__dirname, 'data');
@@ -220,7 +219,7 @@ app.get('/api/changes', (req, res) => {
         } = req.query;
 
         const requestedPage = parsePositiveInteger(req.query.page, 1);
-        const pageSize = CHANGES_PAGE_SIZE;
+        const weekStartExpression = `date(change_date, '-' || ((CAST(strftime('%w', change_date) AS INTEGER) + 6) % 7) || ' days')`;
 
         let whereQuery = `
             FROM changes
@@ -276,24 +275,46 @@ app.get('/api/changes', (req, res) => {
             `;
         }
 
-        const countQuery = `
-            SELECT COUNT(*) AS totalItems
-            ${whereQuery}
+        const weeksQuery = `
+            SELECT
+                weekStart,
+                date(weekStart, '+6 days') AS weekEnd,
+                COUNT(*) AS weekItemCount
+            FROM (
+                SELECT ${weekStartExpression} AS weekStart
+                ${whereQuery}
+            )
+            GROUP BY weekStart
+            ORDER BY weekStart DESC
         `;
 
-        db.get(countQuery, values, (countError, countRow) => {
-            if (countError) {
-                console.error('Aantal roosterwijzigingen kon niet worden opgehaald:', countError.message);
+        db.all(weeksQuery, values, (weeksError, weeks) => {
+            if (weeksError) {
+                console.error('Wijzigingsweken konden niet worden opgehaald:', weeksError.message);
 
                 return res.status(500).json({
                     message: 'Roosterwijzigingen konden niet worden opgehaald.'
                 });
             }
 
-            const totalItems = countRow ? countRow.totalItems : 0;
-            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+            if (!weeks || weeks.length === 0) {
+                return res.json({
+                    items: [],
+                    pagination: {
+                        mode: 'week',
+                        page: 1,
+                        totalPages: 1,
+                        totalWeeks: 0,
+                        totalItems: 0,
+                        weekStart: null,
+                        weekEnd: null
+                    }
+                });
+            }
+
+            const totalPages = weeks.length;
             const page = Math.min(requestedPage, totalPages);
-            const offset = (page - 1) * pageSize;
+            const selectedWeek = weeks[page - 1];
 
             const query = `
                 SELECT
@@ -309,14 +330,14 @@ app.get('/api/changes', (req, res) => {
                     created_by AS createdBy,
                     created_at AS createdAt
                 ${whereQuery}
+                  AND ${weekStartExpression} = ?
                 ORDER BY
                     change_date DESC,
                     created_at DESC,
                     id DESC
-                LIMIT ? OFFSET ?
             `;
 
-            db.all(query, [...values, pageSize, offset], (error, rows) => {
+            db.all(query, [...values, selectedWeek.weekStart], (error, rows) => {
                 if (error) {
                     console.error('Roosterwijzigingen konden niet worden opgehaald:', error.message);
 
@@ -328,12 +349,13 @@ app.get('/api/changes', (req, res) => {
                 res.json({
                     items: rows,
                     pagination: {
+                        mode: 'week',
                         page,
-                        pageSize,
-                        totalItems,
                         totalPages,
-                        from: totalItems === 0 ? 0 : offset + 1,
-                        to: totalItems === 0 ? 0 : Math.min(offset + pageSize, totalItems)
+                        totalWeeks: totalPages,
+                        totalItems: selectedWeek.weekItemCount,
+                        weekStart: selectedWeek.weekStart,
+                        weekEnd: selectedWeek.weekEnd
                     }
                 });
             });
