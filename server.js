@@ -212,6 +212,7 @@ app.get('/api/changes', (req, res) => {
     runWithArchive(res, () => {
         const {
             name,
+            weekStart,
             month,
             location,
             type,
@@ -237,6 +238,14 @@ app.get('/api/changes', (req, res) => {
             `;
 
             values.push(`%${name}%`, `%${name}%`);
+        }
+
+        if (weekStart) {
+            whereQuery += `
+                AND ${weekStartExpression} = ?
+            `;
+
+            values.push(weekStart);
         }
 
         if (month) {
@@ -306,7 +315,7 @@ app.get('/api/changes', (req, res) => {
                         totalPages: 1,
                         totalWeeks: 0,
                         totalItems: 0,
-                        weekStart: null,
+                        weekStart: weekStart || null,
                         weekEnd: null
                     }
                 });
