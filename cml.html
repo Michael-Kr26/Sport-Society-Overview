@@ -6,8 +6,9 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         .cml-search-bar {
-            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             align-items: end;
+            gap: 14px;
         }
 
         .cml-search-bar label {
@@ -17,12 +18,38 @@
         .cml-search-bar input,
         .cml-search-bar select {
             min-width: 0;
+            height: 46px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .cml-search-bar .admin-button {
             width: 100%;
             min-height: 46px;
             margin-top: 0;
+        }
+
+        .cml-table-wrapper {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            background-color: #121212;
+        }
+
+        .cml-table th,
+        .cml-table td {
+            overflow-wrap: normal;
+            line-height: 1.35;
+        }
+
+        .cml-table th:nth-child(1),
+        .cml-table td:nth-child(1),
+        .cml-table th:nth-child(2),
+        .cml-table td:nth-child(2),
+        .cml-table th:nth-child(6),
+        .cml-table td:nth-child(6),
+        .cml-table th:nth-child(8),
+        .cml-table td:nth-child(8) {
+            white-space: nowrap;
         }
 
         .cml-pagination {
