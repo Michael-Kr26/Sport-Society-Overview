@@ -4,6 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .cml-pagination {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .cml-pagination[hidden] {
+            display: none;
+        }
+
+        .cml-pagination-summary {
+            color: #b8b8b8;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .cml-pagination-controls {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #121212;
+        }
+
+        .cml-pagination-button,
+        .cml-pagination-ellipsis {
+            min-width: 44px;
+            height: 40px;
+            padding: 0 14px;
+            border: none;
+            border-right: 1px solid rgba(255, 255, 255, 0.14);
+            background-color: #121212;
+            color: #e6e6e6;
+            font: inherit;
+            font-weight: 800;
+        }
+
+        .cml-pagination-button {
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .cml-pagination-button:last-child,
+        .cml-pagination-ellipsis:last-child {
+            border-right: none;
+        }
+
+        .cml-pagination-button:hover:not(:disabled):not(.is-active) {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
+        .cml-pagination-button.is-active {
+            background-color: #d7ff3f;
+            color: #111111;
+        }
+
+        .cml-pagination-button:disabled {
+            cursor: not-allowed;
+            color: #6f6f6f;
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .cml-pagination-ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #9c9c9c;
+        }
+    </style>
     <script src="cml.js" defer></script>
     <title>Sport Society - Roosterwijzigingen</title>
 </head>
@@ -135,6 +212,8 @@
                     </tbody>
                 </table>
             </div>
+
+            <nav id="cml-pagination" class="cml-pagination" aria-label="Paginering roosterwijzigingen" hidden></nav>
         </section>
     </main>
 
