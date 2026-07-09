@@ -25,6 +25,13 @@
             letter-spacing: 0.04em;
             text-transform: uppercase;
             list-style: none;
+            transition: border-color 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+        }
+
+        .cml-filter-summary:hover {
+            border-color: rgba(215, 255, 63, 0.42);
+            background-color: #151515;
+            box-shadow: 0 0 0 3px rgba(215, 255, 63, 0.06);
         }
 
         .cml-filter-summary::-webkit-details-marker {
@@ -44,10 +51,47 @@
             color: #111111;
             font-size: 1.05rem;
             line-height: 1;
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .cml-filter-panel[open] .cml-filter-summary {
+            border-color: rgba(215, 255, 63, 0.5);
+            background-color: #161616;
+            box-shadow: 0 0 0 3px rgba(215, 255, 63, 0.08);
         }
 
         .cml-filter-panel[open] .cml-filter-summary::after {
             content: '-';
+            transform: rotate(180deg);
+            box-shadow: 0 0 16px rgba(215, 255, 63, 0.22);
+        }
+
+        .cml-filter-panel[open] .cml-search-bar {
+            animation: cmlFilterOpen 0.24s ease-out both;
+            transform-origin: top center;
+        }
+
+        @keyframes cmlFilterOpen {
+            from {
+                opacity: 0;
+                transform: translateY(-8px) scaleY(0.96);
+                filter: blur(2px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scaleY(1);
+                filter: blur(0);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cml-filter-summary,
+            .cml-filter-summary::after,
+            .cml-filter-panel[open] .cml-search-bar {
+                animation: none;
+                transition: none;
+            }
         }
 
         .cml-filter-summary-text {
