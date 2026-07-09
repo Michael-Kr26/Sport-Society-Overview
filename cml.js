@@ -28,6 +28,7 @@ const paginationContainer = document.getElementById('cml-pagination');
 const weekFilter = document.getElementById('search-week');
 
 let currentPage = 1;
+let shouldFocusSelectedWeek = true;
 
 function userCanUpdateStatus() {
     return permissions.canUpdateChangeStatus;
@@ -388,7 +389,7 @@ function renderPagination(pagination) {
         return;
     }
 
-    if (!pagination || pagination.totalItems === 0 || !pagination.weekStart) {
+    if (!pagination || !pagination.weekStart) {
         paginationContainer.hidden = true;
         paginationContainer.innerHTML = '';
         return;
@@ -444,8 +445,8 @@ function buildQueryString() {
         params.append('name', name);
     }
 
-    if (weekStart) {
-        params.append('weekStart', weekStart);
+    if (weekStart && shouldFocusSelectedWeek) {
+        params.append('focusWeekStart', weekStart);
     }
 
     if (month) {
@@ -598,6 +599,12 @@ function handlePaginationClick(event) {
     }
 
     currentPage = nextPage;
+    shouldFocusSelectedWeek = false;
+
+    if (weekFilter) {
+        weekFilter.value = '';
+    }
+
     loadChanges();
 
     document.querySelector('.cml-results-card')?.scrollIntoView({
@@ -651,9 +658,18 @@ async function loadChanges() {
     }
 }
 
+if (weekFilter) {
+    weekFilter.addEventListener('change', () => {
+        currentPage = 1;
+        shouldFocusSelectedWeek = true;
+        loadChanges();
+    });
+}
+
 searchForm.addEventListener('submit', (event) => {
     event.preventDefault();
     currentPage = 1;
+    shouldFocusSelectedWeek = true;
     loadChanges();
 });
 
