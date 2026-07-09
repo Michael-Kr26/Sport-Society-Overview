@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         .cml-search-bar {
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
             align-items: end;
             gap: 14px;
         }
@@ -50,6 +50,23 @@
         .cml-table th:nth-child(8),
         .cml-table td:nth-child(8) {
             white-space: nowrap;
+        }
+
+        .cml-details-row td {
+            background-color: #151515;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 0;
+        }
+
+        .cml-details-content {
+            border-left: 3px solid #d7ff3f;
+            padding: 10px 14px;
+            background-color: rgba(255, 255, 255, 0.03);
+            border-radius: 0 10px 10px 0;
+        }
+
+        .cml-no-action {
+            color: #777777;
         }
 
         .cml-pagination {
@@ -162,13 +179,6 @@
                 <label>
                     Naam
                     <input type="search" id="search-name" placeholder="Zoek op medewerker">
-                </label>
-
-                <label>
-                    Week wijziging
-                    <select id="search-week">
-                        <option value="">Alle weken</option>
-                    </select>
                 </label>
 
                 <label>
