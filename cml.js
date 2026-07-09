@@ -38,6 +38,16 @@ function userCanDeleteChange() {
     return permissions.canDeleteChange;
 }
 
+function getTableColumnCount() {
+    return userCanDeleteChange() ? 8 : 7;
+}
+
+function applyRoleLayout() {
+    if (!userCanDeleteChange()) {
+        document.querySelector('.cml-actions-header')?.remove();
+    }
+}
+
 function formatDate(dateString) {
     if (!dateString) {
         return '-';
@@ -205,10 +215,6 @@ function renderStatusCell(change) {
 }
 
 function renderActionCell(change) {
-    if (!userCanDeleteChange()) {
-        return '<span class="cml-no-action">-</span>';
-    }
-
     return `
         <div class="cml-action-buttons">
             <button
@@ -242,10 +248,12 @@ function renderChanges(changes) {
         return;
     }
 
+    const columnCount = getTableColumnCount();
+
     if (!changes || changes.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="empty-state">
+                <td colspan="${columnCount}" class="empty-state">
                     Geen roosterwijzigingen gevonden.
                 </td>
             </tr>
@@ -255,9 +263,12 @@ function renderChanges(changes) {
 
     tableBody.innerHTML = changes.map((change) => {
         const reason = String(change.reason || '').trim();
+        const actionCell = userCanDeleteChange()
+            ? `<td class="cml-action-cell">${renderActionCell(change)}</td>`
+            : '';
         const detailsRow = reason ? `
             <tr class="cml-details-row" data-details-row="${change.id}">
-                <td colspan="8">
+                <td colspan="${columnCount}">
                     <div class="cml-details-content">
                         <strong>Informatie</strong>
                         <p>${escapeHtml(reason)}</p>
@@ -275,7 +286,7 @@ function renderChanges(changes) {
                 <td>${escapeHtml(change.type)}</td>
                 <td>${renderStatusCell(change)}</td>
                 <td>${escapeHtml(change.createdBy)}</td>
-                <td class="cml-action-cell">${renderActionCell(change)}</td>
+                ${actionCell}
             </tr>
             ${detailsRow}
         `;
@@ -518,10 +529,12 @@ function handlePaginationClick(event) {
 }
 
 async function loadChanges() {
+    const columnCount = getTableColumnCount();
+
     if (!permissions.canViewCml) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="empty-state">
+                <td colspan="${columnCount}" class="empty-state">
                     Je hebt geen toegang tot het roosterwijzigingenoverzicht.
                 </td>
             </tr>
@@ -553,7 +566,7 @@ async function loadChanges() {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="empty-state">
+                <td colspan="${columnCount}" class="empty-state">
                     Er ging iets mis bij het laden van de roosterwijzigingen.
                 </td>
             </tr>
@@ -571,6 +584,7 @@ searchForm.addEventListener('submit', (event) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    applyRoleLayout();
     focusWeekStart = getCurrentWeekStartValue();
     shouldFocusSelectedWeek = true;
     loadChanges();
