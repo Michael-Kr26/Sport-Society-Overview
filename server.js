@@ -55,6 +55,52 @@ function parsePositiveInteger(value, fallback) {
     return parsedValue;
 }
 
+function addDaysToIsoDate(dateString, days) {
+    const parts = String(dateString || '').split('-').map(Number);
+
+    if (parts.length !== 3 || parts.some(Number.isNaN)) {
+        return null;
+    }
+
+    const [year, month, day] = parts;
+    const date = new Date(year, month - 1, day);
+
+    date.setDate(date.getDate() + days);
+
+    const nextYear = date.getFullYear();
+    const nextMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const nextDay = String(date.getDate()).padStart(2, '0');
+
+    return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+function insertFocusWeek(weeks, focusWeekStart) {
+    if (!focusWeekStart) {
+        return weeks;
+    }
+
+    const weekAlreadyExists = weeks.some((week) => week.weekStart === focusWeekStart);
+
+    if (weekAlreadyExists) {
+        return weeks;
+    }
+
+    const focusWeekEnd = addDaysToIsoDate(focusWeekStart, 6);
+
+    if (!focusWeekEnd) {
+        return weeks;
+    }
+
+    return [
+        ...weeks,
+        {
+            weekStart: focusWeekStart,
+            weekEnd: focusWeekEnd,
+            weekItemCount: 0
+        }
+    ].sort((firstWeek, secondWeek) => secondWeek.weekStart.localeCompare(firstWeek.weekStart));
+}
+
 function archiveOldCompletedChanges(callback = () => {}) {
     const query = `
         UPDATE changes
@@ -212,7 +258,7 @@ app.get('/api/changes', (req, res) => {
     runWithArchive(res, () => {
         const {
             name,
-            weekStart,
+            focusWeekStart,
             month,
             location,
             type,
@@ -238,14 +284,6 @@ app.get('/api/changes', (req, res) => {
             `;
 
             values.push(`%${name}%`, `%${name}%`);
-        }
-
-        if (weekStart) {
-            whereQuery += `
-                AND ${weekStartExpression} = ?
-            `;
-
-            values.push(weekStart);
         }
 
         if (month) {
@@ -297,7 +335,7 @@ app.get('/api/changes', (req, res) => {
             ORDER BY weekStart DESC
         `;
 
-        db.all(weeksQuery, values, (weeksError, weeks) => {
+        db.all(weeksQuery, values, (weeksError, weekRows) => {
             if (weeksError) {
                 console.error('Wijzigingsweken konden niet worden opgehaald:', weeksError.message);
 
@@ -306,7 +344,9 @@ app.get('/api/changes', (req, res) => {
                 });
             }
 
-            if (!weeks || weeks.length === 0) {
+            const weeks = insertFocusWeek(weekRows || [], focusWeekStart);
+
+            if (weeks.length === 0) {
                 return res.json({
                     items: [],
                     pagination: {
@@ -315,14 +355,19 @@ app.get('/api/changes', (req, res) => {
                         totalPages: 1,
                         totalWeeks: 0,
                         totalItems: 0,
-                        weekStart: weekStart || null,
+                        weekStart: null,
                         weekEnd: null
                     }
                 });
             }
 
             const totalPages = weeks.length;
-            const page = Math.min(requestedPage, totalPages);
+            const focusWeekIndex = focusWeekStart
+                ? weeks.findIndex((week) => week.weekStart === focusWeekStart)
+                : -1;
+            const page = focusWeekIndex >= 0
+                ? focusWeekIndex + 1
+                : Math.min(requestedPage, totalPages);
             const selectedWeek = weeks[page - 1];
 
             const query = `
