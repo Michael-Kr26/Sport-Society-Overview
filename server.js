@@ -7,7 +7,8 @@ const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
-const allowedStatuses = ['Open', 'In behandeling', 'Afgerond'];
+const ARCHIVE_AFTER_DAYS = 21;
+const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
 
 const dataDir = path.join(__dirname, 'data');
 const dbPath = path.join(dataDir, 'sport-society.db');
@@ -49,7 +50,7 @@ function archiveOldCompletedChanges(callback = () => {}) {
         UPDATE changes
         SET status = 'Archived'
         WHERE status = 'Afgerond'
-          AND date(change_date) <= date('now', '-' || ? || ' days')
+          AND date(change_date) <= date('now', 'localtime', '-' || ? || ' days')
     `;
 
     db.run(query, [ARCHIVE_AFTER_DAYS], function (error) {
@@ -60,6 +61,18 @@ function archiveOldCompletedChanges(callback = () => {}) {
         }
 
         callback(null, this.changes);
+    });
+}
+
+function runWithArchive(res, callback) {
+    archiveOldCompletedChanges((archiveError) => {
+        if (archiveError) {
+            return res.status(500).json({
+                message: 'Wijzigingen konden niet automatisch worden gearchiveerd.'
+            });
+        }
+
+        callback();
     });
 }
 
@@ -186,131 +199,140 @@ app.post('/api/changes', (req, res) => {
 });
 
 app.get('/api/changes', (req, res) => {
-    const {
-        name,
-        month,
-        location,
-        type,
-        status
-    } = req.query;
-
-    let query = `
-        SELECT
-            id,
-            change_date AS date,
-            reported_date AS reportedDate,
+    runWithArchive(res, () => {
+        const {
+            name,
+            month,
             location,
-            employee_1 AS employee,
-            employee_2 AS employee2,
-            change_type AS type,
-            reason,
-            status,
-            created_by AS createdBy,
-            created_at AS createdAt
-        FROM changes
-        WHERE 1 = 1
-    `;
+            type,
+            status
+        } = req.query;
 
-    const values = [];
-
-    if (name) {
-        query += `
-            AND (
-                LOWER(employee_1) LIKE LOWER(?)
-                OR LOWER(employee_2) LIKE LOWER(?)
-            )
+        let query = `
+            SELECT
+                id,
+                change_date AS date,
+                reported_date AS reportedDate,
+                location,
+                employee_1 AS employee,
+                employee_2 AS employee2,
+                change_type AS type,
+                reason,
+                status,
+                created_by AS createdBy,
+                created_at AS createdAt
+            FROM changes
+            WHERE 1 = 1
         `;
 
-        values.push(`%${name}%`, `%${name}%`);
-    }
+        const values = [];
 
-    if (month) {
-    query += `
-        AND substr(change_date, 6, 2) = ?
-        `;
+        if (name) {
+            query += `
+                AND (
+                    LOWER(employee_1) LIKE LOWER(?)
+                    OR LOWER(employee_2) LIKE LOWER(?)
+                )
+            `;
 
-        values.push(month);
-    }
-
-    if (location) {
-        query += `
-            AND location = ?
-        `;
-
-        values.push(location);
-    }
-
-    if (type) {
-        query += `
-            AND change_type = ?
-        `;
-
-        values.push(type);
-    }
-
-    if (status) {
-        query += `
-            AND status = ?
-        `;
-
-        values.push(status);
-    }
-
-    query += `
-        ORDER BY
-            change_date DESC,
-            created_at DESC,
-            id DESC
-    `;
-
-    db.all(query, values, (error, rows) => {
-        if (error) {
-            console.error('Roosterwijzigingen konden niet worden opgehaald:', error.message);
-
-            return res.status(500).json({
-                message: 'Roosterwijzigingen konden niet worden opgehaald.'
-            });
+            values.push(`%${name}%`, `%${name}%`);
         }
 
-        res.json(rows);
+        if (month) {
+            query += `
+                AND substr(change_date, 6, 2) = ?
+            `;
+
+            values.push(month);
+        }
+
+        if (location) {
+            query += `
+                AND location = ?
+            `;
+
+            values.push(location);
+        }
+
+        if (type) {
+            query += `
+                AND change_type = ?
+            `;
+
+            values.push(type);
+        }
+
+        if (status) {
+            query += `
+                AND status = ?
+            `;
+
+            values.push(status);
+        } else {
+            query += `
+                AND status != 'Archived'
+            `;
+        }
+
+        query += `
+            ORDER BY
+                change_date DESC,
+                created_at DESC,
+                id DESC
+        `;
+
+        db.all(query, values, (error, rows) => {
+            if (error) {
+                console.error('Roosterwijzigingen konden niet worden opgehaald:', error.message);
+
+                return res.status(500).json({
+                    message: 'Roosterwijzigingen konden niet worden opgehaald.'
+                });
+            }
+
+            res.json(rows);
+        });
     });
 });
 
 app.get('/api/changes/latest', (req, res) => {
-    const query = `
-        SELECT
-            id,
-            change_date AS date,
-            reported_date AS reportedDate,
-            location,
-            employee_1 AS employee,
-            employee_2 AS employee2,
-            change_type AS type,
-            reason,
-            status,
-            created_by AS createdBy,
-            created_at AS createdAt
-        FROM changes
-        ORDER BY created_at DESC, id DESC
-        LIMIT 1
-    `;
+    runWithArchive(res, () => {
+        const query = `
+            SELECT
+                id,
+                change_date AS date,
+                reported_date AS reportedDate,
+                location,
+                employee_1 AS employee,
+                employee_2 AS employee2,
+                change_type AS type,
+                reason,
+                status,
+                created_by AS createdBy,
+                created_at AS createdAt
+            FROM changes
+            WHERE status != 'Archived'
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+        `;
 
-    db.get(query, [], (error, row) => {
-        if (error) {
-            console.error('Laatste wijziging kon niet worden opgehaald:', error.message);
+        db.get(query, [], (error, row) => {
+            if (error) {
+                console.error('Laatste wijziging kon niet worden opgehaald:', error.message);
 
-            return res.status(500).json({
-                message: 'Laatste wijziging kon niet worden opgehaald.'
-            });
-        }
+                return res.status(500).json({
+                    message: 'Laatste wijziging kon niet worden opgehaald.'
+                });
+            }
 
-        if (!row) {
-            return res.status(404).json({
-                message: 'Geen wijzigingen gevonden.'
-            });
-        }
+            if (!row) {
+                return res.status(404).json({
+                    message: 'Geen wijzigingen gevonden.'
+                });
+            }
 
-        res.json(row);
+            res.json(row);
+        });
     });
 });
 
