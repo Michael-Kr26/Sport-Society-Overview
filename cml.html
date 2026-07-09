@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <style>
+        .cml-search-bar {
+            grid-template-columns: repeat(6, minmax(140px, 1fr)) auto;
+        }
+
         .cml-pagination {
             display: flex;
             flex-direction: column;
@@ -115,6 +119,13 @@
                 <label>
                     Naam
                     <input type="search" id="search-name" placeholder="Zoek op medewerker">
+                </label>
+
+                <label>
+                    Week wijziging
+                    <select id="search-week">
+                        <option value="">Alle weken</option>
+                    </select>
                 </label>
 
                 <label>
