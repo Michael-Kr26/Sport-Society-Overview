@@ -48,24 +48,6 @@ function applyRoleLayout() {
     }
 }
 
-function injectMobileEmptyFieldStyles() {
-    if (document.getElementById('cml-mobile-empty-field-style')) {
-        return;
-    }
-
-    const style = document.createElement('style');
-    style.id = 'cml-mobile-empty-field-style';
-    style.textContent = `
-        @media (max-width: 760px) {
-            .cml-mobile-hide-empty {
-                display: none !important;
-            }
-        }
-    `;
-
-    document.head.appendChild(style);
-}
-
 function formatDate(dateString) {
     if (!dateString) {
         return '-';
@@ -605,7 +587,6 @@ searchForm.addEventListener('submit', (event) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     applyRoleLayout();
-    injectMobileEmptyFieldStyles();
     focusWeekStart = getCurrentWeekStartValue();
     shouldFocusSelectedWeek = true;
     loadChanges();
