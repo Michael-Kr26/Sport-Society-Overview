@@ -8,6 +8,7 @@ const app = express();
 const PORT = 3000;
 
 const ARCHIVE_AFTER_DAYS = 7;
+const CHANGES_PAGE_SIZE = 12;
 const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
 
 const dataDir = path.join(__dirname, 'data');
@@ -43,6 +44,16 @@ function userCanUpdateStatus(req) {
     const demoRole = req.header('X-Demo-Role');
 
     return demoRole === 'admin';
+}
+
+function parsePositiveInteger(value, fallback) {
+    const parsedValue = Number.parseInt(value, 10);
+
+    if (!Number.isInteger(parsedValue) || parsedValue < 1) {
+        return fallback;
+    }
+
+    return parsedValue;
 }
 
 function archiveOldCompletedChanges(callback = () => {}) {
@@ -208,19 +219,10 @@ app.get('/api/changes', (req, res) => {
             status
         } = req.query;
 
-        let query = `
-            SELECT
-                id,
-                change_date AS date,
-                reported_date AS reportedDate,
-                location,
-                employee_1 AS employee,
-                employee_2 AS employee2,
-                change_type AS type,
-                reason,
-                status,
-                created_by AS createdBy,
-                created_at AS createdAt
+        const requestedPage = parsePositiveInteger(req.query.page, 1);
+        const pageSize = CHANGES_PAGE_SIZE;
+
+        let whereQuery = `
             FROM changes
             WHERE 1 = 1
         `;
@@ -228,7 +230,7 @@ app.get('/api/changes', (req, res) => {
         const values = [];
 
         if (name) {
-            query += `
+            whereQuery += `
                 AND (
                     LOWER(employee_1) LIKE LOWER(?)
                     OR LOWER(employee_2) LIKE LOWER(?)
@@ -239,7 +241,7 @@ app.get('/api/changes', (req, res) => {
         }
 
         if (month) {
-            query += `
+            whereQuery += `
                 AND substr(change_date, 6, 2) = ?
             `;
 
@@ -247,7 +249,7 @@ app.get('/api/changes', (req, res) => {
         }
 
         if (location) {
-            query += `
+            whereQuery += `
                 AND location = ?
             `;
 
@@ -255,7 +257,7 @@ app.get('/api/changes', (req, res) => {
         }
 
         if (type) {
-            query += `
+            whereQuery += `
                 AND change_type = ?
             `;
 
@@ -263,34 +265,78 @@ app.get('/api/changes', (req, res) => {
         }
 
         if (status) {
-            query += `
+            whereQuery += `
                 AND status = ?
             `;
 
             values.push(status);
         } else {
-            query += `
+            whereQuery += `
                 AND status != 'Archived'
             `;
         }
 
-        query += `
-            ORDER BY
-                change_date DESC,
-                created_at DESC,
-                id DESC
+        const countQuery = `
+            SELECT COUNT(*) AS totalItems
+            ${whereQuery}
         `;
 
-        db.all(query, values, (error, rows) => {
-            if (error) {
-                console.error('Roosterwijzigingen konden niet worden opgehaald:', error.message);
+        db.get(countQuery, values, (countError, countRow) => {
+            if (countError) {
+                console.error('Aantal roosterwijzigingen kon niet worden opgehaald:', countError.message);
 
                 return res.status(500).json({
                     message: 'Roosterwijzigingen konden niet worden opgehaald.'
                 });
             }
 
-            res.json(rows);
+            const totalItems = countRow ? countRow.totalItems : 0;
+            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+            const page = Math.min(requestedPage, totalPages);
+            const offset = (page - 1) * pageSize;
+
+            const query = `
+                SELECT
+                    id,
+                    change_date AS date,
+                    reported_date AS reportedDate,
+                    location,
+                    employee_1 AS employee,
+                    employee_2 AS employee2,
+                    change_type AS type,
+                    reason,
+                    status,
+                    created_by AS createdBy,
+                    created_at AS createdAt
+                ${whereQuery}
+                ORDER BY
+                    change_date DESC,
+                    created_at DESC,
+                    id DESC
+                LIMIT ? OFFSET ?
+            `;
+
+            db.all(query, [...values, pageSize, offset], (error, rows) => {
+                if (error) {
+                    console.error('Roosterwijzigingen konden niet worden opgehaald:', error.message);
+
+                    return res.status(500).json({
+                        message: 'Roosterwijzigingen konden niet worden opgehaald.'
+                    });
+                }
+
+                res.json({
+                    items: rows,
+                    pagination: {
+                        page,
+                        pageSize,
+                        totalItems,
+                        totalPages,
+                        from: totalItems === 0 ? 0 : offset + 1,
+                        to: totalItems === 0 ? 0 : Math.min(offset + pageSize, totalItems)
+                    }
+                });
+            });
         });
     });
 });
