@@ -48,6 +48,24 @@ function applyRoleLayout() {
     }
 }
 
+function injectMobileEmptyFieldStyles() {
+    if (document.getElementById('cml-mobile-empty-field-style')) {
+        return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'cml-mobile-empty-field-style';
+    style.textContent = `
+        @media (max-width: 760px) {
+            .cml-mobile-hide-empty {
+                display: none !important;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
 function formatDate(dateString) {
     if (!dateString) {
         return '-';
@@ -263,6 +281,8 @@ function renderChanges(changes) {
 
     tableBody.innerHTML = changes.map((change) => {
         const reason = String(change.reason || '').trim();
+        const employee2 = String(change.employee2 || '').trim();
+        const employee2CellClass = employee2 ? '' : ' class="cml-mobile-hide-empty"';
         const actionCell = userCanDeleteChange()
             ? `<td class="cml-action-cell">${renderActionCell(change)}</td>`
             : '';
@@ -282,7 +302,7 @@ function renderChanges(changes) {
                 <td>${formatDate(change.date)}</td>
                 <td>${renderLocationCell(change.location)}</td>
                 <td>${escapeHtml(change.employee)}</td>
-                <td>${change.employee2 ? escapeHtml(change.employee2) : '-'}</td>
+                <td${employee2CellClass}>${employee2 ? escapeHtml(employee2) : '-'}</td>
                 <td>${escapeHtml(change.type)}</td>
                 <td>${renderStatusCell(change)}</td>
                 <td>${escapeHtml(change.createdBy)}</td>
@@ -585,6 +605,7 @@ searchForm.addEventListener('submit', (event) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     applyRoleLayout();
+    injectMobileEmptyFieldStyles();
     focusWeekStart = getCurrentWeekStartValue();
     shouldFocusSelectedWeek = true;
     loadChanges();
