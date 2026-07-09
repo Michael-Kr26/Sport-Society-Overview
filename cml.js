@@ -25,6 +25,7 @@ const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
 const searchForm = document.getElementById('cml-search-form');
 const tableBody = document.getElementById('changes-table-body');
 const paginationContainer = document.getElementById('cml-pagination');
+const weekFilter = document.getElementById('search-week');
 
 let currentPage = 1;
 
@@ -68,8 +69,34 @@ function parseIsoDate(dateString) {
     return new Date(year, month - 1, day);
 }
 
+function getIsoWeekStart(date) {
+    const weekStart = new Date(date.getTime());
+    const dayNumber = (weekStart.getDay() + 6) % 7;
+
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - dayNumber);
+
+    return weekStart;
+}
+
+function addDays(date, days) {
+    const nextDate = new Date(date.getTime());
+
+    nextDate.setDate(nextDate.getDate() + days);
+
+    return nextDate;
+}
+
+function toIsoDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
 function getIsoWeekNumber(dateString) {
-    const date = parseIsoDate(dateString);
+    const date = typeof dateString === 'string' ? parseIsoDate(dateString) : dateString;
 
     if (!date) {
         return null;
@@ -86,6 +113,52 @@ function getIsoWeekNumber(dateString) {
     firstThursday.setDate(firstThursday.getDate() - firstThursdayDayNumber + 3);
 
     return 1 + Math.round((normalizedDate - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+}
+
+function populateWeekFilter() {
+    if (!weekFilter) {
+        return;
+    }
+
+    const previousValue = weekFilter.value;
+    const currentWeekStart = getIsoWeekStart(new Date());
+    const weekOptions = [
+        {
+            offset: -1,
+            prefix: 'Vorige week'
+        },
+        {
+            offset: 0,
+            prefix: 'Huidige week'
+        },
+        {
+            offset: 1,
+            prefix: 'Volgende week'
+        }
+    ];
+
+    const optionsHtml = weekOptions.map(({ offset, prefix }) => {
+        const weekStartDate = addDays(currentWeekStart, offset * 7);
+        const weekEndDate = addDays(weekStartDate, 6);
+        const weekStart = toIsoDate(weekStartDate);
+        const weekEnd = toIsoDate(weekEndDate);
+        const weekNumber = getIsoWeekNumber(weekStartDate);
+
+        return `
+            <option value="${weekStart}">
+                ${prefix} - week ${weekNumber} (${formatDate(weekStart)} t/m ${formatDate(weekEnd)})
+            </option>
+        `;
+    }).join('');
+
+    weekFilter.innerHTML = `
+        <option value="">Alle weken</option>
+        ${optionsHtml}
+    `;
+
+    if ([...weekFilter.options].some((option) => option.value === previousValue)) {
+        weekFilter.value = previousValue;
+    }
 }
 
 function escapeHtml(value) {
@@ -357,6 +430,7 @@ function buildQueryString() {
     const params = new URLSearchParams();
 
     const name = document.getElementById('search-name').value.trim();
+    const weekStart = weekFilter ? weekFilter.value : '';
     const month = document.getElementById('search-month').value;
     const location = document.getElementById('search-location').value;
     const type = document.getElementById('search-type').value;
@@ -364,6 +438,10 @@ function buildQueryString() {
 
     if (name) {
         params.append('name', name);
+    }
+
+    if (weekStart) {
+        params.append('weekStart', weekStart);
     }
 
     if (month) {
@@ -575,4 +653,7 @@ searchForm.addEventListener('submit', (event) => {
     loadChanges();
 });
 
-document.addEventListener('DOMContentLoaded', loadChanges);
+document.addEventListener('DOMContentLoaded', () => {
+    populateWeekFilter();
+    loadChanges();
+});
