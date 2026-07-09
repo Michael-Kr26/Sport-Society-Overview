@@ -25,9 +25,9 @@ const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
 const searchForm = document.getElementById('cml-search-form');
 const tableBody = document.getElementById('changes-table-body');
 const paginationContainer = document.getElementById('cml-pagination');
-const weekFilter = document.getElementById('search-week');
 
 let currentPage = 1;
+let focusWeekStart = '';
 let shouldFocusSelectedWeek = true;
 
 function userCanUpdateStatus() {
@@ -80,20 +80,16 @@ function getIsoWeekStart(date) {
     return weekStart;
 }
 
-function addDays(date, days) {
-    const nextDate = new Date(date.getTime());
-
-    nextDate.setDate(nextDate.getDate() + days);
-
-    return nextDate;
-}
-
 function toIsoDate(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+}
+
+function getCurrentWeekStartValue() {
+    return toIsoDate(getIsoWeekStart(new Date()));
 }
 
 function getIsoWeekNumber(dateString) {
@@ -114,56 +110,6 @@ function getIsoWeekNumber(dateString) {
     firstThursday.setDate(firstThursday.getDate() - firstThursdayDayNumber + 3);
 
     return 1 + Math.round((normalizedDate - firstThursday) / (7 * 24 * 60 * 60 * 1000));
-}
-
-function populateWeekFilter() {
-    if (!weekFilter) {
-        return;
-    }
-
-    const previousValue = weekFilter.value;
-    const currentWeekStart = getIsoWeekStart(new Date());
-    const currentWeekStartValue = toIsoDate(currentWeekStart);
-    const weekOptions = [
-        {
-            offset: -1,
-            prefix: 'Vorige week'
-        },
-        {
-            offset: 0,
-            prefix: 'Huidige week'
-        },
-        {
-            offset: 1,
-            prefix: 'Volgende week'
-        }
-    ];
-
-    const optionsHtml = weekOptions.map(({ offset, prefix }) => {
-        const weekStartDate = addDays(currentWeekStart, offset * 7);
-        const weekEndDate = addDays(weekStartDate, 6);
-        const weekStart = toIsoDate(weekStartDate);
-        const weekEnd = toIsoDate(weekEndDate);
-        const weekNumber = getIsoWeekNumber(weekStartDate);
-
-        return `
-            <option value="${weekStart}">
-                ${prefix} - week ${weekNumber} (${formatDate(weekStart)} t/m ${formatDate(weekEnd)})
-            </option>
-        `;
-    }).join('');
-
-    weekFilter.innerHTML = `
-        <option value="">Alle weken</option>
-        ${optionsHtml}
-    `;
-
-    if ([...weekFilter.options].some((option) => option.value === previousValue)) {
-        weekFilter.value = previousValue;
-        return;
-    }
-
-    weekFilter.value = currentWeekStartValue;
 }
 
 function escapeHtml(value) {
@@ -259,31 +205,21 @@ function renderStatusCell(change) {
 }
 
 function renderActionCell(change) {
-    const deleteButton = userCanDeleteChange() ? `
-        <button
-            type="button"
-            class="delete-change-button"
-            data-change-id="${change.id}"
-            aria-label="Wijziging verwijderen"
-            title="Wijziging verwijderen"
-        >
-            &#128465;
-        </button>
-    ` : '';
+    if (!userCanDeleteChange()) {
+        return '<span class="cml-no-action">-</span>';
+    }
 
     return `
         <div class="cml-action-buttons">
             <button
                 type="button"
-                class="details-toggle-button"
+                class="delete-change-button"
                 data-change-id="${change.id}"
-                aria-expanded="false"
-                aria-label="Beschrijving tonen"
-                title="Beschrijving tonen"
+                aria-label="Wijziging verwijderen"
+                title="Wijziging verwijderen"
             >
-                i
+                &#128465;
             </button>
-            ${deleteButton}
         </div>
     `;
 }
@@ -291,7 +227,6 @@ function renderActionCell(change) {
 function attachTableActionListeners() {
     const statusSelects = document.querySelectorAll('.status-select');
     const deleteButtons = document.querySelectorAll('.delete-change-button');
-    const detailsButtons = document.querySelectorAll('.details-toggle-button');
 
     statusSelects.forEach((select) => {
         select.addEventListener('change', handleStatusChange);
@@ -299,10 +234,6 @@ function attachTableActionListeners() {
 
     deleteButtons.forEach((button) => {
         button.addEventListener('click', handleDeleteChange);
-    });
-
-    detailsButtons.forEach((button) => {
-        button.addEventListener('click', handleDetailsToggle);
     });
 }
 
@@ -323,7 +254,17 @@ function renderChanges(changes) {
     }
 
     tableBody.innerHTML = changes.map((change) => {
-        const reason = change.reason ? escapeHtml(change.reason) : 'Geen beschrijving ingevuld.';
+        const reason = String(change.reason || '').trim();
+        const detailsRow = reason ? `
+            <tr class="cml-details-row" data-details-row="${change.id}">
+                <td colspan="8">
+                    <div class="cml-details-content">
+                        <strong>Informatie</strong>
+                        <p>${escapeHtml(reason)}</p>
+                    </div>
+                </td>
+            </tr>
+        ` : '';
 
         return `
             <tr>
@@ -336,14 +277,7 @@ function renderChanges(changes) {
                 <td>${escapeHtml(change.createdBy)}</td>
                 <td class="cml-action-cell">${renderActionCell(change)}</td>
             </tr>
-            <tr class="cml-details-row" data-details-row="${change.id}" hidden>
-                <td colspan="8">
-                    <div class="cml-details-content">
-                        <strong>Beschrijving / reden</strong>
-                        <p>${reason}</p>
-                    </div>
-                </td>
-            </tr>
+            ${detailsRow}
         `;
     }).join('');
 
@@ -435,7 +369,6 @@ function buildQueryString() {
     const params = new URLSearchParams();
 
     const name = document.getElementById('search-name').value.trim();
-    const weekStart = weekFilter ? weekFilter.value : '';
     const month = document.getElementById('search-month').value;
     const location = document.getElementById('search-location').value;
     const type = document.getElementById('search-type').value;
@@ -445,8 +378,8 @@ function buildQueryString() {
         params.append('name', name);
     }
 
-    if (weekStart && shouldFocusSelectedWeek) {
-        params.append('focusWeekStart', weekStart);
+    if (focusWeekStart && shouldFocusSelectedWeek) {
+        params.append('focusWeekStart', focusWeekStart);
     }
 
     if (month) {
@@ -559,32 +492,6 @@ async function handleDeleteChange(event) {
     }
 }
 
-function handleDetailsToggle(event) {
-    const button = event.target.closest('.details-toggle-button');
-
-    if (!button) {
-        return;
-    }
-
-    const changeId = button.dataset.changeId;
-    const detailsRow = document.querySelector(`[data-details-row="${changeId}"]`);
-
-    if (!detailsRow) {
-        return;
-    }
-
-    const isHidden = detailsRow.hidden;
-
-    detailsRow.hidden = !isHidden;
-    button.setAttribute('aria-expanded', String(isHidden));
-    button.classList.toggle('is-active', isHidden);
-    button.title = isHidden ? 'Beschrijving verbergen' : 'Beschrijving tonen';
-    button.setAttribute(
-        'aria-label',
-        isHidden ? 'Beschrijving verbergen' : 'Beschrijving tonen'
-    );
-}
-
 function handlePaginationClick(event) {
     const button = event.target.closest('.cml-pagination-button');
 
@@ -600,10 +507,7 @@ function handlePaginationClick(event) {
 
     currentPage = nextPage;
     shouldFocusSelectedWeek = false;
-
-    if (weekFilter) {
-        weekFilter.value = '';
-    }
+    focusWeekStart = '';
 
     loadChanges();
 
@@ -658,22 +562,16 @@ async function loadChanges() {
     }
 }
 
-if (weekFilter) {
-    weekFilter.addEventListener('change', () => {
-        currentPage = 1;
-        shouldFocusSelectedWeek = true;
-        loadChanges();
-    });
-}
-
 searchForm.addEventListener('submit', (event) => {
     event.preventDefault();
     currentPage = 1;
+    focusWeekStart = getCurrentWeekStartValue();
     shouldFocusSelectedWeek = true;
     loadChanges();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    populateWeekFilter();
+    focusWeekStart = getCurrentWeekStartValue();
+    shouldFocusSelectedWeek = true;
     loadChanges();
 });
