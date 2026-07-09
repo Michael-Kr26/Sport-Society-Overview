@@ -4,12 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        .cml-table th:nth-child(2),
-        .cml-table td:nth-child(2) {
-            display: none;
-        }
-    </style>
     <script src="cml.js" defer></script>
     <title>Sport Society - Roosterwijzigingen</title>
 </head>
@@ -98,7 +92,7 @@
                 <label>
                     Status
                     <select id="search-status">
-                        <option value="">Alle statussen</option>
+                        <option value="">Actieve statussen</option>
                         <option>Open</option>
                         <option>In behandeling</option>
                         <option>Afgerond</option>
@@ -123,7 +117,6 @@
                     <thead>
                         <tr>
                             <th>Datum wijziging</th>
-                            <th>Doorgegeven</th>
                             <th>Locatie</th>
                             <th>Medewerker 1</th>
                             <th>Medewerker 2</th>
@@ -135,7 +128,7 @@
                     </thead>
                     <tbody id="changes-table-body">
                         <tr>
-                            <td colspan="9" class="empty-state">
+                            <td colspan="8" class="empty-state">
                                 Roosterwijzigingen laden...
                             </td>
                         </tr>
