@@ -8,7 +8,9 @@ const app = express();
 const PORT = 3000;
 
 const ARCHIVE_AFTER_DAYS = 7;
+const ARCHIVED_PAGE_SIZE = 20;
 const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
+const allowedLocations = ['Achterveld', 'Barneveld', 'Voorthuizen', 'Wekerom', 'Harskamp'];
 
 const dataDir = path.join(__dirname, 'data');
 const dbPath = path.join(dataDir, 'sport-society.db');
@@ -53,6 +55,15 @@ function parsePositiveInteger(value, fallback) {
     }
 
     return parsedValue;
+}
+
+function isIsoDateString(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) {
+        return false;
+    }
+
+    const date = new Date(`${value}T00:00:00`);
+    return !Number.isNaN(date.getTime());
 }
 
 function addDaysToIsoDate(dateString, days) {
@@ -322,6 +333,89 @@ app.get('/api/changes', (req, res) => {
             `;
         }
 
+        if (status === 'Archived') {
+            const countQuery = `
+                SELECT COUNT(*) AS totalItems
+                ${whereQuery}
+            `;
+
+            db.get(countQuery, values, (countError, countRow) => {
+                if (countError) {
+                    console.error('Gearchiveerde roosterwijzigingen konden niet worden geteld:', countError.message);
+
+                    return res.status(500).json({
+                        message: 'Gearchiveerde roosterwijzigingen konden niet worden opgehaald.'
+                    });
+                }
+
+                const totalItems = countRow ? countRow.totalItems : 0;
+                const totalPages = Math.max(1, Math.ceil(totalItems / ARCHIVED_PAGE_SIZE));
+                const page = Math.min(requestedPage, totalPages);
+                const offset = (page - 1) * ARCHIVED_PAGE_SIZE;
+
+                if (totalItems === 0) {
+                    return res.json({
+                        items: [],
+                        pagination: {
+                            mode: 'archive',
+                            page: 1,
+                            totalPages: 1,
+                            totalItems: 0,
+                            pageSize: ARCHIVED_PAGE_SIZE,
+                            weekStart: null,
+                            weekEnd: null
+                        }
+                    });
+                }
+
+                const query = `
+                    SELECT
+                        id,
+                        change_date AS date,
+                        reported_date AS reportedDate,
+                        location,
+                        employee_1 AS employee,
+                        employee_2 AS employee2,
+                        change_type AS type,
+                        reason,
+                        status,
+                        created_by AS createdBy,
+                        created_at AS createdAt
+                    ${whereQuery}
+                    ORDER BY
+                        change_date DESC,
+                        created_at DESC,
+                        id DESC
+                    LIMIT ? OFFSET ?
+                `;
+
+                db.all(query, [...values, ARCHIVED_PAGE_SIZE, offset], (error, rows) => {
+                    if (error) {
+                        console.error('Gearchiveerde roosterwijzigingen konden niet worden opgehaald:', error.message);
+
+                        return res.status(500).json({
+                            message: 'Gearchiveerde roosterwijzigingen konden niet worden opgehaald.'
+                        });
+                    }
+
+                    res.json({
+                        items: rows,
+                        pagination: {
+                            mode: 'archive',
+                            page,
+                            totalPages,
+                            totalItems,
+                            pageSize: ARCHIVED_PAGE_SIZE,
+                            weekStart: null,
+                            weekEnd: null
+                        }
+                    });
+                });
+            });
+
+            return;
+        }
+
         const weeksQuery = `
             SELECT
                 weekStart,
@@ -505,6 +599,94 @@ app.patch('/api/changes/:id/status', (req, res) => {
             message: 'Status bijgewerkt.',
             id: changeId,
             status
+        });
+    });
+});
+
+app.patch('/api/changes/:id', (req, res) => {
+    if (!userCanUpdateStatus(req)) {
+        return res.status(403).json({
+            message: 'Alleen admins mogen roosterwijzigingen aanpassen.'
+        });
+    }
+
+    const changeId = Number(req.params.id);
+    const {
+        date,
+        location,
+        employee,
+        employee2,
+        reason
+    } = req.body;
+
+    const normalizedDate = String(date || '').trim();
+    const normalizedLocation = String(location || '').trim();
+    const normalizedEmployee = String(employee || '').trim();
+    const normalizedEmployee2 = String(employee2 || '').trim();
+    const normalizedReason = String(reason || '').trim();
+
+    if (!Number.isInteger(changeId) || changeId <= 0) {
+        return res.status(400).json({
+            message: 'Ongeldig wijziging-ID.'
+        });
+    }
+
+    if (!normalizedDate || !normalizedLocation || !normalizedEmployee) {
+        return res.status(400).json({
+            message: 'Datum, locatie en medewerker 1 zijn verplicht.'
+        });
+    }
+
+    if (!isIsoDateString(normalizedDate)) {
+        return res.status(400).json({
+            message: 'Ongeldige datum.'
+        });
+    }
+
+    if (!allowedLocations.includes(normalizedLocation)) {
+        return res.status(400).json({
+            message: 'Ongeldige locatie.'
+        });
+    }
+
+    const query = `
+        UPDATE changes
+        SET
+            change_date = ?,
+            location = ?,
+            employee_1 = ?,
+            employee_2 = ?,
+            reason = ?
+        WHERE id = ?
+    `;
+
+    const values = [
+        normalizedDate,
+        normalizedLocation,
+        normalizedEmployee,
+        normalizedEmployee2,
+        normalizedReason,
+        changeId
+    ];
+
+    db.run(query, values, function (error) {
+        if (error) {
+            console.error('Wijziging kon niet worden aangepast:', error.message);
+
+            return res.status(500).json({
+                message: 'Wijziging kon niet worden aangepast.'
+            });
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).json({
+                message: 'Wijziging niet gevonden.'
+            });
+        }
+
+        res.json({
+            message: 'Wijziging bijgewerkt.',
+            id: changeId
         });
     });
 });
