@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="login.css">
+    <script src="auth-ui.js" defer></script>
+    <script src="login.js" defer></script>
+    <title>Sport Society - Inloggen</title>
+</head>
+<body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Inloggen</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label">
+            <span></span>
+        </label>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="cml.html">Roosterwijzigingen</a>
+            <a href="roster.html">Rooster</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="login.html" data-auth-entry>Inloggen</a>
+        </div>
+    </nav>
+
+    <main class="login-page">
+        <section class="login-card">
+            <div class="card-header">
+                <p class="card-label">Account</p>
+                <h2>Inloggen</h2>
+            </div>
+
+            <p class="login-intro">
+                Log straks in met je persoonlijke account. De echte sessie- en rollenbackend wordt in de volgende ontwikkelstap gekoppeld.
+            </p>
+
+            <form id="login-form" class="login-form">
+                <label>
+                    E-mailadres
+                    <input type="email" id="login-email" autocomplete="username" required>
+                </label>
+
+                <label>
+                    Wachtwoord
+                    <input type="password" id="login-password" autocomplete="current-password" required>
+                </label>
+
+                <button type="submit" class="admin-button">
+                    Inloggen
+                </button>
+            </form>
+
+            <p id="login-status" class="login-status" aria-live="polite"></p>
+
+            <div id="login-admin-access" class="login-dev-note" hidden>
+                <strong>Ontwikkelmodus actief</strong>
+                <p>Je huidige demoRole staat op admin. Tot de echte login is aangesloten kun je hiermee het ChangeForm openen.</p>
+                <a id="login-admin-link" href="cf.html" class="admin-button login-admin-link">Naar ChangeForm</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
+    </footer>
+</body>
+</html>
