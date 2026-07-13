@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <script src="auth-ui.js" defer></script>
+    <script src="cf.js" defer></script>
+    <title>Sport Society - ChangeForm</title>
+</head>
+<body data-admin-page>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Wijzigingsformulier voor werkrooster</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label">
+            <span></span>
+        </label>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="cml.html">Roosterwijzigingen</a>
+            <a href="roster.html">Rooster</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="login.html" data-auth-entry>Inloggen</a>
+        </div>
+    </nav>
+
+    <main data-admin-content hidden>
+        <section class="dashboard-card">
+            <div class="card-header">
+                <p class="card-label">Change Management</p>
+                <h2>Nieuwe roosterwijziging</h2>
+            </div>
+
+            <form id="change-form" class="admin-form">
+                <label>
+                    Datum van wijziging
+                    <input type="date" id="change-date" required>
+                </label>
+
+                <label>
+                    Datum doorgegeven
+                    <input type="date" id="change-reported-date" required>
+                </label>
+
+                <label>
+                    Locatie
+                    <select id="change-location" required>
+                        <option value="">Kies locatie</option>
+                        <option>Achterveld</option>
+                        <option>Barneveld</option>
+                        <option>Voorthuizen</option>
+                        <option>Wekerom</option>
+                        <option>Harskamp</option>
+                    </select>
+                </label>
+
+                <label>
+                    Medewerker 1
+                    <input type="text" id="change-employee" placeholder="Bijv. Vigo" required>
+                </label>
+
+                <label>
+                    Medewerker 2
+                    <input type="text" id="change-employee2" placeholder="Bijv. Olav">
+                </label>
+
+                <label>
+                    Type wijziging
+                    <select id="change-type" required>
+                        <option>Dienstwissel</option>
+                        <option>Ziekmelding</option>
+                        <option>Vakantieaanvraag</option>
+                        <option>Ouderschapsverlof</option>
+                        <option>Vervanging</option>
+                        <option>Vrij wegens overuren</option>
+                        <option>Extra dienst</option>
+                        <option>Openstaande dienst</option>
+                        <option>Tijdswijziging</option>
+                        <option>Locatiewijziging</option>
+                        <option>Dienst vervallen</option>
+                        <option>Dienst toegevoegd</option>
+                        <option>Overige wijziging</option>
+                    </select>
+                </label>
+
+                <label>
+                    Beschrijving / reden
+                    <textarea id="change-reason" rows="4" placeholder="Omschrijf kort wat er is gewijzigd"></textarea>
+                </label>
+
+                <label>
+                    Status
+                    <select id="change-status" required>
+                        <option>Open</option>
+                        <option>In behandeling</option>
+                        <option>Afgerond</option>
+                    </select>
+                </label>
+
+                <label>
+                    Ingevoerd door
+                    <select id="change-created-by" required>
+                        <option value="">Kies ingevoerd door</option>
+                        <option>Michael</option>
+                        <option>Chico</option>
+                    </select>
+                </label>
+
+                <button type="submit" class="admin-button">
+                    Wijziging doorvoeren
+                </button>
+
+                <p id="form-message" class="empty-state" aria-live="polite"></p>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
+    </footer>
+</body>
+</html>
