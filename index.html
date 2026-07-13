@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
+    <script src="auth-ui.js" defer></script>
     <script src="script.js" defer></script>
     <title>Sport Society - Home</title>
 </head>
@@ -23,7 +24,7 @@
             <a href="cml.html">Roosterwijzigingen</a>
             <a href="roster.html">Rooster</a>
             <a href="dashboard.html">Dashboard</a>
-            <a href="admin.html">Admin login</a>
+            <a href="login.html" data-auth-entry>Inloggen</a>
         </div>
     </nav>
 
@@ -47,18 +48,17 @@
 
             <article class="dashboard-card admin-access-card">
                 <div class="card-header">
-                    <p class="card-label">Beheer</p>
-                    <h2>Admin toegang</h2>
+                    <p class="card-label">Toegang</p>
+                    <h2>Account en beheer</h2>
                 </div>
 
                 <div class="admin-access-content">
                     <p>
-                        Voeg nieuwe roosterwijzigingen toe via het adminformulier.
-                        De meest recente wijziging wordt daarna automatisch op het dashboard getoond.
+                        Log in om functies te openen die bij jouw rol horen. Alleen admins krijgen toegang tot het ChangeForm.
                     </p>
 
-                    <a href="admin.html" class="admin-button">
-                        Naar adminformulier
+                    <a href="login.html" class="admin-button" data-auth-entry>
+                        Inloggen
                     </a>
                 </div>
             </article>
