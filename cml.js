@@ -21,6 +21,7 @@ const rolePermissions = {
 const permissions = rolePermissions[currentUserRole] || rolePermissions.employee;
 
 const allowedStatuses = ['Open', 'In behandeling', 'Afgerond', 'Archived'];
+const allowedLocations = ['Achterveld', 'Barneveld', 'Voorthuizen', 'Wekerom', 'Harskamp'];
 
 const searchForm = document.getElementById('cml-search-form');
 const tableBody = document.getElementById('changes-table-body');
@@ -29,6 +30,8 @@ const paginationContainer = document.getElementById('cml-pagination');
 let currentPage = 1;
 let focusWeekStart = '';
 let shouldFocusSelectedWeek = true;
+let activeEditChangeId = null;
+let visibleChanges = [];
 
 function userCanUpdateStatus() {
     return permissions.canUpdateChangeStatus;
@@ -214,9 +217,76 @@ function renderStatusCell(change) {
     `;
 }
 
+function renderLocationOptions(selectedLocation) {
+    return allowedLocations.map((location) => `
+        <option value="${escapeHtml(location)}" ${location === selectedLocation ? 'selected' : ''}>
+            ${escapeHtml(location)}
+        </option>
+    `).join('');
+}
+
+function renderEditRow(change, columnCount) {
+    return `
+        <tr class="cml-details-row cml-edit-row" data-edit-row="${change.id}">
+            <td colspan="${columnCount}">
+                <form class="cml-edit-form" data-change-id="${change.id}">
+                    <strong>Wijziging aanpassen</strong>
+
+                    <div class="cml-edit-grid">
+                        <label>
+                            Datum wijziging
+                            <input type="date" name="date" value="${escapeHtml(change.date)}" required>
+                        </label>
+
+                        <label>
+                            Locatie
+                            <select name="location" required>
+                                ${renderLocationOptions(change.location)}
+                            </select>
+                        </label>
+
+                        <label>
+                            Medewerker 1
+                            <input type="text" name="employee" value="${escapeHtml(change.employee)}" required>
+                        </label>
+
+                        <label>
+                            Medewerker 2
+                            <input type="text" name="employee2" value="${escapeHtml(change.employee2 || '')}">
+                        </label>
+
+                        <label class="cml-edit-full">
+                            Reden / informatie
+                            <textarea name="reason" rows="3">${escapeHtml(change.reason || '')}</textarea>
+                        </label>
+                    </div>
+
+                    <div class="cml-edit-actions">
+                        <button type="submit" class="admin-button cml-save-button">
+                            Bevestigen
+                        </button>
+                        <button type="button" class="cml-secondary-button cancel-edit-button" data-change-id="${change.id}">
+                            Annuleren
+                        </button>
+                    </div>
+                </form>
+            </td>
+        </tr>
+    `;
+}
+
 function renderActionCell(change) {
     return `
         <div class="cml-action-buttons">
+            <button
+                type="button"
+                class="edit-change-button"
+                data-change-id="${change.id}"
+                aria-label="Wijziging aanpassen"
+                title="Wijziging aanpassen"
+            >
+                &#9998;
+            </button>
             <button
                 type="button"
                 class="delete-change-button"
@@ -232,14 +302,29 @@ function renderActionCell(change) {
 
 function attachTableActionListeners() {
     const statusSelects = document.querySelectorAll('.status-select');
+    const editButtons = document.querySelectorAll('.edit-change-button');
     const deleteButtons = document.querySelectorAll('.delete-change-button');
+    const editForms = document.querySelectorAll('.cml-edit-form');
+    const cancelEditButtons = document.querySelectorAll('.cancel-edit-button');
 
     statusSelects.forEach((select) => {
         select.addEventListener('change', handleStatusChange);
     });
 
+    editButtons.forEach((button) => {
+        button.addEventListener('click', handleEditChange);
+    });
+
     deleteButtons.forEach((button) => {
         button.addEventListener('click', handleDeleteChange);
+    });
+
+    editForms.forEach((form) => {
+        form.addEventListener('submit', handleEditSubmit);
+    });
+
+    cancelEditButtons.forEach((button) => {
+        button.addEventListener('click', handleCancelEdit);
     });
 }
 
@@ -249,6 +334,7 @@ function renderChanges(changes) {
     }
 
     const columnCount = getTableColumnCount();
+    visibleChanges = Array.isArray(changes) ? changes : [];
 
     if (!changes || changes.length === 0) {
         tableBody.innerHTML = `
@@ -265,19 +351,22 @@ function renderChanges(changes) {
         const reason = String(change.reason || '').trim();
         const employee2 = String(change.employee2 || '').trim();
         const employee2CellClass = employee2 ? '' : ' class="cml-mobile-hide-empty"';
+        const isEditing = activeEditChangeId === Number(change.id);
         const actionCell = userCanDeleteChange()
             ? `<td class="cml-action-cell">${renderActionCell(change)}</td>`
             : '';
-        const detailsRow = reason ? `
-            <tr class="cml-details-row" data-details-row="${change.id}">
-                <td colspan="${columnCount}">
-                    <div class="cml-details-content">
-                        <strong>Informatie</strong>
-                        <p>${escapeHtml(reason)}</p>
-                    </div>
-                </td>
-            </tr>
-        ` : '';
+        const detailsRow = isEditing
+            ? renderEditRow(change, columnCount)
+            : reason ? `
+                <tr class="cml-details-row" data-details-row="${change.id}">
+                    <td colspan="${columnCount}">
+                        <div class="cml-details-content">
+                            <strong>Informatie</strong>
+                            <p>${escapeHtml(reason)}</p>
+                        </div>
+                    </td>
+                </tr>
+            ` : '';
 
         return `
             <tr>
@@ -331,22 +420,8 @@ function renderPaginationButton(label, page, options = {}) {
     `;
 }
 
-function renderPagination(pagination) {
-    if (!paginationContainer) {
-        return;
-    }
-
-    if (!pagination || !pagination.weekStart) {
-        paginationContainer.hidden = true;
-        paginationContainer.innerHTML = '';
-        return;
-    }
-
-    const { page, totalPages, totalItems, weekStart, weekEnd } = pagination;
-    const weekNumber = getIsoWeekNumber(weekStart);
-    const weekLabel = weekNumber ? `Week ${weekNumber}` : 'Week';
+function renderPaginationControls(page, totalPages) {
     const paginationItems = getVisiblePaginationItems(page, totalPages);
-
     const pageButtons = paginationItems.map((item) => {
         if (typeof item === 'string') {
             return '<span class="cml-pagination-ellipsis">...</span>';
@@ -357,11 +432,7 @@ function renderPagination(pagination) {
         });
     }).join('');
 
-    paginationContainer.hidden = false;
-    paginationContainer.innerHTML = `
-        <p class="cml-pagination-summary">
-            ${weekLabel} — ${formatDate(weekStart)} t/m ${formatDate(weekEnd)} • ${totalItems} wijziging${totalItems === 1 ? '' : 'en'}
-        </p>
+    return `
         <div class="cml-pagination-controls">
             ${renderPaginationButton('Vorige', page - 1, {
                 disabled: page <= 1
@@ -371,6 +442,59 @@ function renderPagination(pagination) {
                 disabled: page >= totalPages
             })}
         </div>
+    `;
+}
+
+function renderPagination(pagination) {
+    if (!paginationContainer) {
+        return;
+    }
+
+    if (!pagination) {
+        paginationContainer.hidden = true;
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    const { page, totalPages, totalItems, weekStart, weekEnd, mode } = pagination;
+
+    if (mode === 'archive') {
+        if (totalItems === 0) {
+            paginationContainer.hidden = true;
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        paginationContainer.hidden = false;
+        paginationContainer.innerHTML = `
+            <p class="cml-pagination-summary">
+                Archived — ${totalItems} wijziging${totalItems === 1 ? '' : 'en'} • pagina ${page} van ${totalPages}
+            </p>
+            ${renderPaginationControls(page, totalPages)}
+        `;
+
+        paginationContainer.querySelectorAll('.cml-pagination-button').forEach((button) => {
+            button.addEventListener('click', handlePaginationClick);
+        });
+
+        return;
+    }
+
+    if (!weekStart) {
+        paginationContainer.hidden = true;
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    const weekNumber = getIsoWeekNumber(weekStart);
+    const weekLabel = weekNumber ? `Week ${weekNumber}` : 'Week';
+
+    paginationContainer.hidden = false;
+    paginationContainer.innerHTML = `
+        <p class="cml-pagination-summary">
+            ${weekLabel} — ${formatDate(weekStart)} t/m ${formatDate(weekEnd)} • ${totalItems} wijziging${totalItems === 1 ? '' : 'en'}
+        </p>
+        ${renderPaginationControls(page, totalPages)}
     `;
 
     paginationContainer.querySelectorAll('.cml-pagination-button').forEach((button) => {
@@ -391,7 +515,7 @@ function buildQueryString() {
         params.append('name', name);
     }
 
-    if (focusWeekStart && shouldFocusSelectedWeek) {
+    if (focusWeekStart && shouldFocusSelectedWeek && status !== 'Archived') {
         params.append('focusWeekStart', focusWeekStart);
     }
 
@@ -437,6 +561,27 @@ async function updateChangeStatus(changeId, status) {
     return response.json();
 }
 
+async function updateChangeDetails(changeId, updates) {
+    const response = await fetch(`/api/changes/${changeId}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Demo-Role': currentUserRole
+        },
+        body: JSON.stringify(updates)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+            message: 'Wijziging kon niet worden aangepast.'
+        }));
+
+        throw new Error(errorData.message || 'Wijziging kon niet worden aangepast.');
+    }
+
+    return response.json();
+}
+
 async function deleteChange(changeId) {
     const response = await fetch(`/api/changes/${changeId}`, {
         method: 'DELETE',
@@ -465,6 +610,7 @@ async function handleStatusChange(event) {
     select.disabled = true;
 
     try {
+        activeEditChangeId = null;
         await updateChangeStatus(changeId, newStatus);
         await loadChanges();
     } catch (error) {
@@ -473,6 +619,62 @@ async function handleStatusChange(event) {
         select.value = previousStatus;
         select.disabled = false;
 
+        alert(error.message);
+    }
+}
+
+function handleEditChange(event) {
+    const button = event.target.closest('.edit-change-button');
+
+    if (!button) {
+        return;
+    }
+
+    activeEditChangeId = Number(button.dataset.changeId);
+    renderChanges(visibleChanges);
+}
+
+function handleCancelEdit(event) {
+    const button = event.target.closest('.cancel-edit-button');
+
+    if (!button) {
+        return;
+    }
+
+    activeEditChangeId = null;
+    renderChanges(visibleChanges);
+}
+
+async function handleEditSubmit(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const changeId = Number(form.dataset.changeId);
+    const formData = new FormData(form);
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    const updates = {
+        date: String(formData.get('date') || '').trim(),
+        location: String(formData.get('location') || '').trim(),
+        employee: String(formData.get('employee') || '').trim(),
+        employee2: String(formData.get('employee2') || '').trim(),
+        reason: String(formData.get('reason') || '').trim()
+    };
+
+    if (!updates.date || !updates.location || !updates.employee) {
+        alert('Datum, locatie en medewerker 1 zijn verplicht.');
+        return;
+    }
+
+    submitButton.disabled = true;
+
+    try {
+        await updateChangeDetails(changeId, updates);
+        activeEditChangeId = null;
+        await loadChanges();
+    } catch (error) {
+        console.error(error);
+        submitButton.disabled = false;
         alert(error.message);
     }
 }
@@ -495,6 +697,7 @@ async function handleDeleteChange(event) {
     button.disabled = true;
 
     try {
+        activeEditChangeId = null;
         await deleteChange(changeId);
         await loadChanges();
     } catch (error) {
@@ -521,6 +724,7 @@ function handlePaginationClick(event) {
     currentPage = nextPage;
     shouldFocusSelectedWeek = false;
     focusWeekStart = '';
+    activeEditChangeId = null;
 
     loadChanges();
 
@@ -580,8 +784,18 @@ async function loadChanges() {
 searchForm.addEventListener('submit', (event) => {
     event.preventDefault();
     currentPage = 1;
-    focusWeekStart = getCurrentWeekStartValue();
-    shouldFocusSelectedWeek = true;
+    activeEditChangeId = null;
+
+    const status = document.getElementById('search-status').value;
+
+    if (status === 'Archived') {
+        focusWeekStart = '';
+        shouldFocusSelectedWeek = false;
+    } else {
+        focusWeekStart = getCurrentWeekStartValue();
+        shouldFocusSelectedWeek = true;
+    }
+
     loadChanges();
 });
 
