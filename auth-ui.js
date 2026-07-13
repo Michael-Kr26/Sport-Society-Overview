@@ -18,6 +18,10 @@ function updateAuthNavigation() {
     document.querySelectorAll('[data-admin-only]').forEach((element) => {
         element.hidden = !isDemoAdmin;
     });
+
+    document.querySelectorAll('[data-admin-content]').forEach((element) => {
+        element.hidden = !isDemoAdmin;
+    });
 }
 
 function protectAdminPage() {
