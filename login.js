@@ -4,8 +4,13 @@ const nextPage = new URLSearchParams(window.location.search).get('next');
 
 function getSafeNextPage(userRole) {
     const allowedNextPages = ['index.html', 'roster.html', 'cml.html', 'dashboard.html', 'cf.html', 'create.html'];
+    const adminOnlyPages = ['cf.html', 'create.html'];
 
     if (nextPage && allowedNextPages.includes(nextPage)) {
+        if (adminOnlyPages.includes(nextPage) && userRole !== 'admin') {
+            return 'index.html';
+        }
+
         return nextPage;
     }
 
