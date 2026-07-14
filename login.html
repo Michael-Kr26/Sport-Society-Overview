@@ -37,13 +37,20 @@
             </div>
 
             <p class="login-intro">
-                Log straks in met je persoonlijke account. De echte sessie- en rollenbackend wordt in de volgende ontwikkelstap gekoppeld.
+                Log in met je gebruikersnaam en wachtwoord. Je beschikbare functies worden bepaald door je accountrol.
             </p>
 
             <form id="login-form" class="login-form">
                 <label>
-                    E-mailadres
-                    <input type="email" id="login-email" autocomplete="username" required>
+                    Gebruikersnaam
+                    <input
+                        type="text"
+                        id="login-username"
+                        autocomplete="username"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        required
+                    >
                 </label>
 
                 <label>
@@ -57,12 +64,6 @@
             </form>
 
             <p id="login-status" class="login-status" aria-live="polite"></p>
-
-            <div id="login-admin-access" class="login-dev-note" hidden>
-                <strong>Ontwikkelmodus actief</strong>
-                <p>Je huidige demoRole staat op admin. Tot de echte login is aangesloten kun je hiermee het ChangeForm openen.</p>
-                <a id="login-admin-link" href="cf.html" class="admin-button login-admin-link">Naar ChangeForm</a>
-            </div>
         </section>
     </main>
 
