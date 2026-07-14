@@ -1,0 +1,79 @@
+.create-page {
+    display: grid;
+    gap: 20px;
+    max-width: 760px;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
+.create-page .login-card {
+    width: 100%;
+}
+
+.login-form select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    background-color: #121212;
+    color: #e6e6e6;
+    font: inherit;
+}
+
+.login-form select:focus {
+    outline: none;
+    border-color: #d7ff3f;
+    box-shadow: 0 0 0 2px rgba(215, 255, 63, 0.12);
+}
+
+.account-list-card {
+    margin-top: 0;
+}
+
+.account-list {
+    display: grid;
+    gap: 10px;
+}
+
+.account-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    background-color: #121212;
+}
+
+.account-item strong,
+.account-item span {
+    display: block;
+}
+
+.account-username {
+    margin-top: 3px;
+    color: #9c9c9c;
+    font-size: 0.84rem;
+}
+
+.account-role {
+    padding: 5px 9px;
+    border: 1px solid rgba(215, 255, 63, 0.3);
+    border-radius: 999px;
+    color: #d7ff3f;
+    font-size: 0.76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+    .account-item {
+        grid-template-columns: 1fr;
+    }
+
+    .account-role {
+        width: fit-content;
+    }
+}
