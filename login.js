@@ -1,24 +1,47 @@
 const loginForm = document.getElementById('login-form');
 const loginStatus = document.getElementById('login-status');
-const currentDemoRole = localStorage.getItem('demoRole') || 'guest';
 const nextPage = new URLSearchParams(window.location.search).get('next');
 
-function showDevelopmentAccess() {
-    if (currentDemoRole !== 'admin') {
-        return;
+function getSafeNextPage(userRole) {
+    const allowedNextPages = ['index.html', 'roster.html', 'cml.html', 'dashboard.html', 'cf.html', 'create.html'];
+
+    if (nextPage && allowedNextPages.includes(nextPage)) {
+        return nextPage;
     }
 
-    const adminAccess = document.getElementById('login-admin-access');
-    const adminLink = document.getElementById('login-admin-link');
-
-    adminAccess.hidden = false;
-    adminLink.href = nextPage === 'cf.html' ? 'cf.html' : 'cf.html';
+    return userRole === 'admin' ? 'cf.html' : 'index.html';
 }
 
-loginForm?.addEventListener('submit', (event) => {
+loginForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    loginStatus.textContent = 'De echte loginbackend is nog niet gekoppeld. Dit scherm is alvast voorbereid voor de volgende ontwikkelstap.';
-});
+    const submitButton = loginForm.querySelector('button[type="submit"]');
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
 
-document.addEventListener('DOMContentLoaded', showDevelopmentAccess);
+    submitButton.disabled = true;
+    loginStatus.textContent = 'Inloggen...';
+
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Inloggen is niet gelukt.');
+        }
+
+        localStorage.setItem('demoRole', result.user.role);
+        loginStatus.textContent = `Ingelogd als ${result.user.displayName}.`;
+        window.location.href = getSafeNextPage(result.user.role);
+    } catch (error) {
+        console.error(error);
+        loginStatus.textContent = error.message || 'Inloggen is niet gelukt.';
+        submitButton.disabled = false;
+    }
+});
