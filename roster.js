@@ -25,6 +25,7 @@ const resultsContainer = document.getElementById('roster-results');
 const resultCount = document.getElementById('roster-result-count');
 
 let rosterItems = [];
+let rosterRefreshTimer = null;
 
 function escapeHtml(value) {
     return String(value || '')
@@ -140,12 +141,16 @@ function isCurrentOrFutureItem(item) {
     return String(item.rosterDate || '') >= getTodayDateString();
 }
 
+function isValidTime(value) {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value || ''));
+}
+
 function getShiftStartDateTime(item) {
     if (item.itemType !== 'shift' || !item.rosterDate) {
         return null;
     }
 
-    const startTime = /^\d{2}:\d{2}$/.test(String(item.startTime || ''))
+    const startTime = isValidTime(item.startTime)
         ? item.startTime
         : '23:59';
     const dateTime = new Date(`${item.rosterDate}T${startTime}:00`);
@@ -153,10 +158,46 @@ function getShiftStartDateTime(item) {
     return Number.isNaN(dateTime.getTime()) ? null : dateTime;
 }
 
+function getShiftEndDateTime(item) {
+    if (item.itemType !== 'shift' || !item.rosterDate || !isValidTime(item.endTime)) {
+        return null;
+    }
+
+    const endDateTime = new Date(`${item.rosterDate}T${item.endTime}:00`);
+
+    if (Number.isNaN(endDateTime.getTime())) {
+        return null;
+    }
+
+    if (isValidTime(item.startTime)) {
+        const startDateTime = new Date(`${item.rosterDate}T${item.startTime}:00`);
+
+        if (!Number.isNaN(startDateTime.getTime()) && endDateTime <= startDateTime) {
+            endDateTime.setDate(endDateTime.getDate() + 1);
+        }
+    }
+
+    return endDateTime;
+}
+
 function isUpcomingShift(item) {
     const shiftStart = getShiftStartDateTime(item);
 
     return Boolean(shiftStart && shiftStart.getTime() >= Date.now());
+}
+
+function isCompletedShiftToday(item) {
+    if (item.itemType !== 'shift' || item.rosterDate !== getTodayDateString()) {
+        return false;
+    }
+
+    const shiftEnd = getShiftEndDateTime(item);
+
+    return Boolean(shiftEnd && Date.now() >= shiftEnd.getTime());
+}
+
+function removeCompletedShiftsToday(items) {
+    return items.filter((item) => !isCompletedShiftToday(item));
 }
 
 function sortRosterItems(items) {
@@ -336,8 +377,9 @@ function renderRosterItem(item, nextShiftKey) {
 }
 
 function renderRosterItems(items) {
-    const sortedItems = sortRosterItems(items);
-    const nextShift = getNextShift(items);
+    const visibleItems = removeCompletedShiftsToday(items);
+    const sortedItems = sortRosterItems(visibleItems);
+    const nextShift = getNextShift(visibleItems);
     const nextShiftKey = nextShift ? getRosterItemKey(nextShift) : null;
 
     renderSummary(sortedItems);
@@ -373,6 +415,10 @@ function renderRosterItems(items) {
     }).join('');
 }
 
+function renderCurrentRosterView() {
+    renderRosterItems(getFilteredItems());
+}
+
 async function loadRoster() {
     try {
         const response = await fetch('/api/roster');
@@ -385,7 +431,7 @@ async function loadRoster() {
 
         rosterItems = Array.isArray(data) ? data : [];
 
-        renderRosterItems(rosterItems);
+        renderCurrentRosterView();
     } catch (error) {
         console.error(error);
 
@@ -405,7 +451,7 @@ async function loadRoster() {
 
 filterForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    renderRosterItems(getFilteredItems());
+    renderCurrentRosterView();
 });
 
 resetButton.addEventListener('click', () => {
@@ -414,7 +460,19 @@ resetButton.addEventListener('click', () => {
     locationFilter.value = '';
     statusFilter.value = '';
 
-    renderRosterItems(rosterItems);
+    renderCurrentRosterView();
 });
 
-document.addEventListener('DOMContentLoaded', loadRoster);
+document.addEventListener('DOMContentLoaded', () => {
+    loadRoster();
+
+    rosterRefreshTimer = window.setInterval(() => {
+        renderCurrentRosterView();
+    }, 60 * 1000);
+});
+
+window.addEventListener('beforeunload', () => {
+    if (rosterRefreshTimer) {
+        window.clearInterval(rosterRefreshTimer);
+    }
+});
