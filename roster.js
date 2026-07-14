@@ -140,6 +140,25 @@ function isCurrentOrFutureItem(item) {
     return String(item.rosterDate || '') >= getTodayDateString();
 }
 
+function getShiftStartDateTime(item) {
+    if (item.itemType !== 'shift' || !item.rosterDate) {
+        return null;
+    }
+
+    const startTime = /^\d{2}:\d{2}$/.test(String(item.startTime || ''))
+        ? item.startTime
+        : '23:59';
+    const dateTime = new Date(`${item.rosterDate}T${startTime}:00`);
+
+    return Number.isNaN(dateTime.getTime()) ? null : dateTime;
+}
+
+function isUpcomingShift(item) {
+    const shiftStart = getShiftStartDateTime(item);
+
+    return Boolean(shiftStart && shiftStart.getTime() >= Date.now());
+}
+
 function sortRosterItems(items) {
     return [...items].sort((a, b) => {
         const aDate = String(a.rosterDate || '');
@@ -160,7 +179,38 @@ function sortRosterItems(items) {
             return dateCompare;
         }
 
-        return String(a.startTime || '99:99').localeCompare(String(b.startTime || '99:99'));
+        const aIsShift = a.itemType === 'shift';
+        const bIsShift = b.itemType === 'shift';
+
+        if (aIsShift !== bIsShift) {
+            return aIsShift ? -1 : 1;
+        }
+
+        if (aIsShift && bIsShift) {
+            const locationCompare = String(a.location || '').localeCompare(
+                String(b.location || ''),
+                'nl',
+                { sensitivity: 'base' }
+            );
+
+            if (locationCompare !== 0) {
+                return locationCompare;
+            }
+        }
+
+        const timeCompare = String(a.startTime || '99:99').localeCompare(
+            String(b.startTime || '99:99')
+        );
+
+        if (timeCompare !== 0) {
+            return timeCompare;
+        }
+
+        return String(a.employeeName || '').localeCompare(
+            String(b.employeeName || ''),
+            'nl',
+            { sensitivity: 'base' }
+        );
     });
 }
 
@@ -200,17 +250,17 @@ function groupItemsByDate(items) {
 }
 
 function getNextShift(items) {
-    return items.find((item) => (
-        item.itemType === 'shift'
-        && isCurrentOrFutureItem(item)
-    ));
+    return items
+        .filter(isUpcomingShift)
+        .sort((a, b) => getShiftStartDateTime(a) - getShiftStartDateTime(b))[0] || null;
 }
 
 function renderSummary(items) {
-        if (!permissions.canViewRosterSummary) {
+    if (!permissions.canViewRosterSummary) {
         summaryContainer.innerHTML = '';
         return;
     }
+
     const total = items.length;
     const shifts = items.filter((item) => item.itemType === 'shift').length;
     const absences = items.filter((item) => item.itemType === 'absence').length;
@@ -287,7 +337,7 @@ function renderRosterItem(item, nextShiftKey) {
 
 function renderRosterItems(items) {
     const sortedItems = sortRosterItems(items);
-    const nextShift = getNextShift(sortedItems);
+    const nextShift = getNextShift(items);
     const nextShiftKey = nextShift ? getRosterItemKey(nextShift) : null;
 
     renderSummary(sortedItems);
