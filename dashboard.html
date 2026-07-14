@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
     <script src="auth-ui.js" defer></script>
     <title>Sport Society - Dashboard</title>
 </head>
 <body>
     <header>
         <h1>Sport Society Overview</h1>
-        <p>KPI-dashboard voor Sport Society</p>
+        <p>Projectstatus en managementoverzicht</p>
     </header>
 
     <nav>
@@ -28,116 +29,189 @@
         </div>
     </nav>
 
-    <main class="kpi-page">
-        <section class="kpi-hero">
-            <div class="kpi-hero-content">
-                <p class="kpi-eyebrow">KPI Dashboard</p>
-                <h2>Managementoverzicht in voorbereiding</h2>
+    <main class="project-dashboard">
+        <section class="project-card project-hero">
+            <div class="project-hero-copy">
+                <div class="project-heading-row">
+                    <p class="project-label">Sport Society Overview</p>
+                    <span class="project-version-badge">Werkende demo</span>
+                </div>
+
+                <h2>Operationeel overzicht in ontwikkeling</h2>
                 <p>
-                    Deze pagina wordt later het centrale overzicht voor roosterbezetting,
-                    roosterwijzigingen, locaties en medewerkerinzichten.
+                    De eerste werkende versie brengt roostercontrole, roosterwijzigingen,
+                    accounttoegang en rolverdeling samen in één applicatie. De basis staat;
+                    de volgende fase richt zich op live synchronisatie, auditlogging en KPI-data.
                 </p>
 
-                <div class="kpi-actions">
+                <div class="project-actions">
                     <a href="roster.html" class="admin-button">Bekijk rooster</a>
-                    <a href="cml.html" class="kpi-secondary-link">Bekijk roosterwijzigingen</a>
+                    <a href="cml.html" class="project-secondary-link">Bekijk roosterwijzigingen</a>
                 </div>
             </div>
 
-            <aside class="kpi-status-panel">
-                <p class="kpi-status-label">Status</p>
-                <h3>Opbouwfase</h3>
+            <aside class="project-hero-status">
+                <span class="project-status-pill is-active">Presentatieversie</span>
+                <h3>Kernfunctionaliteit werkt</h3>
                 <p>
-                    De structuur staat klaar. De echte KPI-data wordt later gekoppeld
-                    aan rooster- en wijzigingsdata.
+                    Roosterdata kan worden gecontroleerd, wijzigingen kunnen worden verwerkt
+                    en gebruikers krijgen toegang op basis van hun rol.
                 </p>
             </aside>
         </section>
 
-        <section class="kpi-overview-grid" aria-label="Dashboard modules">
-            <article class="kpi-module-card">
-                <div class="kpi-module-header">
-                    <p class="kpi-eyebrow">Rooster</p>
-                    <span class="kpi-module-status">Later</span>
+        <section class="project-card project-status-card" aria-label="Huidige systeemstatus">
+            <div>
+                <p class="project-label">Huidige status</p>
+                <h2>Wat werkt er nu?</h2>
+            </div>
+
+            <div class="project-status-list">
+                <article class="project-status-item">
+                    <span class="project-status-pill is-active">Actief</span>
+                    <strong>Roostercontrole</strong>
+                    <p>Excel-import, filters, sortering en eerstvolgende dienst.</p>
+                </article>
+
+                <article class="project-status-item">
+                    <span class="project-status-pill is-active">Actief</span>
+                    <strong>Change Management</strong>
+                    <p>Registreren, bewerken, statussen, archiveren en filteren.</p>
+                </article>
+
+                <article class="project-status-item">
+                    <span class="project-status-pill is-active">Actief</span>
+                    <strong>Login en rollen</strong>
+                    <p>Accounts, sessies en toegang voor employee, manager en admin.</p>
+                </article>
+
+                <article class="project-status-item">
+                    <span class="project-status-pill is-planned">Gepland</span>
+                    <strong>Live integratie</strong>
+                    <p>Automatische synchronisatie met de definitieve roosterbron.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="project-modules" aria-label="Onderdelen van Sport Society Overview">
+            <article class="project-module">
+                <div class="project-module-header">
+                    <p class="project-label">Rooster</p>
+                    <span class="project-module-status is-active">Werkend</span>
                 </div>
 
-                <h3>Roosterbezetting</h3>
+                <h3>Roostercontrole</h3>
                 <p>
-                    Inzicht in geplande diensten, bezetting per dag en openstaande diensten.
+                    Een overzichtelijke weergave van diensten, locaties, afwezigheden en
+                    overgenomen diensten op basis van geïmporteerde roosterdata.
                 </p>
 
                 <ul>
-                    <li>Diensten per locatie</li>
-                    <li>Openstaande diensten</li>
-                    <li>Drukste dagen</li>
+                    <li>Filteren op medewerker, type, locatie en status</li>
+                    <li>Shifts alfabetisch gegroepeerd per locatie</li>
+                    <li>Eerstvolgende dienst automatisch gemarkeerd</li>
+                    <li>Afgeronde diensten verdwijnen gedurende de dag</li>
                 </ul>
+
+                <a href="roster.html" class="project-module-link">Open rooster →</a>
             </article>
 
-            <article class="kpi-module-card">
-                <div class="kpi-module-header">
-                    <p class="kpi-eyebrow">Change Management</p>
-                    <span class="kpi-module-status">Later</span>
+            <article class="project-module">
+                <div class="project-module-header">
+                    <p class="project-label">Change Management</p>
+                    <span class="project-module-status is-active">Werkend</span>
                 </div>
 
                 <h3>Roosterwijzigingen</h3>
                 <p>
-                    Overzicht van wijzigingen, statussen, ziekte, vervangingen en afgeronde meldingen.
+                    Een centraal logboek voor wijzigingen, ziekte, vervanging, extra diensten
+                    en andere roosterafspraken.
                 </p>
 
                 <ul>
-                    <li>Open meldingen</li>
-                    <li>Wijzigingen per maand</li>
-                    <li>Afgeronde wijzigingen</li>
+                    <li>Wijzigingen registreren en bestaande meldingen aanpassen</li>
+                    <li>Statusbeheer: open, in behandeling, afgerond en archived</li>
+                    <li>Archived overzicht met paginering</li>
+                    <li>Mobiele card-weergave en uitgebreide filters</li>
                 </ul>
+
+                <a href="cml.html" class="project-module-link">Open roosterwijzigingen →</a>
             </article>
 
-            <article class="kpi-module-card">
-                <div class="kpi-module-header">
-                    <p class="kpi-eyebrow">Locaties</p>
-                    <span class="kpi-module-status">Later</span>
+            <article class="project-module">
+                <div class="project-module-header">
+                    <p class="project-label">Toegang</p>
+                    <span class="project-module-status is-active">Werkend</span>
                 </div>
 
-                <h3>Locatie-overzicht</h3>
+                <h3>Accounts en rollen</h3>
                 <p>
-                    Vergelijking tussen Barneveld, Achterveld, Voorthuizen, Wekerom en Harskamp.
+                    Gebruikers loggen in met een gebruikersnaam en krijgen alleen toegang tot
+                    functies die bij hun rol horen.
                 </p>
 
                 <ul>
-                    <li>Bezetting per locatie</li>
-                    <li>Wijzigingen per locatie</li>
-                    <li>Roosterdruk per vestiging</li>
+                    <li>Employee-, manager- en adminrollen</li>
+                    <li>Beveiligde sessies en wachtwoordhashing</li>
+                    <li>ChangeForm alleen beschikbaar voor admins</li>
+                    <li>Verborgen accountbeheer voor admins</li>
                 </ul>
+
+                <a href="login.html" class="project-module-link">Open login →</a>
             </article>
 
-            <article class="kpi-module-card">
-                <div class="kpi-module-header">
-                    <p class="kpi-eyebrow">Medewerkers</p>
-                    <span class="kpi-module-status">Later</span>
+            <article class="project-module">
+                <div class="project-module-header">
+                    <p class="project-label">Managementinformatie</p>
+                    <span class="project-module-status is-planned">Volgende fase</span>
                 </div>
 
-                <h3>Medewerkerinzichten</h3>
+                <h3>KPI-dashboard</h3>
                 <p>
-                    Praktische inzichten per medewerker, gebaseerd op diensten en roosterwijzigingen.
+                    Zodra de live roosterbron gekoppeld is, kan deze pagina worden uitgebreid
+                    met actuele managementinformatie uit rooster- en wijzigingsdata.
                 </p>
 
                 <ul>
-                    <li>Diensten per medewerker</li>
-                    <li>Afwezigheden</li>
-                    <li>Overgenomen diensten</li>
+                    <li>Bezetting en openstaande diensten per locatie</li>
+                    <li>Wijzigingen, ziekte en vervanging per periode</li>
+                    <li>Trends per medewerker en vestiging</li>
+                    <li>Managementsamenvatting en signaleringen</li>
                 </ul>
             </article>
         </section>
 
-        <section class="kpi-roadmap-card">
+        <section class="project-card project-roadmap">
             <div>
-                <p class="kpi-eyebrow">Volgende stap</p>
-                <h3>Dashboard wordt gekoppeld na rooster-database</h3>
+                <p class="project-label">Roadmap</p>
+                <h2>Volgende ontwikkelfase</h2>
             </div>
 
-            <p>
-                Eerst wordt het rooster inhoudelijk gecontroleerd en daarna opgeslagen in SQLite.
-                Zodra die basis klopt, kunnen de KPI's automatisch uit de database worden opgebouwd.
-            </p>
+            <div class="project-roadmap-list">
+                <article class="project-roadmap-step">
+                    <span class="project-roadmap-number">1</span>
+                    <div>
+                        <strong>Live roosterintegratie</strong>
+                        <p>Excel-import vervangen of aanvullen met automatische synchronisatie.</p>
+                    </div>
+                </article>
+
+                <article class="project-roadmap-step">
+                    <span class="project-roadmap-number">2</span>
+                    <div>
+                        <strong>Auditlog</strong>
+                        <p>Vastleggen wie een wijziging heeft aangepast, wanneer en wat er veranderde.</p>
+                    </div>
+                </article>
+
+                <article class="project-roadmap-step">
+                    <span class="project-roadmap-number">3</span>
+                    <div>
+                        <strong>Actuele KPI-data</strong>
+                        <p>Rooster- en wijzigingsdata vertalen naar praktisch managementinzicht.</p>
+                    </div>
+                </article>
+            </div>
         </section>
     </main>
 
