@@ -2,13 +2,13 @@
   "name": "sport-society-overview",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
-"scripts": {
-  "test": "echo \"Error: no test specified\" && exit 1",
-  "start": "node server.js",
-  "import:roster": "node import-roster.js",
-  "download:roster": "node download-roster.js",
-  "sync:roster": "node download-roster.js && node import-roster.js data/imports/live-rooster.xlsx"
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js",
+    "import:roster": "node import-roster.js",
+    "download:roster": "node download-roster.js",
+    "sync:roster": "node download-roster.js && node import-roster.js data/imports/live-rooster.xlsx"
   },
   "repository": {
     "type": "git",
