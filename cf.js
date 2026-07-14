@@ -1,11 +1,5 @@
 const form = document.getElementById('change-form');
 const formMessage = document.getElementById('form-message');
-const currentUserRole = localStorage.getItem('demoRole') || 'guest';
-
-if (currentUserRole !== 'admin') {
-    const nextPage = encodeURIComponent('cf.html');
-    window.location.replace(`login.html?next=${nextPage}`);
-}
 
 form?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -19,8 +13,7 @@ form?.addEventListener('submit', async (event) => {
         employee2: document.getElementById('change-employee2').value.trim(),
         type: document.getElementById('change-type').value,
         reason: document.getElementById('change-reason').value.trim(),
-        status: document.getElementById('change-status').value,
-        createdBy: document.getElementById('change-created-by').value
+        status: document.getElementById('change-status').value
     };
 
     submitButton.disabled = true;
@@ -30,13 +23,16 @@ form?.addEventListener('submit', async (event) => {
         const response = await fetch('/api/changes', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-Demo-Role': currentUserRole
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(newChange)
         });
-
         const result = await response.json();
+
+        if (response.status === 401 || response.status === 403) {
+            window.location.replace('login.html?next=cf.html');
+            return;
+        }
 
         if (!response.ok) {
             throw new Error(result.message || 'Wijziging kon niet worden opgeslagen.');
