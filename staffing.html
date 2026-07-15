@@ -18,14 +18,7 @@
     <nav>
         <input type="checkbox" id="nav-toggle">
         <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="roster.html">Rooster</a>
-            <a href="staffing.html">Bezetting</a>
-            <a href="cml.html">Roosterwijzigingen</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="login.html" data-auth-entry>Inloggen</a>
-        </div>
+        <div class="nav-links"></div>
     </nav>
 
     <main class="staffing-page">
@@ -45,15 +38,15 @@
         </section>
 
         <section class="staffing-card rule-card">
-            <div>
-                <p class="staffing-label">Actieve regels</p>
-                <h2>Vastgelegde bezettingslogica</h2>
+            <div class="staffing-results-header">
+                <div>
+                    <p class="staffing-label">Actieve regels</p>
+                    <h2>Vastgelegde bezettingslogica</h2>
+                </div>
+                <a href="staffing-standards.html" class="staffing-secondary-button">Standaarden bekijken</a>
             </div>
-            <div class="rule-grid">
-                <article><strong>Avondpiek</strong><p>Maandag t/m donderdag, 18:00–21:30: minimaal 2 medewerkers.</p></article>
-                <article><strong>Voorthuizen</strong><p>Reguliere groepsles buiten juli/augustus: minimaal 2, behalve dinsdagochtend.</p></article>
-                <article><strong>Barneveld</strong><p>Reguliere groepsles in aparte ruimte: dubbele bezetting als sterk advies, niet als harde norm.</p></article>
-                <article><strong>Reformer Pilates</strong><p>Wordt volledig uitgesloten van deze bezettingsanalyse.</p></article>
+            <div id="active-rules-grid" class="rule-grid">
+                <article><strong>Laden...</strong><p>Bezettingsstandaarden worden opgehaald.</p></article>
             </div>
         </section>
 
@@ -98,6 +91,7 @@
                     Roosterdiensten worden opgehaald via <code>/api/roster</code>. De groepslessen
                     staan nu als historische weektemplates in de analyse. Dezelfde datastructuur kan
                     later rechtstreeks worden gevuld vanuit DEWI of een andere live lesroosterbron.
+                    De bezettingsstandaarden worden afzonderlijk opgeslagen en blijven daardoor actief.
                 </p>
             </div>
         </section>
