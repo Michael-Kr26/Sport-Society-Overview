@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="staffing.css">
+    <script src="auth-ui.js" defer></script>
+    <script src="staffing.js" defer></script>
+    <title>Sport Society - Bezettingsanalyse</title>
+</head>
+<body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Rooster- en bezettingsanalyse per vestiging</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="roster.html">Rooster</a>
+            <a href="staffing.html">Bezetting</a>
+            <a href="cml.html">Roosterwijzigingen</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="login.html" data-auth-entry>Inloggen</a>
+        </div>
+    </nav>
+
+    <main class="staffing-page">
+        <section class="staffing-card staffing-intro">
+            <div>
+                <div class="staffing-heading-row">
+                    <p class="staffing-label">Capaciteitscontrole</p>
+                    <span class="staffing-version-badge">Werkende eerste versie</span>
+                </div>
+                <h2>Enkele, dubbele en kwetsbare bezetting</h2>
+                <p>
+                    De analyse gebruikt dezelfde rooster-API als het rooster. Daardoor blijft de
+                    functie werken wanneer de Excel-import later wordt vervangen door een live
+                    roosterintegratie.
+                </p>
+            </div>
+        </section>
+
+        <section class="staffing-card rule-card">
+            <div>
+                <p class="staffing-label">Actieve regels</p>
+                <h2>Vastgelegde bezettingslogica</h2>
+            </div>
+            <div class="rule-grid">
+                <article><strong>Avondpiek</strong><p>Maandag t/m donderdag, 18:00–21:30: minimaal 2 medewerkers.</p></article>
+                <article><strong>Voorthuizen</strong><p>Reguliere groepsles buiten juli/augustus: minimaal 2, behalve dinsdagochtend.</p></article>
+                <article><strong>Barneveld</strong><p>Reguliere groepsles in aparte ruimte: dubbele bezetting als sterk advies, niet als harde norm.</p></article>
+                <article><strong>Reformer Pilates</strong><p>Wordt volledig uitgesloten van deze bezettingsanalyse.</p></article>
+            </div>
+        </section>
+
+        <section class="staffing-card">
+            <form id="staffing-filter-form" class="staffing-filter-bar">
+                <label>Vanaf<input type="date" id="from-filter"></label>
+                <label>Tot en met<input type="date" id="to-filter"></label>
+                <label>Locatie
+                    <select id="location-filter">
+                        <option value="">Alle locaties</option>
+                        <option>Achterveld</option><option>Barneveld</option><option>Voorthuizen</option>
+                        <option>Wekerom</option><option>Harskamp</option>
+                    </select>
+                </label>
+                <label>Weergave
+                    <select id="status-filter">
+                        <option value="issues">Alleen aandachtspunten</option>
+                        <option value="all">Alle tijdsblokken</option>
+                        <option value="under">Alleen onderbezet</option>
+                        <option value="vulnerable">Alleen kwetsbaar</option>
+                    </select>
+                </label>
+                <button type="submit" class="admin-button">Analyseren</button>
+            </form>
+        </section>
+
+        <section id="staffing-summary" class="staffing-summary" aria-live="polite"></section>
+
+        <section class="staffing-card">
+            <div class="staffing-results-header">
+                <div><p class="staffing-label">Resultaten</p><h2>Bezetting per tijdsblok</h2></div>
+                <p id="staffing-result-count" class="staffing-result-count">Laden...</p>
+            </div>
+            <div id="staffing-results" class="staffing-results"><p class="empty-state">Analyse laden...</p></div>
+        </section>
+
+        <section class="staffing-card integration-note">
+            <div>
+                <p class="staffing-label">Integratiegereed</p>
+                <h2>Bronnen kunnen later worden vervangen</h2>
+                <p>
+                    Roosterdiensten worden opgehaald via <code>/api/roster</code>. De groepslessen
+                    staan nu als historische weektemplates in de analyse. Dezelfde datastructuur kan
+                    later rechtstreeks worden gevuld vanuit DEWI of een andere live lesroosterbron.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+</body>
+</html>
