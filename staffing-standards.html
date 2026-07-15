@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="staffing-standards.css">
+    <script src="auth-ui.js" defer></script>
+    <script src="staffing-standards.js" defer></script>
+    <title>Sport Society - Bezettingsstandaarden</title>
+</head>
+<body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Bezettingsregels bekijken en beheren</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="standards-page">
+        <section class="standards-card standards-intro">
+            <div>
+                <div class="standards-heading-row">
+                    <p class="standards-label">Regelbeheer</p>
+                    <span id="edit-status" class="standards-version-badge">Laden...</span>
+                </div>
+                <h2>Bezettingsstandaarden</h2>
+                <p>
+                    Deze instellingen worden direct gebruikt door de bezettingsanalyse. De roosterbron
+                    blijft via <code>/api/roster</code> lopen, zodat dezelfde regels ook op een latere live
+                    roosterintegratie worden toegepast.
+                </p>
+                <p id="standards-meta" class="standards-meta"></p>
+            </div>
+            <a href="staffing.html" class="standards-secondary-button">Bekijk analyse</a>
+        </section>
+
+        <div id="standards-message" class="standards-message" hidden></div>
+
+        <form id="standards-form" class="standards-form">
+            <section class="standards-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="standards-label">Algemene norm</p>
+                        <h2>Vaste avondbezetting</h2>
+                    </div>
+                    <label class="switch-field">
+                        <input type="checkbox" id="evening-enabled">
+                        <span>Regel actief</span>
+                    </label>
+                </div>
+
+                <div class="evening-grid">
+                    <label>
+                        Starttijd
+                        <input type="time" id="evening-start" required>
+                    </label>
+                    <label>
+                        Eindtijd
+                        <input type="time" id="evening-end" required>
+                    </label>
+                    <label>
+                        Minimum medewerkers
+                        <input type="number" id="evening-minimum" min="1" max="10" required>
+                    </label>
+                </div>
+
+                <fieldset class="weekday-fieldset">
+                    <legend>Dagen waarop deze norm geldt</legend>
+                    <div id="evening-days" class="weekday-grid"></div>
+                </fieldset>
+            </section>
+
+            <section class="standards-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="standards-label">Vestigingsregels</p>
+                        <h2>Groepslessen per locatie</h2>
+                    </div>
+                </div>
+                <p class="section-copy">
+                    Kies per vestiging of dubbele bezetting tijdens een reguliere groepsles geen regel,
+                    een advies of een harde norm is. Reformer Pilates blijft uitgesloten.
+                </p>
+                <div id="location-standards" class="location-grid"></div>
+            </section>
+
+            <section class="standards-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="standards-label">Uitzonderingen</p>
+                        <h2>Enkele bezetting toegestaan</h2>
+                    </div>
+                    <button type="button" id="add-window" class="standards-secondary-button">Uitzondering toevoegen</button>
+                </div>
+                <p class="section-copy">
+                    Binnen deze tijdsvensters wordt een lesregel niet gebruikt om dubbele bezetting af te
+                    dwingen of te adviseren. De algemene avondnorm blijft wel van kracht wanneer tijden overlappen.
+                </p>
+                <div id="exception-list" class="exception-list"></div>
+            </section>
+
+            <section class="standards-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="standards-label">Druktesignalen</p>
+                        <h2>Volle lessen en wachtlijsten</h2>
+                    </div>
+                </div>
+                <div class="demand-grid">
+                    <label class="switch-field">
+                        <input type="checkbox" id="full-lesson-vulnerable">
+                        <span>Volle lessen of een wachtlijst als kwetsbaar markeren</span>
+                    </label>
+                    <label>
+                        Hoge lesdruk vanaf aantal deelnemers
+                        <input type="number" id="participant-threshold" min="1" max="100" required>
+                    </label>
+                </div>
+            </section>
+
+            <section class="standards-actions">
+                <button type="button" id="reload-standards" class="standards-secondary-button">Wijzigingen terugdraaien</button>
+                <button type="submit" id="save-standards" class="admin-button">Standaarden opslaan</button>
+            </section>
+        </form>
+    </main>
+
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+</body>
+</html>
