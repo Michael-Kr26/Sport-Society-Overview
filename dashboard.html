@@ -16,13 +16,11 @@
 
     <nav>
         <input type="checkbox" id="nav-toggle">
-        <label for="nav-toggle" class="nav-toggle-label">
-            <span></span>
-        </label>
-
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
         <div class="nav-links">
             <a href="index.html">Home</a>
             <a href="roster.html">Rooster</a>
+            <a href="staffing.html">Bezetting</a>
             <a href="cml.html">Roosterwijzigingen</a>
             <a href="dashboard.html">Dashboard</a>
             <a href="login.html" data-auth-entry>Inloggen</a>
@@ -36,187 +34,79 @@
                     <p class="project-label">Sport Society Overview</p>
                     <span class="project-version-badge">Werkende demo</span>
                 </div>
-
                 <h2>Operationeel overzicht in ontwikkeling</h2>
                 <p>
-                    De eerste werkende versie brengt roostercontrole, roosterwijzigingen,
-                    accounttoegang en rolverdeling samen in één applicatie. De basis staat;
-                    de volgende fase richt zich op live synchronisatie, auditlogging en KPI-data.
+                    De werkende versie brengt roostercontrole, bezettingsanalyse,
+                    roosterwijzigingen, accounttoegang en rolverdeling samen in één applicatie.
                 </p>
-
                 <div class="project-actions">
-                    <a href="roster.html" class="admin-button">Bekijk rooster</a>
-                    <a href="cml.html" class="project-secondary-link">Bekijk roosterwijzigingen</a>
+                    <a href="staffing.html" class="admin-button">Bekijk bezettingsanalyse</a>
+                    <a href="roster.html" class="project-secondary-link">Bekijk rooster</a>
                 </div>
             </div>
-
             <aside class="project-hero-status">
                 <span class="project-status-pill is-active">Presentatieversie</span>
-                <h3>Kernfunctionaliteit werkt</h3>
+                <h3>Roosterregels worden automatisch gecontroleerd</h3>
                 <p>
-                    Roosterdata kan worden gecontroleerd, wijzigingen kunnen worden verwerkt
-                    en gebruikers krijgen toegang op basis van hun rol.
+                    De nieuwe bezettingsmodule vergelijkt ingeplande medewerkers met harde normen,
+                    groepslessen en locatiespecifieke uitzonderingen.
                 </p>
             </aside>
         </section>
 
         <section class="project-card project-status-card" aria-label="Huidige systeemstatus">
-            <div>
-                <p class="project-label">Huidige status</p>
-                <h2>Wat werkt er nu?</h2>
-            </div>
-
+            <div><p class="project-label">Huidige status</p><h2>Wat werkt er nu?</h2></div>
             <div class="project-status-list">
-                <article class="project-status-item">
-                    <span class="project-status-pill is-active">Actief</span>
-                    <strong>Roostercontrole</strong>
-                    <p>Excel-import, filters, sortering en eerstvolgende dienst.</p>
-                </article>
-
-                <article class="project-status-item">
-                    <span class="project-status-pill is-active">Actief</span>
-                    <strong>Change Management</strong>
-                    <p>Registreren, bewerken, statussen, archiveren en filteren.</p>
-                </article>
-
-                <article class="project-status-item">
-                    <span class="project-status-pill is-active">Actief</span>
-                    <strong>Login en rollen</strong>
-                    <p>Accounts, sessies en toegang voor employee, manager en admin.</p>
-                </article>
-
-                <article class="project-status-item">
-                    <span class="project-status-pill is-planned">Gepland</span>
-                    <strong>Live integratie</strong>
-                    <p>Automatische synchronisatie met de definitieve roosterbron.</p>
-                </article>
+                <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Roostercontrole</strong><p>Excel-import, filters, sortering en eerstvolgende dienst.</p></article>
+                <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Bezettingsanalyse</strong><p>Harde normen, groepslessen, uitzonderingen en signaleringen.</p></article>
+                <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Change Management</strong><p>Registreren, bewerken, statussen, archiveren en filteren.</p></article>
+                <article class="project-status-item"><span class="project-status-pill is-planned">Gepland</span><strong>Live integratie</strong><p>Automatische synchronisatie met rooster- en lesbronnen.</p></article>
             </div>
         </section>
 
         <section class="project-modules" aria-label="Onderdelen van Sport Society Overview">
             <article class="project-module">
-                <div class="project-module-header">
-                    <p class="project-label">Rooster</p>
-                    <span class="project-module-status is-active">Werkend</span>
-                </div>
-
+                <div class="project-module-header"><p class="project-label">Rooster</p><span class="project-module-status is-active">Werkend</span></div>
                 <h3>Roostercontrole</h3>
-                <p>
-                    Een overzichtelijke weergave van diensten, locaties, afwezigheden en
-                    overgenomen diensten op basis van geïmporteerde roosterdata.
-                </p>
-
-                <ul>
-                    <li>Filteren op medewerker, type, locatie en status</li>
-                    <li>Shifts alfabetisch gegroepeerd per locatie</li>
-                    <li>Eerstvolgende dienst automatisch gemarkeerd</li>
-                    <li>Afgeronde diensten verdwijnen gedurende de dag</li>
-                </ul>
-
+                <p>Een overzichtelijke weergave van diensten, locaties, afwezigheden en overgenomen diensten.</p>
+                <ul><li>Filteren op medewerker, type, locatie en status</li><li>Shifts gegroepeerd per locatie</li><li>Eerstvolgende dienst automatisch gemarkeerd</li><li>Dezelfde API als de bezettingsanalyse</li></ul>
                 <a href="roster.html" class="project-module-link">Open rooster →</a>
             </article>
 
             <article class="project-module">
-                <div class="project-module-header">
-                    <p class="project-label">Change Management</p>
-                    <span class="project-module-status is-active">Werkend</span>
-                </div>
+                <div class="project-module-header"><p class="project-label">Capaciteit</p><span class="project-module-status is-active">Werkend</span></div>
+                <h3>Bezettingsanalyse</h3>
+                <p>Controleert per locatie en tijdsblok of de ingeplande capaciteit voldoende, kwetsbaar of onderbezet is.</p>
+                <ul><li>Ma–do 18:00–21:30 minimaal dubbele bezetting</li><li>Voorthuizen: aparte lesruimte en dinsdagochtend-uitzondering</li><li>Barneveld: dubbele bezetting als sterk advies tijdens lessen</li><li>Reformer Pilates volledig uitgesloten</li></ul>
+                <a href="staffing.html" class="project-module-link">Open bezettingsanalyse →</a>
+            </article>
 
+            <article class="project-module">
+                <div class="project-module-header"><p class="project-label">Change Management</p><span class="project-module-status is-active">Werkend</span></div>
                 <h3>Roosterwijzigingen</h3>
-                <p>
-                    Een centraal logboek voor wijzigingen, ziekte, vervanging, extra diensten
-                    en andere roosterafspraken.
-                </p>
-
-                <ul>
-                    <li>Wijzigingen registreren en bestaande meldingen aanpassen</li>
-                    <li>Statusbeheer: open, in behandeling, afgerond en archived</li>
-                    <li>Archived overzicht met paginering</li>
-                    <li>Mobiele card-weergave en uitgebreide filters</li>
-                </ul>
-
+                <p>Een centraal logboek voor wijzigingen, ziekte, vervanging, extra diensten en andere roosterafspraken.</p>
+                <ul><li>Wijzigingen registreren en aanpassen</li><li>Statusbeheer en archivering</li><li>Filteren en paginering</li><li>Mobiele card-weergave</li></ul>
                 <a href="cml.html" class="project-module-link">Open roosterwijzigingen →</a>
             </article>
 
             <article class="project-module">
-                <div class="project-module-header">
-                    <p class="project-label">Toegang</p>
-                    <span class="project-module-status is-active">Werkend</span>
-                </div>
-
-                <h3>Accounts en rollen</h3>
-                <p>
-                    Gebruikers loggen in met een gebruikersnaam en krijgen alleen toegang tot
-                    functies die bij hun rol horen.
-                </p>
-
-                <ul>
-                    <li>Employee-, manager- en adminrollen</li>
-                    <li>Beveiligde sessies en wachtwoordhashing</li>
-                    <li>ChangeForm alleen beschikbaar voor admins</li>
-                    <li>Verborgen accountbeheer voor admins</li>
-                </ul>
-
-                <a href="login.html" class="project-module-link">Open login →</a>
-            </article>
-
-            <article class="project-module">
-                <div class="project-module-header">
-                    <p class="project-label">Managementinformatie</p>
-                    <span class="project-module-status is-planned">Volgende fase</span>
-                </div>
-
+                <div class="project-module-header"><p class="project-label">Managementinformatie</p><span class="project-module-status is-planned">Volgende fase</span></div>
                 <h3>KPI-dashboard</h3>
-                <p>
-                    Zodra de live roosterbron gekoppeld is, kan deze pagina worden uitgebreid
-                    met actuele managementinformatie uit rooster- en wijzigingsdata.
-                </p>
-
-                <ul>
-                    <li>Bezetting en openstaande diensten per locatie</li>
-                    <li>Wijzigingen, ziekte en vervanging per periode</li>
-                    <li>Trends per medewerker en vestiging</li>
-                    <li>Managementsamenvatting en signaleringen</li>
-                </ul>
+                <p>Health Planner-, rooster- en bezettingsdata worden later gecombineerd tot historische managementinformatie.</p>
+                <ul><li>Week-, maand- en jaarvergelijkingen</li><li>Personeelsuren en urenbank</li><li>Health Planner KPI's per vestiging</li><li>Trends, adviezen en signaleringen</li></ul>
             </article>
         </section>
 
         <section class="project-card project-roadmap">
-            <div>
-                <p class="project-label">Roadmap</p>
-                <h2>Volgende ontwikkelfase</h2>
-            </div>
-
+            <div><p class="project-label">Roadmap</p><h2>Volgende ontwikkelfase</h2></div>
             <div class="project-roadmap-list">
-                <article class="project-roadmap-step">
-                    <span class="project-roadmap-number">1</span>
-                    <div>
-                        <strong>Live roosterintegratie</strong>
-                        <p>Excel-import vervangen of aanvullen met automatische synchronisatie.</p>
-                    </div>
-                </article>
-
-                <article class="project-roadmap-step">
-                    <span class="project-roadmap-number">2</span>
-                    <div>
-                        <strong>Auditlog</strong>
-                        <p>Vastleggen wie een wijziging heeft aangepast, wanneer en wat er veranderde.</p>
-                    </div>
-                </article>
-
-                <article class="project-roadmap-step">
-                    <span class="project-roadmap-number">3</span>
-                    <div>
-                        <strong>Actuele KPI-data</strong>
-                        <p>Rooster- en wijzigingsdata vertalen naar praktisch managementinzicht.</p>
-                    </div>
-                </article>
+                <article class="project-roadmap-step"><span class="project-roadmap-number">1</span><div><strong>Live roosterintegratie</strong><p>De bestaande <code>/api/roster</code>-bron automatisch laten synchroniseren.</p></div></article>
+                <article class="project-roadmap-step"><span class="project-roadmap-number">2</span><div><strong>Live lesroosterintegratie</strong><p>Historische weektemplates vervangen door actuele DEWI-lesdata.</p></div></article>
+                <article class="project-roadmap-step"><span class="project-roadmap-number">3</span><div><strong>Health Planner KPI-data</strong><p>Dagelijkse rapportages opslaan en vergelijken per periode en vestiging.</p></div></article>
             </div>
         </section>
     </main>
 
-    <footer>
-        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
-    </footer>
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
 </body>
 </html>
