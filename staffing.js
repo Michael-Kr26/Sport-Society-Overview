@@ -1,8 +1,59 @@
 const LOCATIONS = ['Achterveld', 'Barneveld', 'Voorthuizen', 'Wekerom', 'Harskamp'];
 const WEEKDAYS = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
 
+const DEFAULT_STANDARDS = {
+    version: 1,
+    eveningPeak: { enabled: true, days: [1, 2, 3, 4], start: '18:00', end: '21:30', minimum: 2 },
+    locations: {
+        Achterveld: {
+            separateLessonRoom: false,
+            lessonMode: 'none',
+            lessonMinimum: 1,
+            excludedMonths: [],
+            singleCoverageWindows: [
+                { day: 2, start: '00:00', end: '12:00', label: 'Dinsdagochtend enkele bezetting toegestaan' },
+                { day: 4, start: '00:00', end: '12:00', label: 'Donderdagochtend enkele bezetting toegestaan' }
+            ]
+        },
+        Barneveld: {
+            separateLessonRoom: true,
+            lessonMode: 'advice',
+            lessonMinimum: 2,
+            excludedMonths: [],
+            singleCoverageWindows: []
+        },
+        Voorthuizen: {
+            separateLessonRoom: true,
+            lessonMode: 'hard',
+            lessonMinimum: 2,
+            excludedMonths: [7, 8],
+            singleCoverageWindows: [
+                { day: 2, start: '00:00', end: '12:00', label: 'Dinsdagochtend enkele bezetting toegestaan' }
+            ]
+        },
+        Wekerom: {
+            separateLessonRoom: false,
+            lessonMode: 'none',
+            lessonMinimum: 1,
+            excludedMonths: [],
+            singleCoverageWindows: [
+                { day: 2, start: '00:00', end: '12:00', label: 'Dinsdagochtend enkele bezetting toegestaan' }
+            ]
+        },
+        Harskamp: {
+            separateLessonRoom: false,
+            lessonMode: 'none',
+            lessonMinimum: 1,
+            excludedMonths: [],
+            singleCoverageWindows: []
+        }
+    },
+    lessonDemand: { markFullOrWaitlistVulnerable: true, highParticipantThreshold: 10 },
+    reformerExcluded: true
+};
+
 // Historische weektemplates uit de aangeleverde DEWI-roosters. Reformer Pilates is bewust niet opgenomen.
-// De adapter is los van de analyse gehouden zodat deze lijst later één-op-één door live DEWI-data kan worden vervangen.
+// Deze adapter kan later worden vervangen door live DEWI-data zonder de regelengine te wijzigen.
 const LESSON_TEMPLATES = {
     Achterveld: [
         [1,'08:45','09:30','Circuit',8,8,0],[1,'10:00','10:45','Boxing low',4,8,0],[1,'18:45','19:30','HYROX',8,8,1],[1,'19:30','20:15','Circuit',6,8,0],[1,'20:15','21:00','Boxing high',5,10,0],
@@ -47,146 +98,385 @@ const statusFilter = document.getElementById('status-filter');
 const summary = document.getElementById('staffing-summary');
 const results = document.getElementById('staffing-results');
 const resultCount = document.getElementById('staffing-result-count');
+const activeRulesGrid = document.getElementById('active-rules-grid');
+
 let rosterItems = [];
+let standards = DEFAULT_STANDARDS;
 
-function timeToMinutes(value){const [h,m]=String(value||'').split(':').map(Number);return Number.isFinite(h)&&Number.isFinite(m)?h*60+m:null}
-function minutesToTime(value){return `${String(Math.floor(value/60)).padStart(2,'0')}:${String(value%60).padStart(2,'0')}`}
-function isoDate(date){return [date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-')}
-function parseDate(value){const [y,m,d]=value.split('-').map(Number);return new Date(y,m-1,d)}
-function addDays(value,days){const date=parseDate(value);date.setDate(date.getDate()+days);return isoDate(date)}
-function escapeHtml(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
-function formatDate(value){return new Intl.DateTimeFormat('nl-NL',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}).format(parseDate(value))}
-
-function getLessons(location,dateString){
-    const day=parseDate(dateString).getDay();
-    return (LESSON_TEMPLATES[location]||[]).filter(item=>item[0]===day).map(item=>({
-        name:item[3],start:item[1],end:item[2],registered:item[4],capacity:item[5],waitlist:item[6],source:'historical-template'
-    }));
+function timeToMinutes(value) {
+    const [hours, minutes] = String(value || '').split(':').map(Number);
+    return Number.isFinite(hours) && Number.isFinite(minutes) ? hours * 60 + minutes : null;
 }
 
-function getShiftEmployees(location,dateString,start,end){
-    const names=new Set();
-    rosterItems.filter(item=>item.itemType==='shift'&&item.location===location&&item.rosterDate===dateString).forEach(item=>{
-        const shiftStart=timeToMinutes(item.startTime);const shiftEnd=timeToMinutes(item.endTime);
-        if(shiftStart===null||shiftEnd===null)return;
-        const normalizedEnd=shiftEnd<=shiftStart?shiftEnd+1440:shiftEnd;
-        if(shiftStart<end&&normalizedEnd>start)names.add(item.employeeName);
-    });
+function minutesToTime(value) {
+    return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+}
+
+function isoDate(date) {
+    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
+function parseDate(value) {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function addDays(value, days) {
+    const date = parseDate(value);
+    date.setDate(date.getDate() + days);
+    return isoDate(date);
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function formatDate(value) {
+    return new Intl.DateTimeFormat('nl-NL', {
+        weekday: 'short',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    }).format(parseDate(value));
+}
+
+function getLessons(location, dateString) {
+    const day = parseDate(dateString).getDay();
+    return (LESSON_TEMPLATES[location] || [])
+        .filter((item) => item[0] === day)
+        .map((item) => ({
+            name: item[3],
+            start: item[1],
+            end: item[2],
+            registered: item[4],
+            capacity: item[5],
+            waitlist: item[6],
+            source: 'historical-template'
+        }));
+}
+
+function getShiftEmployees(location, dateString, start, end) {
+    const names = new Set();
+
+    rosterItems
+        .filter((item) => item.itemType === 'shift' && item.location === location && item.rosterDate === dateString)
+        .forEach((item) => {
+            const shiftStart = timeToMinutes(item.startTime);
+            const shiftEnd = timeToMinutes(item.endTime);
+            if (shiftStart === null || shiftEnd === null) return;
+            const normalizedEnd = shiftEnd <= shiftStart ? shiftEnd + 1440 : shiftEnd;
+            if (shiftStart < end && normalizedEnd > start) names.add(item.employeeName);
+        });
+
     return [...names];
 }
 
-function getRuleState(location,dateString,start,end,activeLessons){
-    const date=parseDate(dateString);const day=date.getDay();const month=date.getMonth()+1;
-    const isEveningPeak=day>=1&&day<=4&&start<21*60+30&&end>18*60;
-    let hardMinimum=isEveningPeak?2:1;
-    let advisedMinimum=hardMinimum;
-    const reasons=[];
-    if(isEveningPeak)reasons.push('Harde avondnorm: maandag t/m donderdag 18:00–21:30 minimaal 2 medewerkers.');
+function getEveningState(dateString, start, end) {
+    const rule = standards.eveningPeak;
+    const day = parseDate(dateString).getDay();
+    const ruleStart = timeToMinutes(rule.start);
+    const ruleEnd = timeToMinutes(rule.end);
+    const active = Boolean(
+        rule.enabled
+        && rule.days.includes(day)
+        && ruleStart !== null
+        && ruleEnd !== null
+        && start < ruleEnd
+        && end > ruleStart
+    );
 
-    if(activeLessons.length){
-        const lessonNames=activeLessons.map(lesson=>lesson.name).join(', ');
-        reasons.push(`Reguliere groepsles actief: ${lessonNames}.`);
-        if(location==='Voorthuizen'){
-            const tuesdayMorning=day===2&&start<12*60;
-            const summer=month===7||month===8;
-            if(tuesdayMorning){reasons.push('Uitzondering Voorthuizen: dinsdagochtend mag enkel bezet zijn.');}
-            else if(summer){reasons.push('Juli/augustus: dubbele bezetting bij lessen is geen harde norm.');advisedMinimum=Math.max(advisedMinimum,2);}
-            else{hardMinimum=Math.max(hardMinimum,2);advisedMinimum=Math.max(advisedMinimum,2);reasons.push('Voorthuizen: aparte groepslesruimte, buiten juli/augustus minimaal 2 medewerkers.');}
-        }
-        if(location==='Barneveld'){
-            advisedMinimum=Math.max(advisedMinimum,2);
-            reasons.push('Barneveld: aparte groepslesruimte; dubbele bezetting is een sterk advies.');
-        }
-        if(activeLessons.length>1){
-            advisedMinimum=Math.max(advisedMinimum,activeLessons.length+1);
-            reasons.push(`${activeLessons.length} lessen overlappen; extra operationele capaciteit overwegen.`);
-        }
-        const highDemand=activeLessons.some(lesson=>lesson.waitlist>0||lesson.registered>=lesson.capacity||lesson.registered>=10);
-        if(highDemand)reasons.push('Hoge lesdruk: volle les, wachtlijst of minimaal 10 deelnemers.');
-    }
-    return {hardMinimum,advisedMinimum,reasons,isEveningPeak};
+    return { active, ruleStart, ruleEnd };
 }
 
-function analyzeDateLocation(dateString,location){
-    const lessons=getLessons(location,dateString);
-    const boundaries=new Set();
-    const day=parseDate(dateString).getDay();
-    if(day>=1&&day<=4){boundaries.add(18*60);boundaries.add(21*60+30)}
-    lessons.forEach(lesson=>{boundaries.add(timeToMinutes(lesson.start));boundaries.add(timeToMinutes(lesson.end))});
-    rosterItems.filter(item=>item.itemType==='shift'&&item.location===location&&item.rosterDate===dateString).forEach(item=>{
-        const start=timeToMinutes(item.startTime);const end=timeToMinutes(item.endTime);if(start!==null)boundaries.add(start);if(end!==null)boundaries.add(end);
-    });
-    const sorted=[...boundaries].filter(Number.isFinite).sort((a,b)=>a-b);
-    const rows=[];
-    for(let index=0;index<sorted.length-1;index+=1){
-        const start=sorted[index],end=sorted[index+1];if(end<=start)continue;
-        const activeLessons=lessons.filter(lesson=>timeToMinutes(lesson.start)<end&&timeToMinutes(lesson.end)>start);
-        const relevant=(day>=1&&day<=4&&start<21*60+30&&end>18*60)||activeLessons.length>0;
-        if(!relevant)continue;
-        const employees=getShiftEmployees(location,dateString,start,end);
-        const rule=getRuleState(location,dateString,start,end,activeLessons);
-        let status='sufficient';
-        if(employees.length<rule.hardMinimum)status='under';
-        else if(employees.length<rule.advisedMinimum)status='vulnerable';
-        else if(activeLessons.some(lesson=>lesson.waitlist>0||lesson.registered>=lesson.capacity))status='vulnerable';
-        rows.push({date:dateString,location,start,end,employees,activeLessons,status,...rule});
+function getSingleCoverageWindow(location, dateString, start, end) {
+    const day = parseDate(dateString).getDay();
+    const windows = standards.locations[location]?.singleCoverageWindows || [];
+
+    return windows.find((window) => {
+        const windowStart = timeToMinutes(window.start);
+        const windowEnd = timeToMinutes(window.end);
+        return window.day === day && windowStart < end && windowEnd > start;
+    }) || null;
+}
+
+function getRuleState(location, dateString, start, end, activeLessons) {
+    const date = parseDate(dateString);
+    const month = date.getMonth() + 1;
+    const eveningState = getEveningState(dateString, start, end);
+    const locationRule = standards.locations[location] || DEFAULT_STANDARDS.locations[location];
+    const singleWindow = getSingleCoverageWindow(location, dateString, start, end);
+    let hardMinimum = 1;
+    let advisedMinimum = 1;
+    let suppressLessonVulnerability = false;
+    const reasons = [];
+
+    if (eveningState.active) {
+        hardMinimum = Math.max(hardMinimum, standards.eveningPeak.minimum);
+        advisedMinimum = Math.max(advisedMinimum, standards.eveningPeak.minimum);
+        reasons.push(`Harde avondnorm: ${standards.eveningPeak.minimum} medewerkers van ${standards.eveningPeak.start} tot ${standards.eveningPeak.end}.`);
     }
+
+    if (activeLessons.length) {
+        reasons.push(`Reguliere groepsles actief: ${activeLessons.map((lesson) => lesson.name).join(', ')}.`);
+
+        if (singleWindow) {
+            suppressLessonVulnerability = true;
+            reasons.push(`Uitzondering: ${singleWindow.label}.`);
+        } else {
+            const excluded = locationRule.excludedMonths.includes(month);
+
+            if (excluded) {
+                reasons.push(`Lesregel voor ${location} is in deze maand uitgesloten.`);
+            } else if (locationRule.lessonMode === 'hard') {
+                hardMinimum = Math.max(hardMinimum, locationRule.lessonMinimum);
+                advisedMinimum = Math.max(advisedMinimum, locationRule.lessonMinimum);
+                reasons.push(`${location}: tijdens een reguliere groepsles minimaal ${locationRule.lessonMinimum} medewerkers.`);
+            } else if (locationRule.lessonMode === 'advice') {
+                advisedMinimum = Math.max(advisedMinimum, locationRule.lessonMinimum);
+                reasons.push(`${location}: tijdens een reguliere groepsles worden ${locationRule.lessonMinimum} medewerkers geadviseerd.`);
+            }
+
+            if (activeLessons.length > 1) {
+                advisedMinimum = Math.max(advisedMinimum, activeLessons.length + 1);
+                reasons.push(`${activeLessons.length} lessen overlappen; extra operationele capaciteit overwegen.`);
+            }
+        }
+
+        const threshold = standards.lessonDemand.highParticipantThreshold;
+        const highDemand = activeLessons.some((lesson) => (
+            lesson.waitlist > 0
+            || lesson.registered >= lesson.capacity
+            || lesson.registered >= threshold
+        ));
+
+        if (highDemand) {
+            reasons.push(`Hoge lesdruk: volle les, wachtlijst of minimaal ${threshold} deelnemers.`);
+        }
+    }
+
+    return {
+        hardMinimum,
+        advisedMinimum,
+        reasons,
+        isEveningPeak: eveningState.active,
+        singleWindow,
+        suppressLessonVulnerability
+    };
+}
+
+function analyzeDateLocation(dateString, location) {
+    const lessons = getLessons(location, dateString);
+    const boundaries = new Set();
+    const evening = standards.eveningPeak;
+    const day = parseDate(dateString).getDay();
+
+    if (evening.enabled && evening.days.includes(day)) {
+        boundaries.add(timeToMinutes(evening.start));
+        boundaries.add(timeToMinutes(evening.end));
+    }
+
+    lessons.forEach((lesson) => {
+        boundaries.add(timeToMinutes(lesson.start));
+        boundaries.add(timeToMinutes(lesson.end));
+    });
+
+    rosterItems
+        .filter((item) => item.itemType === 'shift' && item.location === location && item.rosterDate === dateString)
+        .forEach((item) => {
+            const start = timeToMinutes(item.startTime);
+            const end = timeToMinutes(item.endTime);
+            if (start !== null) boundaries.add(start);
+            if (end !== null) boundaries.add(end);
+        });
+
+    const sorted = [...boundaries].filter(Number.isFinite).sort((a, b) => a - b);
+    const rows = [];
+
+    for (let index = 0; index < sorted.length - 1; index += 1) {
+        const start = sorted[index];
+        const end = sorted[index + 1];
+        if (end <= start) continue;
+
+        const activeLessons = lessons.filter((lesson) => (
+            timeToMinutes(lesson.start) < end && timeToMinutes(lesson.end) > start
+        ));
+        const eveningState = getEveningState(dateString, start, end);
+        if (!eveningState.active && activeLessons.length === 0) continue;
+
+        const employees = getShiftEmployees(location, dateString, start, end);
+        const rule = getRuleState(location, dateString, start, end, activeLessons);
+        const fullOrWaitlist = activeLessons.some((lesson) => lesson.waitlist > 0 || lesson.registered >= lesson.capacity);
+        let status = 'sufficient';
+
+        if (employees.length < rule.hardMinimum) {
+            status = 'under';
+        } else if (employees.length < rule.advisedMinimum) {
+            status = 'vulnerable';
+        } else if (
+            standards.lessonDemand.markFullOrWaitlistVulnerable
+            && fullOrWaitlist
+            && !rule.suppressLessonVulnerability
+        ) {
+            status = 'vulnerable';
+        }
+
+        rows.push({
+            date: dateString,
+            location,
+            start,
+            end,
+            employees,
+            activeLessons,
+            status,
+            ...rule
+        });
+    }
+
     return rows;
 }
 
-function analyze(){
-    const from=fromFilter.value;const to=toFilter.value;if(!from||!to||from>to)return [];
-    const selectedLocations=locationFilter.value?[locationFilter.value]:LOCATIONS;
-    const rows=[];let cursor=from;
-    while(cursor<=to){selectedLocations.forEach(location=>rows.push(...analyzeDateLocation(cursor,location)));cursor=addDays(cursor,1)}
-    const mode=statusFilter.value;
-    return rows.filter(row=>mode==='all'||(mode==='issues'&&row.status!=='sufficient')||row.status===mode);
+function analyze() {
+    const from = fromFilter.value;
+    const to = toFilter.value;
+    if (!from || !to || from > to) return [];
+
+    const selectedLocations = locationFilter.value ? [locationFilter.value] : LOCATIONS;
+    const rows = [];
+    let cursor = from;
+
+    while (cursor <= to) {
+        selectedLocations.forEach((location) => rows.push(...analyzeDateLocation(cursor, location)));
+        cursor = addDays(cursor, 1);
+    }
+
+    const mode = statusFilter.value;
+    return rows.filter((row) => (
+        mode === 'all'
+        || (mode === 'issues' && row.status !== 'sufficient')
+        || row.status === mode
+    ));
 }
 
-function renderSummary(allRows){
-    const under=allRows.filter(row=>row.status==='under').length;
-    const vulnerable=allRows.filter(row=>row.status==='vulnerable').length;
-    const sufficient=allRows.filter(row=>row.status==='sufficient').length;
-    const missingHours=allRows.filter(row=>row.status==='under').reduce((total,row)=>total+(row.end-row.start)/60,0);
-    summary.innerHTML=`
+function renderRulesSummary() {
+    const evening = standards.eveningPeak;
+    const exceptionCount = LOCATIONS.reduce(
+        (total, location) => total + standards.locations[location].singleCoverageWindows.length,
+        0
+    );
+    const locationRules = LOCATIONS.filter((location) => standards.locations[location].lessonMode !== 'none');
+
+    activeRulesGrid.innerHTML = `
+        <article>
+            <strong>Avondpiek</strong>
+            <p>${evening.enabled ? `${evening.start}–${evening.end}, minimum ${evening.minimum} medewerkers.` : 'Uitgeschakeld.'}</p>
+        </article>
+        <article>
+            <strong>Groepslesregels</strong>
+            <p>${locationRules.length ? locationRules.map((location) => `${location}: ${standards.locations[location].lessonMode === 'hard' ? 'harde norm' : 'advies'}`).join(' · ') : 'Geen extra lesregels actief.'}</p>
+        </article>
+        <article>
+            <strong>Enkele bezetting</strong>
+            <p>${exceptionCount} vastgelegde uitzonderingsvenster(s), waaronder de ingestelde ochtenduitzonderingen.</p>
+        </article>
+        <article>
+            <strong>Reformer Pilates</strong>
+            <p>Volledig uitgesloten van deze bezettingsanalyse.</p>
+        </article>
+    `;
+}
+
+function renderSummary(allRows) {
+    const under = allRows.filter((row) => row.status === 'under').length;
+    const vulnerable = allRows.filter((row) => row.status === 'vulnerable').length;
+    const sufficient = allRows.filter((row) => row.status === 'sufficient').length;
+    const missingHours = allRows
+        .filter((row) => row.status === 'under')
+        .reduce((total, row) => total + (row.end - row.start) / 60, 0);
+
+    summary.innerHTML = `
         <article class="summary-card is-danger"><span class="summary-value">${under}</span><span class="summary-label">Onderbezette tijdsblokken</span></article>
         <article class="summary-card is-warning"><span class="summary-value">${vulnerable}</span><span class="summary-label">Kwetsbare tijdsblokken</span></article>
         <article class="summary-card is-ok"><span class="summary-value">${sufficient}</span><span class="summary-label">Voldoende bezet</span></article>
-        <article class="summary-card"><span class="summary-value">${missingHours.toFixed(1)}</span><span class="summary-label">Uren onder harde norm</span></article>`;
+        <article class="summary-card"><span class="summary-value">${missingHours.toFixed(1)}</span><span class="summary-label">Uren onder harde norm</span></article>
+    `;
 }
 
-function renderRows(rows){
-    resultCount.textContent=`${rows.length} tijdsblok(ken)`;
-    if(!rows.length){results.innerHTML='<p class="empty-state">Geen tijdsblokken gevonden voor deze selectie.</p>';return}
-    results.innerHTML=rows.map(row=>{
-        const lessonText=row.activeLessons.length?row.activeLessons.map(lesson=>`${lesson.name} ${lesson.registered}/${lesson.capacity}${lesson.waitlist?` +${lesson.waitlist} wachtlijst`:''}`).join(' · '):'Geen groepsles';
-        const label=row.status==='under'?'Onderbezet':row.status==='vulnerable'?'Kwetsbaar':'Voldoende';
-        return `<article class="staffing-row is-${row.status}">
-            <div class="staffing-date"><strong>${escapeHtml(formatDate(row.date))}</strong><span class="muted">${WEEKDAYS[parseDate(row.date).getDay()]}</span></div>
-            <div class="staffing-location"><strong>${escapeHtml(row.location)}</strong><span class="muted">${escapeHtml(lessonText)}</span></div>
-            <div><strong>${minutesToTime(row.start)}–${minutesToTime(row.end)}</strong><span class="muted">${row.employees.length?escapeHtml(row.employees.join(', ')):'Niemand ingepland'}</span></div>
-            <div><strong>${row.employees.length}</strong><span class="muted">ingepland</span></div>
-            <div><strong>${row.hardMinimum}</strong><span class="muted">harde norm${row.advisedMinimum>row.hardMinimum?` / advies ${row.advisedMinimum}`:''}</span></div>
-            <div class="staffing-reason"><span class="status-pill is-${row.status}">${label}</span><ul>${row.reasons.map(reason=>`<li>${escapeHtml(reason)}</li>`).join('')}</ul></div>
-        </article>`
+function renderRows(rows) {
+    resultCount.textContent = `${rows.length} tijdsblok(ken)`;
+
+    if (!rows.length) {
+        results.innerHTML = '<p class="empty-state">Geen tijdsblokken gevonden voor deze selectie.</p>';
+        return;
+    }
+
+    results.innerHTML = rows.map((row) => {
+        const lessonText = row.activeLessons.length
+            ? row.activeLessons.map((lesson) => `${lesson.name} ${lesson.registered}/${lesson.capacity}${lesson.waitlist ? ` +${lesson.waitlist} wachtlijst` : ''}`).join(' · ')
+            : 'Geen groepsles';
+        const label = row.status === 'under' ? 'Onderbezet' : row.status === 'vulnerable' ? 'Kwetsbaar' : 'Voldoende';
+
+        return `
+            <article class="staffing-row is-${row.status}">
+                <div class="staffing-date"><strong>${escapeHtml(formatDate(row.date))}</strong><span class="muted">${WEEKDAYS[parseDate(row.date).getDay()]}</span></div>
+                <div class="staffing-location"><strong>${escapeHtml(row.location)}</strong><span class="muted">${escapeHtml(lessonText)}</span></div>
+                <div><strong>${minutesToTime(row.start)}–${minutesToTime(row.end)}</strong><span class="muted">${row.employees.length ? escapeHtml(row.employees.join(', ')) : 'Niemand ingepland'}</span></div>
+                <div><strong>${row.employees.length}</strong><span class="muted">ingepland</span></div>
+                <div><strong>${row.hardMinimum}</strong><span class="muted">harde norm${row.advisedMinimum > row.hardMinimum ? ` / advies ${row.advisedMinimum}` : ''}</span></div>
+                <div class="staffing-reason"><span class="status-pill is-${row.status}">${label}</span><ul>${row.reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join('')}</ul></div>
+            </article>
+        `;
     }).join('');
 }
 
-function runAnalysis(){
-    const allMode=statusFilter.value;statusFilter.value='all';const allRows=analyze();statusFilter.value=allMode;
-    renderSummary(allRows);renderRows(analyze());
+function runAnalysis() {
+    const selectedMode = statusFilter.value;
+    statusFilter.value = 'all';
+    const allRows = analyze();
+    statusFilter.value = selectedMode;
+    renderSummary(allRows);
+    renderRows(analyze());
 }
 
-async function init(){
-    try{
-        const response=await fetch('/api/roster');if(!response.ok)throw new Error('Rooster kon niet worden geladen.');
-        rosterItems=await response.json();
-        const dates=rosterItems.map(item=>item.rosterDate).filter(Boolean).sort();
-        const latest=dates.at(-1)||isoDate(new Date());
-        toFilter.value=latest;fromFilter.value=addDays(latest,-6);
+async function loadStandards() {
+    try {
+        const response = await fetch('/api/staffing-standards');
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (payload.standards) standards = payload.standards;
+    } catch (error) {
+        console.warn('Opgeslagen bezettingsstandaarden konden niet worden geladen; standaardregels worden gebruikt.', error);
+    }
+}
+
+async function init() {
+    try {
+        const [rosterResponse] = await Promise.all([
+            fetch('/api/roster'),
+            loadStandards()
+        ]);
+
+        if (!rosterResponse.ok) throw new Error('Rooster kon niet worden geladen.');
+        rosterItems = await rosterResponse.json();
+        const dates = rosterItems.map((item) => item.rosterDate).filter(Boolean).sort();
+        const latest = dates.at(-1) || isoDate(new Date());
+        toFilter.value = latest;
+        fromFilter.value = addDays(latest, -6);
+        renderRulesSummary();
         runAnalysis();
-    }catch(error){results.innerHTML=`<p class="error-state">${escapeHtml(error.message)}</p>`;resultCount.textContent='Fout';}
+    } catch (error) {
+        results.innerHTML = `<p class="error-state">${escapeHtml(error.message)}</p>`;
+        resultCount.textContent = 'Fout';
+    }
 }
 
-form.addEventListener('submit',event=>{event.preventDefault();runAnalysis()});
+form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    runAnalysis();
+});
+
 init();
