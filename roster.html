@@ -24,6 +24,7 @@
         <div class="nav-links">
             <a href="index.html">Home</a>
             <a href="roster.html">Rooster</a>
+            <a href="staffing.html">Bezetting</a>
             <a href="cml.html">Roosterwijzigingen</a>
             <a href="dashboard.html">Dashboard</a>
             <a href="login.html" data-auth-entry>Inloggen</a>
@@ -72,12 +73,7 @@
             <form id="roster-filter-form" class="roster-filter-bar">
                 <label>
                     Medewerker
-                    <input
-                        type="search"
-                        id="employee-filter"
-                        placeholder="Bijvoorbeeld Michael"
-                        autocomplete="off"
-                    >
+                    <input type="search" id="employee-filter" placeholder="Bijvoorbeeld Michael" autocomplete="off">
                 </label>
 
                 <label>
@@ -115,9 +111,7 @@
                 </label>
 
                 <button type="submit" class="admin-button">Zoeken</button>
-                <button type="button" id="reset-roster-filters" class="roster-secondary-button">
-                    Reset
-                </button>
+                <button type="button" id="reset-roster-filters" class="roster-secondary-button">Reset</button>
             </form>
         </section>
 
@@ -134,12 +128,8 @@
                     <p class="roster-label">Resultaten</p>
                     <h2>Roosteritems</h2>
                 </div>
-
-                <p id="roster-result-count" class="roster-result-count">
-                    Laden...
-                </p>
+                <p id="roster-result-count" class="roster-result-count">Laden...</p>
             </div>
-
             <div id="roster-results" class="roster-results">
                 <p class="empty-state">Rooster laden...</p>
             </div>
