@@ -1,0 +1,141 @@
+/* Uniforme hoofdnavigatie, dynamisch opgebouwd door auth-ui.js */
+.nav-links {
+    align-items: stretch;
+    overflow: visible;
+}
+
+.nav-item,
+.nav-dropdown {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.nav-dropdown > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    color: #e6e6e6;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.nav-dropdown > summary::-webkit-details-marker {
+    display: none;
+}
+
+.nav-dropdown > summary::after {
+    content: '▾';
+    font-size: .72rem;
+    opacity: .75;
+    transition: transform .2s ease;
+}
+
+.nav-dropdown[open] > summary::after {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown > summary:hover,
+.nav-dropdown:focus-within > summary,
+.nav-dropdown.is-current > summary {
+    background-color: #333;
+    color: #fff;
+}
+
+.nav-dropdown-menu {
+    position: absolute;
+    z-index: 1200;
+    top: calc(100% - 1px);
+    left: 0;
+    min-width: 250px;
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 0 0 12px 12px;
+    background: #181d23;
+    box-shadow: 0 16px 35px rgba(0,0,0,.35);
+    display: grid;
+    gap: 3px;
+}
+
+.nav-dropdown:not([open]) .nav-dropdown-menu {
+    display: none;
+}
+
+.nav-dropdown-menu a {
+    display: block;
+    width: 100%;
+    padding: 11px 13px;
+    border-radius: 8px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.nav-dropdown-menu a:hover,
+.nav-dropdown-menu a[aria-current='page'] {
+    background: #303840;
+}
+
+.nav-links > a[aria-current='page'] {
+    background: #333;
+    color: #fff;
+}
+
+.nav-account-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (hover: hover) and (min-width: 769px) {
+    .nav-dropdown:hover > .nav-dropdown-menu,
+    .nav-dropdown:focus-within > .nav-dropdown-menu {
+        display: grid;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        gap: 0;
+        overflow-y: auto;
+    }
+
+    nav input[type='checkbox']:checked ~ .nav-links {
+        max-height: min(80vh, 650px);
+    }
+
+    .nav-item,
+    .nav-dropdown {
+        display: block;
+        width: 100%;
+    }
+
+    .nav-dropdown > summary {
+        width: 100%;
+        padding: 14px 20px;
+        border-top: 1px solid rgba(230,230,230,.08);
+    }
+
+    .nav-dropdown-menu {
+        position: static;
+        min-width: 0;
+        padding: 0 0 6px 16px;
+        border: 0;
+        border-radius: 0;
+        background: #171b20;
+        box-shadow: none;
+    }
+
+    .nav-dropdown-menu a {
+        padding: 12px 20px;
+        border-top: 1px solid rgba(230,230,230,.06);
+    }
+
+    .nav-links > a,
+    .nav-account-name {
+        width: 100%;
+    }
+}
