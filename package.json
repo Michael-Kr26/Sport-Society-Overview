@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js",
+    "start": "node staffing-bootstrap.js",
     "import:roster": "node import-roster.js",
     "download:roster": "node download-roster.js",
     "sync:roster": "node download-roster.js && node import-roster.js data/imports/live-rooster.xlsx"
