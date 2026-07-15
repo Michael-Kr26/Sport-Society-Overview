@@ -4,6 +4,58 @@ let currentAuthState = {
     user: null
 };
 
+function ensureNavigationStyles() {
+    if (document.querySelector('link[href="navigation.css"]')) {
+        return;
+    }
+
+    const stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = 'navigation.css';
+    document.head.appendChild(stylesheet);
+}
+
+function getCurrentPage() {
+    return window.location.pathname.split('/').pop() || 'index.html';
+}
+
+function markCurrentNavigationItem(navLinks) {
+    const currentPage = getCurrentPage();
+
+    navLinks.querySelectorAll('a[href]').forEach((link) => {
+        if (link.getAttribute('href') === currentPage) {
+            link.setAttribute('aria-current', 'page');
+            link.closest('.nav-dropdown')?.classList.add('is-current');
+        }
+    });
+}
+
+function buildNavigation() {
+    ensureNavigationStyles();
+
+    document.querySelectorAll('.nav-links').forEach((navLinks) => {
+        navLinks.innerHTML = `
+            <a class="nav-item" href="index.html">Home</a>
+
+            <details class="nav-dropdown">
+                <summary>Operationeel</summary>
+                <div class="nav-dropdown-menu">
+                    <a href="roster.html">Rooster</a>
+                    <a href="staffing.html">Bezettingsanalyse</a>
+                    <a href="staffing-standards.html">Bezettingsstandaarden</a>
+                    <a href="cml.html">Roosterwijzigingen</a>
+                    <a href="cf.html" data-admin-only hidden>Wijziging registreren</a>
+                </div>
+            </details>
+
+            <a class="nav-item" href="dashboard.html">Dashboard</a>
+            <a class="nav-item nav-account-name" href="login.html" data-auth-entry>Inloggen</a>
+        `;
+
+        markCurrentNavigationItem(navLinks);
+    });
+}
+
 async function fetchAuthState() {
     try {
         const response = await fetch('/api/auth/me');
@@ -39,6 +91,7 @@ function createLogoutLink(navLinks) {
 
     const logoutLink = document.createElement('a');
     logoutLink.href = '#';
+    logoutLink.className = 'nav-item';
     logoutLink.textContent = 'Uitloggen';
     logoutLink.dataset.authLogout = '';
 
@@ -64,13 +117,6 @@ function updateAuthNavigation(authState) {
             link.href = 'login.html';
             link.textContent = 'Inloggen';
             link.setAttribute('aria-label', 'Inloggen');
-            return;
-        }
-
-        if (authState.role === 'admin') {
-            link.href = 'cf.html';
-            link.textContent = 'ChangeForm';
-            link.setAttribute('aria-label', 'Open het wijzigingsformulier');
             return;
         }
 
@@ -109,6 +155,8 @@ function protectAdminPage(authState) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    buildNavigation();
+
     const authState = await fetchAuthState();
     updateAuthNavigation(authState);
     protectAdminPage(authState);
