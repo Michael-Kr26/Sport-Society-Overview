@@ -18,12 +18,13 @@ De cumulatieve urenbank begint bij de ingestelde startstand en telt iedere maand
 
 ## Flexmedewerkers
 
-Flexmedewerkers krijgen geen maandnorm of urenbank. Zij worden vergeleken op:
+Flexmedewerkers krijgen geen maandnorm of urenbank. Zij worden vergeleken op ingeplande en meegetelde uren, het verschil met de vorige maand en het verschil met het flexgemiddelde.
 
-- ingeplande uren;
-- meegetelde uren na correcties;
-- verschil met de vorige maand;
-- verschil met het gemiddelde van de flexgroep.
+## Filters en medewerkersbeheer
+
+De urenpagina kan worden gefilterd op alle medewerkers, vaste uren of flexcontract. De filter werkt door in de samenvatting, tabellen, medewerkerinstellingen en correcties.
+
+Een admin kan een medewerker vooraf toevoegen met een startmaand. De medewerker verschijnt pas vanaf die maand in de analyse en de contractnorm start op dezelfde datum. Verwijderen is een veilige deactivatie: historische contractperiodes, uren en correcties blijven bewaard en de medewerker kan worden hersteld.
 
 ## Ingevoerde contracturen
 
