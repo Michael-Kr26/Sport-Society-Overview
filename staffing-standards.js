@@ -8,6 +8,10 @@ const DAYS = [
     { value: 5, label: 'Vrijdag' },
     { value: 6, label: 'Zaterdag' }
 ];
+const MONTHS = [
+    'Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni',
+    'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'
+];
 
 const form = document.getElementById('standards-form');
 const message = document.getElementById('standards-message');
@@ -18,7 +22,14 @@ const eveningStart = document.getElementById('evening-start');
 const eveningEnd = document.getElementById('evening-end');
 const eveningMinimum = document.getElementById('evening-minimum');
 const eveningDays = document.getElementById('evening-days');
-const locationStandards = document.getElementById('location-standards');
+const locationTabs = document.getElementById('location-tabs');
+const activeLocationTitle = document.getElementById('active-location-title');
+const activeLocationSummary = document.getElementById('active-location-summary');
+const locationSeparateRoom = document.getElementById('location-separate-room');
+const locationLessonMode = document.getElementById('location-lesson-mode');
+const locationLessonMinimum = document.getElementById('location-lesson-minimum');
+const locationExcludedMonths = document.getElementById('location-excluded-months');
+const exceptionLocationTitle = document.getElementById('exception-location-title');
 const exceptionList = document.getElementById('exception-list');
 const addWindowButton = document.getElementById('add-window');
 const fullLessonVulnerable = document.getElementById('full-lesson-vulnerable');
@@ -27,6 +38,8 @@ const reloadButton = document.getElementById('reload-standards');
 const saveButton = document.getElementById('save-standards');
 
 let currentPayload = null;
+let draftStandards = null;
+let activeLocation = LOCATIONS[0];
 let canEdit = false;
 
 function escapeHtml(value) {
@@ -36,6 +49,10 @@ function escapeHtml(value) {
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
+}
+
+function clone(value) {
+    return JSON.parse(JSON.stringify(value));
 }
 
 function showMessage(text, type = 'success') {
@@ -69,35 +86,38 @@ function renderWeekdays(selectedDays) {
     `).join('');
 }
 
-function renderLocations(locations) {
-    locationStandards.innerHTML = LOCATIONS.map((location) => {
-        const standard = locations[location];
+function getLessonModeLabel(mode) {
+    if (mode === 'hard') return 'Harde norm';
+    if (mode === 'advice') return 'Adviesregel';
+    return 'Geen lesregel';
+}
+
+function renderLocationTabs() {
+    locationTabs.innerHTML = LOCATIONS.map((location) => `
+        <button
+            type="button"
+            class="location-tab ${location === activeLocation ? 'is-active' : ''}"
+            data-location-tab="${escapeHtml(location)}"
+            role="tab"
+            aria-selected="${location === activeLocation}"
+        >
+            ${escapeHtml(location)}
+        </button>
+    `).join('');
+
+    locationTabs.querySelectorAll('[data-location-tab]').forEach((button) => {
+        button.addEventListener('click', () => switchLocation(button.dataset.locationTab));
+    });
+}
+
+function renderExcludedMonths(selectedMonths) {
+    locationExcludedMonths.innerHTML = MONTHS.map((month, index) => {
+        const monthNumber = index + 1;
         return `
-            <article class="location-card" data-location-card="${escapeHtml(location)}">
-                <h3>${escapeHtml(location)}</h3>
-                <label class="switch-field">
-                    <input type="checkbox" data-field="separateLessonRoom" ${standard.separateLessonRoom ? 'checked' : ''}>
-                    <span>Groepslesruimte ligt apart</span>
-                </label>
-                <div class="location-fields">
-                    <label>
-                        Lesregel
-                        <select data-field="lessonMode">
-                            <option value="none" ${standard.lessonMode === 'none' ? 'selected' : ''}>Geen extra norm</option>
-                            <option value="advice" ${standard.lessonMode === 'advice' ? 'selected' : ''}>Dubbele bezetting adviseren</option>
-                            <option value="hard" ${standard.lessonMode === 'hard' ? 'selected' : ''}>Dubbele bezetting verplicht</option>
-                        </select>
-                    </label>
-                    <label>
-                        Minimum
-                        <input type="number" min="1" max="10" data-field="lessonMinimum" value="${standard.lessonMinimum}">
-                    </label>
-                    <label class="excluded-months">
-                        Uitgesloten maanden, nummers gescheiden door komma's
-                        <input type="text" data-field="excludedMonths" value="${escapeHtml(standard.excludedMonths.join(', '))}" placeholder="Bijvoorbeeld 7, 8">
-                    </label>
-                </div>
-            </article>
+            <label>
+                <input type="checkbox" name="excluded-month" value="${monthNumber}" ${selectedMonths.includes(monthNumber) ? 'checked' : ''}>
+                <span>${month}</span>
+            </label>
         `;
     }).join('');
 }
@@ -106,12 +126,6 @@ function createExceptionRow(window = {}) {
     const row = document.createElement('article');
     row.className = 'exception-row';
     row.innerHTML = `
-        <label>
-            Locatie
-            <select data-window-field="location">
-                ${LOCATIONS.map((location) => `<option ${location === window.location ? 'selected' : ''}>${location}</option>`).join('')}
-            </select>
-        </label>
         <label>
             Dag
             <select data-window-field="day">
@@ -126,113 +140,143 @@ function createExceptionRow(window = {}) {
             Tot
             <input type="time" data-window-field="end" value="${escapeHtml(window.end || '12:00')}">
         </label>
-        <label>
+        <label class="exception-description">
             Omschrijving
             <input type="text" maxlength="140" data-window-field="label" value="${escapeHtml(window.label || 'Enkele bezetting toegestaan')}">
         </label>
-        <button type="button" class="standards-secondary-button" data-remove-window>Verwijderen</button>
+        <button type="button" class="standards-secondary-button" data-remove-window ${canEdit ? '' : 'hidden'}>Verwijderen</button>
     `;
 
-    row.querySelector('[data-remove-window]').addEventListener('click', () => row.remove());
+    row.querySelector('[data-remove-window]')?.addEventListener('click', () => {
+        row.remove();
+        renderExceptionEmptyState();
+    });
     exceptionList.appendChild(row);
 }
 
-function renderExceptions(locations) {
-    exceptionList.innerHTML = '';
-    LOCATIONS.forEach((location) => {
-        locations[location].singleCoverageWindows.forEach((window) => {
-            createExceptionRow({ location, ...window });
-        });
-    });
+function renderExceptionEmptyState() {
+    const existing = exceptionList.querySelector('.exception-empty-state');
+    const hasRows = Boolean(exceptionList.querySelector('.exception-row'));
 
-    if (!exceptionList.children.length) {
-        createExceptionRow({ location: 'Achterveld', day: 2, start: '08:00', end: '12:00' });
+    if (hasRows) {
+        existing?.remove();
+        return;
+    }
+
+    if (!existing) {
+        exceptionList.insertAdjacentHTML(
+            'beforeend',
+            `<p class="exception-empty-state">Voor ${escapeHtml(activeLocation)} zijn geen uitzonderingsvensters ingesteld.</p>`
+        );
     }
 }
 
-function setReadOnly(readOnly) {
+function renderExceptions(windows) {
+    exceptionList.innerHTML = '';
+    windows.forEach((window) => createExceptionRow(window));
+    renderExceptionEmptyState();
+}
+
+function readActiveLocationFromForm() {
+    if (!draftStandards?.locations?.[activeLocation]) return;
+
+    const standard = draftStandards.locations[activeLocation];
+    standard.separateLessonRoom = locationSeparateRoom.checked;
+    standard.lessonMode = locationLessonMode.value;
+    standard.lessonMinimum = Number(locationLessonMinimum.value);
+    standard.excludedMonths = [...locationExcludedMonths.querySelectorAll('input[name="excluded-month"]:checked')]
+        .map((input) => Number(input.value))
+        .sort((a, b) => a - b);
+    standard.singleCoverageWindows = [...exceptionList.querySelectorAll('.exception-row')].map((row) => ({
+        day: Number(row.querySelector('[data-window-field="day"]').value),
+        start: row.querySelector('[data-window-field="start"]').value,
+        end: row.querySelector('[data-window-field="end"]').value,
+        label: row.querySelector('[data-window-field="label"]').value.trim()
+    }));
+}
+
+function renderActiveLocation() {
+    const standard = draftStandards.locations[activeLocation];
+    activeLocationTitle.textContent = activeLocation;
+    exceptionLocationTitle.textContent = `Enkele bezetting toegestaan — ${activeLocation}`;
+    activeLocationSummary.textContent = getLessonModeLabel(standard.lessonMode);
+    activeLocationSummary.className = `location-summary-pill is-${standard.lessonMode}`;
+    locationSeparateRoom.checked = Boolean(standard.separateLessonRoom);
+    locationLessonMode.value = standard.lessonMode;
+    locationLessonMinimum.value = standard.lessonMinimum;
+    renderExcludedMonths(standard.excludedMonths || []);
+    renderExceptions(standard.singleCoverageWindows || []);
+    applyReadOnlyState();
+}
+
+function switchLocation(location) {
+    if (!LOCATIONS.includes(location) || location === activeLocation || !draftStandards) return;
+    readActiveLocationFromForm();
+    activeLocation = location;
+    renderLocationTabs();
+    renderActiveLocation();
+    hideMessage();
+}
+
+function applyReadOnlyState() {
+    const readOnly = !canEdit;
     form.classList.toggle('is-readonly', readOnly);
-    form.querySelectorAll('input, select, button').forEach((element) => {
-        if (element === reloadButton) return;
+
+    form.querySelectorAll('input, select').forEach((element) => {
         element.disabled = readOnly;
     });
+
     saveButton.hidden = readOnly;
     addWindowButton.hidden = readOnly;
+    exceptionList.querySelectorAll('[data-remove-window]').forEach((button) => {
+        button.hidden = readOnly;
+    });
 }
 
 function renderStandards(payload) {
     currentPayload = payload;
     canEdit = Boolean(payload.permissions?.canEdit);
-    const standards = payload.standards;
+    draftStandards = clone(payload.standards);
 
-    eveningEnabled.checked = standards.eveningPeak.enabled;
-    eveningStart.value = standards.eveningPeak.start;
-    eveningEnd.value = standards.eveningPeak.end;
-    eveningMinimum.value = standards.eveningPeak.minimum;
-    renderWeekdays(standards.eveningPeak.days);
-    renderLocations(standards.locations);
-    renderExceptions(standards.locations);
-    fullLessonVulnerable.checked = standards.lessonDemand.markFullOrWaitlistVulnerable;
-    participantThreshold.value = standards.lessonDemand.highParticipantThreshold;
+    eveningEnabled.checked = draftStandards.eveningPeak.enabled;
+    eveningStart.value = draftStandards.eveningPeak.start;
+    eveningEnd.value = draftStandards.eveningPeak.end;
+    eveningMinimum.value = draftStandards.eveningPeak.minimum;
+    renderWeekdays(draftStandards.eveningPeak.days);
+
+    if (!draftStandards.locations[activeLocation]) {
+        activeLocation = LOCATIONS[0];
+    }
+    renderLocationTabs();
+    renderActiveLocation();
+
+    fullLessonVulnerable.checked = draftStandards.lessonDemand.markFullOrWaitlistVulnerable;
+    participantThreshold.value = draftStandards.lessonDemand.highParticipantThreshold;
 
     editStatus.textContent = canEdit ? 'Bewerkbaar door admin' : 'Alleen bekijken';
     editStatus.classList.toggle('is-readonly', !canEdit);
     meta.textContent = `Laatst bijgewerkt: ${formatUpdatedAt(payload.updatedAt)}${payload.updatedBy ? ` door ${payload.updatedBy}` : ''}.`;
-    setReadOnly(!canEdit);
-}
-
-function parseMonths(value) {
-    return [...new Set(String(value || '')
-        .split(',')
-        .map((part) => Number(part.trim()))
-        .filter((month) => Number.isInteger(month) && month >= 1 && month <= 12))]
-        .sort((a, b) => a - b);
-}
-
-function collectLocations() {
-    const locations = {};
-
-    document.querySelectorAll('[data-location-card]').forEach((card) => {
-        const location = card.dataset.locationCard;
-        locations[location] = {
-            separateLessonRoom: card.querySelector('[data-field="separateLessonRoom"]').checked,
-            lessonMode: card.querySelector('[data-field="lessonMode"]').value,
-            lessonMinimum: Number(card.querySelector('[data-field="lessonMinimum"]').value),
-            excludedMonths: parseMonths(card.querySelector('[data-field="excludedMonths"]').value),
-            singleCoverageWindows: []
-        };
-    });
-
-    exceptionList.querySelectorAll('.exception-row').forEach((row) => {
-        const location = row.querySelector('[data-window-field="location"]').value;
-        locations[location].singleCoverageWindows.push({
-            day: Number(row.querySelector('[data-window-field="day"]').value),
-            start: row.querySelector('[data-window-field="start"]').value,
-            end: row.querySelector('[data-window-field="end"]').value,
-            label: row.querySelector('[data-window-field="label"]').value.trim()
-        });
-    });
-
-    return locations;
+    applyReadOnlyState();
 }
 
 function collectStandards() {
-    return {
-        version: 1,
-        eveningPeak: {
-            enabled: eveningEnabled.checked,
-            days: [...document.querySelectorAll('input[name="evening-day"]:checked')].map((input) => Number(input.value)),
-            start: eveningStart.value,
-            end: eveningEnd.value,
-            minimum: Number(eveningMinimum.value)
-        },
-        locations: collectLocations(),
-        lessonDemand: {
-            markFullOrWaitlistVulnerable: fullLessonVulnerable.checked,
-            highParticipantThreshold: Number(participantThreshold.value)
-        },
-        reformerExcluded: true
+    readActiveLocationFromForm();
+
+    draftStandards.version = 1;
+    draftStandards.eveningPeak = {
+        enabled: eveningEnabled.checked,
+        days: [...document.querySelectorAll('input[name="evening-day"]:checked')].map((input) => Number(input.value)),
+        start: eveningStart.value,
+        end: eveningEnd.value,
+        minimum: Number(eveningMinimum.value)
     };
+    draftStandards.lessonDemand = {
+        markFullOrWaitlistVulnerable: fullLessonVulnerable.checked,
+        highParticipantThreshold: Number(participantThreshold.value)
+    };
+    draftStandards.reformerExcluded = true;
+
+    return clone(draftStandards);
 }
 
 async function loadStandards() {
@@ -245,7 +289,8 @@ async function loadStandards() {
         if (!response.ok) throw new Error(payload.message || 'Standaarden konden niet worden geladen.');
         renderStandards(payload);
     } catch (error) {
-        setReadOnly(true);
+        canEdit = false;
+        applyReadOnlyState();
         editStatus.textContent = 'Niet beschikbaar';
         editStatus.classList.add('is-readonly');
         showMessage(error.message, 'error');
@@ -253,10 +298,17 @@ async function loadStandards() {
 }
 
 addWindowButton.addEventListener('click', () => {
-    createExceptionRow({ location: 'Achterveld', day: 1, start: '08:00', end: '12:00' });
+    exceptionList.querySelector('.exception-empty-state')?.remove();
+    createExceptionRow({ day: 1, start: '08:00', end: '12:00' });
+    applyReadOnlyState();
 });
 
 reloadButton.addEventListener('click', loadStandards);
+
+locationLessonMode.addEventListener('change', () => {
+    activeLocationSummary.textContent = getLessonModeLabel(locationLessonMode.value);
+    activeLocationSummary.className = `location-summary-pill is-${locationLessonMode.value}`;
+});
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -274,14 +326,13 @@ form.addEventListener('submit', async (event) => {
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.message || 'Opslaan is mislukt.');
-        showMessage(payload.message, 'success');
         await loadStandards();
-        showMessage('Bezettingsstandaarden opgeslagen en direct actief in de analyse.', 'success');
+        showMessage('Alle bezettingsstandaarden zijn opgeslagen en direct actief in de analyse.', 'success');
     } catch (error) {
         showMessage(error.message, 'error');
     } finally {
         saveButton.disabled = false;
-        saveButton.textContent = 'Standaarden opslaan';
+        saveButton.textContent = 'Alle standaarden opslaan';
     }
 });
 
