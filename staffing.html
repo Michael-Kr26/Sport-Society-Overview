@@ -26,13 +26,12 @@
             <div>
                 <div class="staffing-heading-row">
                     <p class="staffing-label">Capaciteitscontrole</p>
-                    <span class="staffing-version-badge">Werkende eerste versie</span>
+                    <span class="staffing-version-badge" data-admin-only hidden>Werkende eerste versie</span>
                 </div>
                 <h2>Enkele, dubbele en kwetsbare bezetting</h2>
                 <p>
-                    De analyse gebruikt dezelfde rooster-API als het rooster. Daardoor blijft de
-                    functie werken wanneer de Excel-import later wordt vervangen door een live
-                    roosterintegratie.
+                    De analyse gebruikt dezelfde rooster-API als het rooster en controleert de
+                    ingeplande bezetting aan de hand van de vastgelegde normen per vestiging.
                 </p>
             </div>
         </section>
@@ -83,7 +82,7 @@
             <div id="staffing-results" class="staffing-results"><p class="empty-state">Analyse laden...</p></div>
         </section>
 
-        <section class="staffing-card integration-note">
+        <section class="staffing-card integration-note" data-admin-content hidden>
             <div>
                 <p class="staffing-label">Integratiegereed</p>
                 <h2>Bronnen kunnen later worden vervangen</h2>
