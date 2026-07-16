@@ -36,11 +36,11 @@ function buildNavigation() {
     document.querySelectorAll('.nav-links').forEach((navLinks) => {
         navLinks.innerHTML = `
             <a class="nav-item" href="index.html">Home</a>
+            <a class="nav-item" href="roster.html">Rooster</a>
 
             <details class="nav-dropdown">
                 <summary>Operationeel</summary>
                 <div class="nav-dropdown-menu">
-                    <a href="roster.html">Rooster</a>
                     <a href="staffing.html">Bezettingsanalyse</a>
                     <a href="staffing-standards.html">Bezettingsstandaarden</a>
                     <a href="cml.html">Roosterwijzigingen</a>
