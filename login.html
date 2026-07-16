@@ -10,65 +10,20 @@
     <title>Sport Society - Inloggen</title>
 </head>
 <body>
-    <header>
-        <h1>Sport Society Overview</h1>
-        <p>Inloggen</p>
-    </header>
-
-    <nav>
-        <input type="checkbox" id="nav-toggle">
-        <label for="nav-toggle" class="nav-toggle-label">
-            <span></span>
-        </label>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="cml.html">Roosterwijzigingen</a>
-            <a href="roster.html">Rooster</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="login.html" data-auth-entry>Inloggen</a>
-        </div>
-    </nav>
-
+    <header><h1>Sport Society Overview</h1><p>Inloggen</p></header>
+    <nav><input type="checkbox" id="nav-toggle"><label for="nav-toggle" class="nav-toggle-label"><span></span></label><div class="nav-links"></div></nav>
     <main class="login-page">
         <section class="login-card">
-            <div class="card-header">
-                <p class="card-label">Account</p>
-                <h2>Inloggen</h2>
-            </div>
-
-            <p class="login-intro">
-                Log in met je gebruikersnaam en wachtwoord. Je beschikbare functies worden bepaald door je accountrol.
-            </p>
-
+            <div class="card-header"><p class="card-label">Account</p><h2>Inloggen</h2></div>
+            <p class="login-intro">Log in met je gebruikersnaam en wachtwoord. Je beschikbare functies worden bepaald door je accountrol.</p>
             <form id="login-form" class="login-form">
-                <label>
-                    Gebruikersnaam
-                    <input
-                        type="text"
-                        id="login-username"
-                        autocomplete="username"
-                        autocapitalize="none"
-                        spellcheck="false"
-                        required
-                    >
-                </label>
-
-                <label>
-                    Wachtwoord
-                    <input type="password" id="login-password" autocomplete="current-password" required>
-                </label>
-
-                <button type="submit" class="admin-button">
-                    Inloggen
-                </button>
+                <label>Gebruikersnaam<input type="text" id="login-username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+                <label>Wachtwoord<input type="password" id="login-password" autocomplete="current-password" required></label>
+                <button type="submit" class="admin-button">Inloggen</button>
             </form>
-
             <p id="login-status" class="login-status" aria-live="polite"></p>
         </section>
     </main>
-
-    <footer>
-        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
-    </footer>
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
 </body>
 </html>
