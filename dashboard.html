@@ -6,12 +6,12 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dashboard.css">
     <script src="auth-ui.js" defer></script>
-    <title>Sport Society - Dashboard</title>
+    <title>Sport Society - Preview en integratiestatus</title>
 </head>
-<body>
+<body data-admin-page>
     <header>
         <h1>Sport Society Overview</h1>
-        <p>Projectstatus en managementoverzicht</p>
+        <p>Preview, projectstatus en integratieplanning</p>
     </header>
 
     <nav>
@@ -20,7 +20,7 @@
         <div class="nav-links"></div>
     </nav>
 
-    <main class="project-dashboard">
+    <main class="project-dashboard" data-admin-content hidden>
         <section class="project-card project-hero">
             <div class="project-hero-copy">
                 <div class="project-heading-row">
@@ -34,7 +34,7 @@
                 </p>
                 <div class="project-actions">
                     <a href="staffing.html" class="admin-button">Bekijk bezettingsanalyse</a>
-                    <a href="hours.html" class="project-secondary-link" data-manager-only hidden>Bekijk urenanalyse</a>
+                    <a href="hours.html" class="project-secondary-link">Bekijk urenanalyse</a>
                     <a href="roster.html" class="project-secondary-link">Bekijk rooster</a>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                 <a href="staffing.html" class="project-module-link">Open bezettingsanalyse →</a>
             </article>
 
-            <article class="project-module" data-manager-only hidden>
+            <article class="project-module">
                 <div class="project-module-header"><p class="project-label">Personeelsuren</p><span class="project-module-status is-active">Werkend</span></div>
                 <h3>Urenanalyse en urenbank</h3>
                 <p>Vergelijkt flexuren en bewaakt voor contractmedewerkers de maandnorm en cumulatieve urenbank.</p>
@@ -100,7 +100,7 @@
         </section>
 
         <section class="project-card project-roadmap">
-            <div><p class="project-label">Roadmap</p><h2>Volgende ontwikkelfase</h2></div>
+            <div><p class="project-label">Integratiestatus</p><h2>Volgende ontwikkelfase</h2></div>
             <div class="project-roadmap-list">
                 <article class="project-roadmap-step"><span class="project-roadmap-number">1</span><div><strong>Live roosterintegratie</strong><p>De bestaande <code>/api/roster</code>-bron automatisch laten synchroniseren.</p></div></article>
                 <article class="project-roadmap-step"><span class="project-roadmap-number">2</span><div><strong>Live lesroosterintegratie</strong><p>Historische weektemplates vervangen door actuele DEWI-lesdata.</p></div></article>
