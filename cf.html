@@ -16,16 +16,8 @@
 
     <nav>
         <input type="checkbox" id="nav-toggle">
-        <label for="nav-toggle" class="nav-toggle-label">
-            <span></span>
-        </label>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="cml.html">Roosterwijzigingen</a>
-            <a href="roster.html">Rooster</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="login.html" data-auth-entry>Inloggen</a>
-        </div>
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links"></div>
     </nav>
 
     <main data-admin-content hidden>
@@ -47,7 +39,7 @@
                 </label>
 
                 <label>
-                    Locatie
+                    Locatie na wijziging
                     <select id="change-location" required>
                         <option value="">Kies locatie</option>
                         <option>Achterveld</option>
@@ -60,12 +52,12 @@
 
                 <label>
                     Medewerker 1
-                    <input type="text" id="change-employee" placeholder="Bijv. Vigo" required>
+                    <input type="text" id="change-employee" placeholder="Huidige of nieuwe medewerker" required autocomplete="off">
                 </label>
 
                 <label>
                     Medewerker 2
-                    <input type="text" id="change-employee2" placeholder="Bijv. Olav">
+                    <input type="text" id="change-employee2" placeholder="Nieuwe medewerker bij vervanging of wissel" autocomplete="off">
                 </label>
 
                 <label>
@@ -87,6 +79,32 @@
                     </select>
                 </label>
 
+                <label style="display:flex; grid-template-columns:auto 1fr; align-items:center; gap:10px;">
+                    <input type="checkbox" id="change-sync-roster" checked style="width:auto;">
+                    Ook direct verwerken in het rooster
+                </label>
+
+                <div id="change-source-fields" class="admin-form" style="margin-top:0;">
+                    <label>
+                        Bestaande dienst die aangepast wordt
+                        <select id="change-source-shift">
+                            <option value="">Vul eerst datum en medewerker 1 in</option>
+                        </select>
+                    </label>
+                    <p id="change-source-message" class="empty-state" aria-live="polite"></p>
+                </div>
+
+                <div id="change-time-fields" class="admin-form" style="margin-top:0;" hidden>
+                    <label>
+                        Nieuwe begintijd
+                        <input type="time" id="change-start-time">
+                    </label>
+                    <label>
+                        Nieuwe eindtijd
+                        <input type="time" id="change-end-time">
+                    </label>
+                </div>
+
                 <label>
                     Beschrijving / reden
                     <textarea id="change-reason" rows="4" placeholder="Omschrijf kort wat er is gewijzigd"></textarea>
@@ -102,20 +120,16 @@
                 </label>
 
                 <p class="empty-state">
-                    De ingelogde gebruiker wordt automatisch opgeslagen als ‘ingevoerd door’.
+                    Een gekoppelde roosterwijziging blijft als override actief na een nieuwe Excel-import.
+                    Het oorspronkelijke Excel-bestand wordt niet aangepast.
                 </p>
 
-                <button type="submit" class="admin-button">
-                    Wijziging doorvoeren
-                </button>
-
+                <button type="submit" class="admin-button">Wijziging doorvoeren</button>
                 <p id="form-message" class="empty-state" aria-live="polite"></p>
             </form>
         </section>
     </main>
 
-    <footer>
-        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
-    </footer>
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
 </body>
 </html>
