@@ -17,14 +17,7 @@
     <nav>
         <input type="checkbox" id="nav-toggle">
         <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="roster.html">Rooster</a>
-            <a href="staffing.html">Bezetting</a>
-            <a href="cml.html">Roosterwijzigingen</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="login.html" data-auth-entry>Inloggen</a>
-        </div>
+        <div class="nav-links"></div>
     </nav>
 
     <main class="project-dashboard">
@@ -36,20 +29,21 @@
                 </div>
                 <h2>Operationeel overzicht in ontwikkeling</h2>
                 <p>
-                    De werkende versie brengt roostercontrole, bezettingsanalyse,
+                    De werkende versie brengt roostercontrole, bezettingsanalyse, urenanalyse,
                     roosterwijzigingen, accounttoegang en rolverdeling samen in één applicatie.
                 </p>
                 <div class="project-actions">
                     <a href="staffing.html" class="admin-button">Bekijk bezettingsanalyse</a>
+                    <a href="hours.html" class="project-secondary-link" data-manager-only hidden>Bekijk urenanalyse</a>
                     <a href="roster.html" class="project-secondary-link">Bekijk rooster</a>
                 </div>
             </div>
             <aside class="project-hero-status">
                 <span class="project-status-pill is-active">Presentatieversie</span>
-                <h3>Roosterregels worden automatisch gecontroleerd</h3>
+                <h3>Roosterregels en personeelsuren worden automatisch geanalyseerd</h3>
                 <p>
-                    De nieuwe bezettingsmodule vergelijkt ingeplande medewerkers met harde normen,
-                    groepslessen en locatiespecifieke uitzonderingen.
+                    De applicatie controleert bezettingsnormen en berekent per medewerker ingeplande
+                    uren, maandnormen, maandmutaties en de cumulatieve urenbank.
                 </p>
             </aside>
         </section>
@@ -59,8 +53,8 @@
             <div class="project-status-list">
                 <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Roostercontrole</strong><p>Excel-import, filters, sortering en eerstvolgende dienst.</p></article>
                 <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Bezettingsanalyse</strong><p>Harde normen, groepslessen, uitzonderingen en signaleringen.</p></article>
+                <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Urenanalyse</strong><p>Contractnormen, flexvergelijking, correcties en cumulatieve urenbank.</p></article>
                 <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Change Management</strong><p>Registreren, bewerken, statussen, archiveren en filteren.</p></article>
-                <article class="project-status-item"><span class="project-status-pill is-planned">Gepland</span><strong>Live integratie</strong><p>Automatische synchronisatie met rooster- en lesbronnen.</p></article>
             </div>
         </section>
 
@@ -81,6 +75,14 @@
                 <a href="staffing.html" class="project-module-link">Open bezettingsanalyse →</a>
             </article>
 
+            <article class="project-module" data-manager-only hidden>
+                <div class="project-module-header"><p class="project-label">Personeelsuren</p><span class="project-module-status is-active">Werkend</span></div>
+                <h3>Urenanalyse en urenbank</h3>
+                <p>Vergelijkt flexuren en bewaakt voor contractmedewerkers de maandnorm en cumulatieve urenbank.</p>
+                <ul><li>Maandnorm op basis van contracturen × 4,33</li><li>Contracthistorie met ingangsdatums</li><li>Flexvergelijking met gemiddelde en maandtrend</li><li>Handmatige uren- en bankcorrecties</li></ul>
+                <a href="hours.html" class="project-module-link">Open urenanalyse →</a>
+            </article>
+
             <article class="project-module">
                 <div class="project-module-header"><p class="project-label">Change Management</p><span class="project-module-status is-active">Werkend</span></div>
                 <h3>Roosterwijzigingen</h3>
@@ -92,8 +94,8 @@
             <article class="project-module">
                 <div class="project-module-header"><p class="project-label">Managementinformatie</p><span class="project-module-status is-planned">Volgende fase</span></div>
                 <h3>KPI-dashboard</h3>
-                <p>Health Planner-, rooster- en bezettingsdata worden later gecombineerd tot historische managementinformatie.</p>
-                <ul><li>Week-, maand- en jaarvergelijkingen</li><li>Personeelsuren en urenbank</li><li>Health Planner KPI's per vestiging</li><li>Trends, adviezen en signaleringen</li></ul>
+                <p>Health Planner-, rooster-, uren- en bezettingsdata worden later gecombineerd tot historische managementinformatie.</p>
+                <ul><li>Week-, maand- en jaarvergelijkingen</li><li>Health Planner KPI's per vestiging</li><li>Gecombineerde personeels- en capaciteitsinzichten</li><li>Trends, adviezen en signaleringen</li></ul>
             </article>
         </section>
 
