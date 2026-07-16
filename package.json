@@ -4,8 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "node --check app.js && node --check staffing-bootstrap.js && node --check hours-bootstrap.js && node --check auth-ui.js && node --check hours.js",
-    "start": "node hours-bootstrap.js",
+    "test": "node --check app.js && node --check staffing-bootstrap.js && node --check hours-bootstrap.js && node --check roster-sync-bootstrap.js && node --check auth-ui.js && node --check hours.js && node --check cf.js",
+    "start": "node roster-sync-bootstrap.js",
     "import:roster": "node import-roster.js",
     "download:roster": "node download-roster.js",
     "sync:roster": "node download-roster.js && node import-roster.js data/imports/live-rooster.xlsx"
