@@ -43,6 +43,7 @@ function buildNavigation() {
                 <div class="nav-dropdown-menu">
                     <a href="staffing.html">Bezettingsanalyse</a>
                     <a href="staffing-standards.html">Bezettingsstandaarden</a>
+                    <a href="hours.html" data-manager-only hidden>Urenanalyse &amp; urenbank</a>
                     <a href="cml.html">Roosterwijzigingen</a>
                     <a href="cf.html" data-admin-only hidden>Wijziging registreren</a>
                 </div>
@@ -154,12 +155,27 @@ function protectAdminPage(authState) {
     window.location.replace(`login.html?next=${nextPage}`);
 }
 
+function protectManagerPage(authState) {
+    if (!document.body.hasAttribute('data-manager-page') || ['manager', 'admin'].includes(authState.role)) {
+        return;
+    }
+
+    if (!authState.authenticated) {
+        const nextPage = encodeURIComponent(window.location.pathname.split('/').pop() || 'hours.html');
+        window.location.replace(`login.html?next=${nextPage}`);
+        return;
+    }
+
+    window.location.replace('dashboard.html');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     buildNavigation();
 
     const authState = await fetchAuthState();
     updateAuthNavigation(authState);
     protectAdminPage(authState);
+    protectManagerPage(authState);
 
     document.dispatchEvent(new CustomEvent('authready', {
         detail: authState
