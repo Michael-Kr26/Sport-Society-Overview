@@ -43,35 +43,66 @@ function markCurrentNavigationItem(navLinks) {
     navLinks.querySelectorAll('a[href]').forEach((link) => {
         if (link.getAttribute('href') === currentPage) {
             link.setAttribute('aria-current', 'page');
-            link.closest('.nav-dropdown')?.classList.add('is-current');
         }
     });
+}
+
+function closeMobileNavigation(nav) {
+    const toggle = nav.querySelector('#nav-toggle');
+    if (toggle) {
+        toggle.checked = false;
+    }
 }
 
 function buildNavigation() {
     ensureNavigationStyles();
 
-    document.querySelectorAll('.nav-links').forEach((navLinks) => {
+    const navigationElements = document.querySelectorAll('nav');
+    if (!navigationElements.length) {
+        return;
+    }
+
+    document.body.classList.add('has-sidebar-navigation');
+
+    navigationElements.forEach((nav) => {
+        nav.setAttribute('aria-label', 'Hoofdnavigatie');
+        const navLinks = nav.querySelector('.nav-links');
+
+        if (!navLinks) {
+            return;
+        }
+
         navLinks.innerHTML = `
+            <div class="nav-brand" aria-label="Sport Society Overview">
+                <span class="nav-brand-kicker">Sport Society</span>
+                <strong>Overview</strong>
+            </div>
+
+            <p class="nav-section-label">Algemeen</p>
             <a class="nav-item" href="index.html">Home</a>
             <a class="nav-item" href="roster.html">Rooster</a>
 
-            <details class="nav-dropdown">
-                <summary>Operationeel</summary>
-                <div class="nav-dropdown-menu">
-                    <a href="staffing.html">Bezettingsanalyse</a>
-                    <a href="staffing-standards.html">Bezettingsstandaarden</a>
-                    <a href="hours.html" data-manager-only hidden>Urenanalyse &amp; urenbank</a>
-                    <a href="cml.html">Roosterwijzigingen</a>
-                    <a href="cf.html" data-admin-only hidden>Wijziging registreren</a>
-                </div>
-            </details>
+            <p class="nav-section-label">Operationeel</p>
+            <a class="nav-item" href="staffing.html">Bezettingsanalyse</a>
+            <a class="nav-item" href="staffing-standards.html">Bezettingsstandaarden</a>
+            <a class="nav-item" href="cml.html">Roosterwijzigingen</a>
 
-            <a class="nav-item" href="dashboard.html">Dashboard</a>
+            <p class="nav-section-label" data-manager-only hidden>Management</p>
+            <a class="nav-item" href="hours.html" data-manager-only hidden>Urenanalyse &amp; urenbank</a>
+
+            <p class="nav-section-label" data-admin-only hidden>Admin</p>
+            <a class="nav-item" href="cf.html" data-admin-only hidden>Wijziging registreren</a>
+            <a class="nav-item" href="dashboard.html" data-admin-only hidden>Preview &amp; integratiestatus</a>
+
+            <div class="nav-spacer" aria-hidden="true"></div>
             <a class="nav-item nav-account-name" href="login.html" data-auth-entry>Inloggen</a>
         `;
 
         markCurrentNavigationItem(navLinks);
+
+        navLinks.querySelectorAll('a[href]').forEach((link) => {
+            link.addEventListener('click', () => closeMobileNavigation(nav));
+        });
     });
 }
 
@@ -110,7 +141,7 @@ function createLogoutLink(navLinks) {
 
     const logoutLink = document.createElement('a');
     logoutLink.href = '#';
-    logoutLink.className = 'nav-item';
+    logoutLink.className = 'nav-item nav-logout-link';
     logoutLink.textContent = 'Uitloggen';
     logoutLink.dataset.authLogout = '';
 
@@ -169,8 +200,13 @@ function protectAdminPage(authState) {
         return;
     }
 
-    const nextPage = encodeURIComponent(window.location.pathname.split('/').pop() || 'cf.html');
-    window.location.replace(`login.html?next=${nextPage}`);
+    if (!authState.authenticated) {
+        const nextPage = encodeURIComponent(window.location.pathname.split('/').pop() || 'cf.html');
+        window.location.replace(`login.html?next=${nextPage}`);
+        return;
+    }
+
+    window.location.replace('index.html');
 }
 
 function protectManagerPage(authState) {
@@ -184,7 +220,7 @@ function protectManagerPage(authState) {
         return;
     }
 
-    window.location.replace('dashboard.html');
+    window.location.replace('index.html');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
