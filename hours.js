@@ -296,8 +296,6 @@ async function loadEmployees() {
     const payload = await requestJson('/api/hours/employees');
     employeeData = payload.employees || [];
     canEdit = Boolean(payload.permissions?.canEdit);
-    renderEmployeeSettings();
-    populateAdjustmentEmployees();
 }
 
 async function loadAnalysis() {
@@ -308,7 +306,6 @@ async function loadAnalysis() {
     renderSummary();
     renderContractTable();
     renderFlexTable();
-    renderAdjustments();
     setMessage(`Analyse bijgewerkt voor ${formatMonth(analysis.month)}.`, 'success');
 }
 
