@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="hours.css">
+    <script src="auth-ui.js" defer></script>
+    <script src="hours.js" defer></script>
+    <title>Sport Society - Urenanalyse en urenbank</title>
+</head>
+<body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Urenanalyse, contractnormen en urenbank</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="hours-page">
+        <section class="hours-card hours-intro">
+            <div>
+                <div class="hours-heading-row">
+                    <p class="hours-label">Operationele urensturing</p>
+                    <span class="hours-version-badge">Eerste werkende versie</span>
+                </div>
+                <h2>Ingeplande uren en urenbank per medewerker</h2>
+                <p>
+                    Flexmedewerkers worden onderling vergeleken op uren. Voor medewerkers met een
+                    urencontract wordt de maandnorm berekend als contracturen per week × 4,33.
+                    De urenbank is voor deze groep de primaire KPI.
+                </p>
+            </div>
+        </section>
+
+        <section class="hours-card">
+            <form id="hours-filter-form" class="hours-filter-bar">
+                <label>
+                    Maand
+                    <input type="month" id="month-filter" required>
+                </label>
+                <button type="submit" class="admin-button">Analyseren</button>
+            </form>
+            <p id="hours-message" class="hours-message" aria-live="polite"></p>
+        </section>
+
+        <section id="hours-summary" class="hours-summary" aria-live="polite"></section>
+
+        <section class="hours-card">
+            <div class="hours-results-header">
+                <div>
+                    <p class="hours-label">Hoofd-KPI</p>
+                    <h2>Urenbank contractmedewerkers</h2>
+                </div>
+                <p id="contract-count" class="hours-result-count">Laden...</p>
+            </div>
+            <div id="contract-results" class="hours-table-wrap">
+                <p class="empty-state">Urenbank laden...</p>
+            </div>
+        </section>
+
+        <section class="hours-card">
+            <div class="hours-results-header">
+                <div>
+                    <p class="hours-label">Flexvergelijking</p>
+                    <h2>Ingeplande en gecorrigeerde uren</h2>
+                </div>
+                <p id="flex-count" class="hours-result-count">Laden...</p>
+            </div>
+            <div id="flex-results" class="hours-table-wrap">
+                <p class="empty-state">Flexanalyse laden...</p>
+            </div>
+        </section>
+
+        <section class="hours-card" data-admin-content hidden>
+            <div class="hours-results-header">
+                <div>
+                    <p class="hours-label">Beheer</p>
+                    <h2>Medewerkerinstellingen</h2>
+                </div>
+                <p class="hours-result-count">Alleen admin</p>
+            </div>
+            <p class="hours-help">
+                Nieuwe namen uit het rooster worden automatisch als flexmedewerker toegevoegd. Zet een
+                medewerker op contract om de maandnorm en cumulatieve urenbank te activeren.
+            </p>
+            <div id="employee-settings" class="employee-settings">
+                <p class="empty-state">Medewerkers laden...</p>
+            </div>
+        </section>
+
+        <section class="hours-card" data-admin-content hidden>
+            <div class="hours-results-header">
+                <div>
+                    <p class="hours-label">Correcties</p>
+                    <h2>Uren of bankstand corrigeren</h2>
+                </div>
+            </div>
+
+            <form id="adjustment-form" class="adjustment-form">
+                <label>Medewerker<select id="adjustment-employee" required></select></label>
+                <label>Datum<input type="date" id="adjustment-date" required></label>
+                <label>Type
+                    <select id="adjustment-type">
+                        <option value="credited">Correctie op meegetelde uren</option>
+                        <option value="bank">Directe correctie urenbank</option>
+                    </select>
+                </label>
+                <label>Uren<input type="number" id="adjustment-hours" step="0.25" min="-250" max="250" required></label>
+                <label class="adjustment-note">Toelichting<input type="text" id="adjustment-note" maxlength="300" placeholder="Bijvoorbeeld handmatige correctie of verlofuren"></label>
+                <button type="submit" class="admin-button">Correctie opslaan</button>
+            </form>
+
+            <div id="adjustment-list" class="adjustment-list"></div>
+        </section>
+
+        <section class="hours-card hours-method">
+            <p class="hours-label">Berekeningsmethode</p>
+            <h2>Hoe de urenbank wordt opgebouwd</h2>
+            <p>
+                Meegetelde uren = roosteruren + urencorrecties. Maandmutatie = meegetelde uren −
+                (contracturen × 4,33) + directe bankcorrecties. De cumulatieve urenbank start bij de
+                ingestelde beginstand en telt iedere maandmutatie vanaf de gekozen startmaand op.
+            </p>
+        </section>
+    </main>
+
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+</body>
+</html>
