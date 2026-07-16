@@ -16,6 +16,9 @@ window.fetch = (input, options) => {
     return originalWindowFetch(input, options);
 };
 
+const SIDEBAR_STORAGE_KEY = 'sso_sidebar_collapsed';
+const desktopSidebarQuery = window.matchMedia('(min-width: 901px)');
+
 let currentAuthState = {
     authenticated: false,
     role: 'guest',
@@ -54,6 +57,47 @@ function closeMobileNavigation(nav) {
     }
 }
 
+function getStoredSidebarState() {
+    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
+}
+
+function updateCollapseButton(button, isCollapsed) {
+    if (!button) return;
+
+    button.setAttribute('aria-expanded', String(!isCollapsed));
+    button.setAttribute('aria-label', isCollapsed ? 'Navigatie uitklappen' : 'Navigatie inklappen');
+    button.title = isCollapsed ? 'Navigatie uitklappen' : 'Navigatie inklappen';
+
+    const icon = button.querySelector('[data-collapse-icon]');
+    if (icon) {
+        icon.textContent = isCollapsed ? '›' : '‹';
+    }
+}
+
+function applySidebarState(requestedCollapsed = getStoredSidebarState()) {
+    const isCollapsed = desktopSidebarQuery.matches && requestedCollapsed;
+    document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+
+    document.querySelectorAll('[data-sidebar-collapse]').forEach((button) => {
+        updateCollapseButton(button, isCollapsed);
+    });
+}
+
+function toggleDesktopSidebar() {
+    const nextState = !document.body.classList.contains('sidebar-collapsed');
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(nextState));
+    applySidebarState(nextState);
+}
+
+function navigationItem(href, icon, label, attributes = '') {
+    return `
+        <a class="nav-item" href="${href}" title="${label}" ${attributes}>
+            <span class="nav-item-icon" aria-hidden="true">${icon}</span>
+            <span class="nav-item-label">${label}</span>
+        </a>
+    `;
+}
+
 function buildNavigation() {
     ensureNavigationStyles();
 
@@ -66,44 +110,63 @@ function buildNavigation() {
 
     navigationElements.forEach((nav) => {
         nav.setAttribute('aria-label', 'Hoofdnavigatie');
-        const navLinks = nav.querySelector('.nav-links');
 
+        const mobileToggleLabel = nav.querySelector('.nav-toggle-label');
+        if (mobileToggleLabel) {
+            mobileToggleLabel.setAttribute('aria-label', 'Navigatie openen of sluiten');
+            mobileToggleLabel.title = 'Navigatie openen of sluiten';
+        }
+
+        const navLinks = nav.querySelector('.nav-links');
         if (!navLinks) {
             return;
         }
 
         navLinks.innerHTML = `
-            <div class="nav-brand" aria-label="Sport Society Overview">
-                <span class="nav-brand-kicker">Sport Society</span>
-                <strong>Overview</strong>
+            <div class="nav-sidebar-head">
+                <div class="nav-brand" aria-label="Sport Society Overview">
+                    <span class="nav-brand-kicker">Sport Society</span>
+                    <strong class="nav-brand-name">Overview</strong>
+                    <strong class="nav-brand-short" aria-hidden="true">SSO</strong>
+                </div>
+                <button type="button" class="nav-collapse-button" data-sidebar-collapse aria-expanded="true">
+                    <span data-collapse-icon aria-hidden="true">‹</span>
+                </button>
             </div>
 
             <p class="nav-section-label">Algemeen</p>
-            <a class="nav-item" href="index.html">Home</a>
-            <a class="nav-item" href="roster.html">Rooster</a>
+            ${navigationItem('index.html', '⌂', 'Home')}
+            ${navigationItem('roster.html', '▦', 'Rooster')}
 
             <p class="nav-section-label">Operationeel</p>
-            <a class="nav-item" href="staffing.html">Bezettingsanalyse</a>
-            <a class="nav-item" href="staffing-standards.html">Bezettingsstandaarden</a>
-            <a class="nav-item" href="cml.html">Roosterwijzigingen</a>
+            ${navigationItem('staffing.html', '◫', 'Bezettingsanalyse')}
+            ${navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden')}
+            ${navigationItem('cml.html', '↔', 'Roosterwijzigingen')}
 
             <p class="nav-section-label" data-manager-only hidden>Management</p>
-            <a class="nav-item" href="hours.html" data-manager-only hidden>Urenanalyse &amp; urenbank</a>
+            ${navigationItem('hours.html', '◷', 'Urenanalyse &amp; urenbank', 'data-manager-only hidden')}
 
             <p class="nav-section-label" data-admin-only hidden>Admin</p>
-            <a class="nav-item" href="cf.html" data-admin-only hidden>Wijziging registreren</a>
-            <a class="nav-item" href="dashboard.html" data-admin-only hidden>Preview &amp; integratiestatus</a>
+            ${navigationItem('cf.html', '＋', 'Wijziging registreren', 'data-admin-only hidden')}
+            ${navigationItem('dashboard.html', '◇', 'Preview &amp; integratiestatus', 'data-admin-only hidden')}
 
             <div class="nav-spacer" aria-hidden="true"></div>
-            <a class="nav-item nav-account-name" href="login.html" data-auth-entry>Inloggen</a>
+            <a class="nav-item nav-account-name" href="login.html" title="Inloggen" data-auth-entry>
+                <span class="nav-item-icon" aria-hidden="true">●</span>
+                <span class="nav-item-label">Inloggen</span>
+            </a>
         `;
 
         markCurrentNavigationItem(navLinks);
+
+        navLinks.querySelector('[data-sidebar-collapse]')?.addEventListener('click', toggleDesktopSidebar);
 
         navLinks.querySelectorAll('a[href]').forEach((link) => {
             link.addEventListener('click', () => closeMobileNavigation(nav));
         });
     });
+
+    applySidebarState();
 }
 
 async function fetchAuthState() {
@@ -134,6 +197,16 @@ async function fetchAuthState() {
     return currentAuthState;
 }
 
+function setNavigationLinkLabel(link, label) {
+    const labelElement = link.querySelector('.nav-item-label');
+    if (labelElement) {
+        labelElement.textContent = label;
+    } else {
+        link.textContent = label;
+    }
+    link.title = label;
+}
+
 function createLogoutLink(navLinks) {
     if (navLinks.querySelector('[data-auth-logout]')) {
         return;
@@ -142,8 +215,12 @@ function createLogoutLink(navLinks) {
     const logoutLink = document.createElement('a');
     logoutLink.href = '#';
     logoutLink.className = 'nav-item nav-logout-link';
-    logoutLink.textContent = 'Uitloggen';
+    logoutLink.title = 'Uitloggen';
     logoutLink.dataset.authLogout = '';
+    logoutLink.innerHTML = `
+        <span class="nav-item-icon" aria-hidden="true">↪</span>
+        <span class="nav-item-label">Uitloggen</span>
+    `;
 
     logoutLink.addEventListener('click', async (event) => {
         event.preventDefault();
@@ -165,14 +242,15 @@ function updateAuthNavigation(authState) {
     document.querySelectorAll('[data-auth-entry]').forEach((link) => {
         if (!authState.authenticated) {
             link.href = 'login.html';
-            link.textContent = 'Inloggen';
+            setNavigationLinkLabel(link, 'Inloggen');
             link.setAttribute('aria-label', 'Inloggen');
             return;
         }
 
+        const accountLabel = authState.user?.displayName || authState.user?.username || 'Account';
         link.href = '#';
-        link.textContent = authState.user?.displayName || authState.user?.username || 'Account';
-        link.setAttribute('aria-label', 'Ingelogd account');
+        setNavigationLinkLabel(link, accountLabel);
+        link.setAttribute('aria-label', `Ingelogd als ${accountLabel}`);
         link.addEventListener('click', (event) => event.preventDefault(), { once: true });
     });
 
@@ -222,6 +300,13 @@ function protectManagerPage(authState) {
 
     window.location.replace('index.html');
 }
+
+desktopSidebarQuery.addEventListener?.('change', () => applySidebarState());
+
+document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('nav').forEach(closeMobileNavigation);
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
     buildNavigation();
