@@ -1,3 +1,21 @@
+const originalWindowFetch = window.fetch.bind(window);
+
+window.fetch = (input, options) => {
+    const requestUrl = typeof input === 'string' ? input : input?.url;
+
+    if (typeof requestUrl === 'string' && /^\/api\/roster(?:\?|$)/.test(requestUrl)) {
+        const effectiveUrl = requestUrl.replace(/^\/api\/roster/, '/api/roster-effective');
+
+        if (typeof input === 'string') {
+            return originalWindowFetch(effectiveUrl, options);
+        }
+
+        return originalWindowFetch(new Request(effectiveUrl, input), options);
+    }
+
+    return originalWindowFetch(input, options);
+};
+
 let currentAuthState = {
     authenticated: false,
     role: 'guest',
