@@ -138,10 +138,10 @@ function buildNavigation() {
             ${navigationItem('index.html', '⌂', 'Home')}
             ${navigationItem('roster.html', '▦', 'Rooster')}
 
-            <p class="nav-section-label">Operationeel</p>
-            ${navigationItem('staffing.html', '◫', 'Bezettingsanalyse')}
-            ${navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden')}
-            ${navigationItem('cml.html', '↔', 'Roosterwijzigingen')}
+            <p class="nav-section-label" data-manager-only hidden>Operationeel</p>
+            ${navigationItem('staffing.html', '◫', 'Bezettingsanalyse', 'data-manager-only hidden')}
+            ${navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden', 'data-manager-only hidden')}
+            ${navigationItem('cml.html', '↔', 'Roosterwijzigingen', 'data-manager-only hidden')}
 
             <p class="nav-section-label" data-manager-only hidden>Management</p>
             ${navigationItem('hours.html', '◷', 'Urenanalyse &amp; urenbank', 'data-manager-only hidden')}
