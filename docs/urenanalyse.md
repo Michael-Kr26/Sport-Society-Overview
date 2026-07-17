@@ -6,7 +6,9 @@ De roosterimport verwerkt iedere dienst samen met de bijbehorende Excel-kolom `U
 
 De locatie wordt gekoppeld via de locatiekleur van de dienstcel. Wanneer de kleur op de naastliggende Uren-cel staat, wordt die kleur eveneens gebruikt. Daardoor blijven de gedeclareerde uren en de bijbehorende vestiging onderdeel van dezelfde roosterregel.
 
-Na een roosterimport voert `import-roster-linked.js` automatisch eerst `import-roster.js` en daarna `link-roster-hours.js` uit. De linker voegt de kolom `declared_hours` veilig toe aan bestaande databases en toont na afloop apart een controleoverzicht voor Lucas V.
+Na een roosterimport voert `import-roster-linked.js` automatisch eerst `import-roster.js`, daarna `link-roster-hours.js` en vervolgens `migrate-employee-names.js` uit. De linker voegt de kolom `declared_hours` veilig toe aan bestaande databases en toont na afloop apart een controleoverzicht voor Lucas Veenendaal.
+
+De Excelnaam `Lucas Veenendaal` wordt letterlijk overgenomen. Bestaande databaseverwijzingen naar `Lucas V` worden eenmalig samengevoegd met `Lucas Veenendaal`, inclusief contractperiodes, urenbankcorrecties, roosterregels en roosterwijzigingen.
 
 ## Contractmedewerkers
 
@@ -46,7 +48,7 @@ Contractperiodes mogen elkaar niet overlappen. Na de stopdatum wordt de medewerk
 | Leon | 38 | Vanaf januari 2026 |
 | Mario | 32 | Vanaf januari 2026 |
 | Koen | 21 | Vanaf januari 2026 |
-| Lucas V | 36 | Vanaf januari 2026 |
+| Lucas Veenendaal | 36 | Vanaf januari 2026 |
 | Dysianne | 34 | Vanaf januari 2026 |
 | Michael | 28 | Vanaf januari 2026 |
 | Tristan | 15 | Tot en met 31 mei 2026 |
