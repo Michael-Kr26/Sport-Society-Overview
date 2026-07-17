@@ -60,12 +60,26 @@ function getCellText(cell) {
     return cleanText(cell.text || cell.value);
 }
 
-function numberValue(cell) {
+function isFormulaCell(cell) {
+    const value = cell?.value;
+    return Boolean(value && typeof value === 'object' && (value.formula || value.sharedFormula));
+}
+
+function numberValue(cell, { blankFormulaIsZero = false } = {}) {
     if (!cell) return null;
     let value = cell.value;
-    if (value && typeof value === 'object' && value.result !== undefined) value = value.result;
+
+    if (value && typeof value === 'object' && isFormulaCell(cell)) {
+        if (!Object.hasOwn(value, 'result')) return null;
+        value = value.result;
+        if (blankFormulaIsZero && (value === '' || value === null)) return 0;
+    } else if (value && typeof value === 'object' && Object.hasOwn(value, 'result')) {
+        value = value.result;
+    }
+
     if (typeof value === 'number' && Number.isFinite(value)) return Math.round(value * 100) / 100;
-    const text = getCellText(cell).replace(',', '.');
+    const text = cleanText(value ?? getCellText(cell)).replace(',', '.');
+    if (!text && blankFormulaIsZero && isFormulaCell(cell)) return 0;
     if (!/^-?\d+(?:\.\d+)?$/.test(text)) return null;
     const parsed = Number(text);
     return Number.isFinite(parsed) ? Math.round(parsed * 100) / 100 : null;
@@ -143,14 +157,14 @@ function parseEmployeeSummary(worksheet, block, dateRows) {
         for (let column = block.startColumn; column < block.hoursColumn; column += 1) {
             const key = METRICS[normalizedText(getCellText(row.getCell(column)))];
             if (!key || rows[key]) continue;
-            values[key] = numberValue(row.getCell(block.hoursColumn));
+            values[key] = numberValue(row.getCell(block.hoursColumn), { blankFormulaIsZero: true });
             rows[key] = rowNumber;
         }
     }
 
     const minimumRow = rows.minimumHours || null;
     const scheduledHours = minimumRow && minimumRow > 1
-        ? numberValue(worksheet.getRow(minimumRow - 1).getCell(block.hoursColumn))
+        ? numberValue(worksheet.getRow(minimumRow - 1).getCell(block.hoursColumn), { blankFormulaIsZero: true })
         : null;
     const checkTotal = Number.isFinite(values.minimumHours) && Number.isFinite(values.overtimeThisMonth)
         ? Math.round((values.minimumHours + values.overtimeThisMonth) * 100) / 100
@@ -158,9 +172,7 @@ function parseEmployeeSummary(worksheet, block, dateRows) {
     const completeValues = { scheduledHours, ...values };
     const missingFields = REQUIRED_FIELDS.filter((field) => !Number.isFinite(completeValues[field]));
     const issues = [];
-    if (missingFields.length) {
-        issues.push(`Ontbrekend: ${missingFields.map((field) => FIELD_LABELS[field] || field).join(', ')}`);
-    }
+
     if (Number.isFinite(scheduledHours) && Number.isFinite(checkTotal) && Math.abs(scheduledHours - checkTotal) > 0.01) {
         issues.push(`Ingepland ${scheduledHours} wijkt af van Minstens + overuren (${checkTotal})`);
     }
