@@ -3,9 +3,9 @@ const { spawnSync } = require('child_process');
 
 const workbookPath = process.argv[2];
 
-function run(script) {
+function run(script, includeWorkbook = true) {
     const args = [path.join(__dirname, script)];
-    if (workbookPath) args.push(workbookPath);
+    if (includeWorkbook && workbookPath) args.push(workbookPath);
     const result = spawnSync(process.execPath, args, { stdio: 'inherit' });
     if (result.error) throw result.error;
     if (result.status !== 0) process.exit(result.status || 1);
@@ -13,3 +13,4 @@ function run(script) {
 
 run('import-roster.js');
 run('link-roster-hours.js');
+run('migrate-employee-names.js', false);
