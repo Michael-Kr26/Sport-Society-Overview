@@ -44,7 +44,9 @@ const DEFAULT_CONTRACTS = [
     ['Lucas V', 36, '2026-01-01'], ['Dysianne', 34, '2026-01-01'],
     ['Michael', 28, '2026-01-01'], ['Tristan', 15, '2026-01-01', '2026-05-31'],
     ['Tristan', 8, '2026-06-01'], ['Denise', 22, '2026-01-01']
-].map(([employeeName, weeklyHours, effectiveFrom, effectiveTo = null]) => ({ employeeName, weeklyHours, effectiveFrom, effectiveTo }));
+].map(([employeeName, weeklyHours, effectiveFrom, effectiveTo = null]) => ({
+    employeeName, weeklyHours, effectiveFrom, effectiveTo
+}));
 
 function cookies(req) {
     return String(req.headers.cookie || '').split(';').reduce((result, part) => {
@@ -53,7 +55,9 @@ function cookies(req) {
         return result;
     }, {});
 }
+
 const tokenHash = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
 async function authenticatedUser(req) {
     const token = cookies(req)[COOKIE];
     if (!token) return null;
@@ -65,10 +69,12 @@ async function authenticatedUser(req) {
         [tokenHash(token)]
     );
 }
+
 function apiError(res, error, fallback = 'De urenmodule kon de aanvraag niet verwerken.') {
     console.error(error);
     if (!res.headersSent) res.status(error.status || 500).json({ message: error.status ? error.message : fallback });
 }
+
 function requireRoles(...roles) {
     return async (req, res, next) => {
         try {
@@ -78,8 +84,16 @@ function requireRoles(...roles) {
             if (!roles.includes(user.role)) return res.status(403).json({ message: 'Je hebt geen toegang tot deze functie.' });
             req.hoursUser = user;
             next();
-        } catch (error) { apiError(res, error); }
+        } catch (error) {
+            apiError(res, error);
+        }
     };
+}
+
+function requestError(status, message) {
+    const error = new Error(message);
+    error.status = status;
+    return error;
 }
 
 const round = (value) => Math.round((Number(value) || 0) * 100) / 100;
@@ -95,30 +109,36 @@ const monthEnd = (month) => {
     const [year, number] = month.split('-').map(Number);
     return new Date(year, number, 0).toISOString().slice(0, 10);
 };
+
 function addMonths(month, amount) {
     const [year, number] = month.split('-').map(Number);
     const date = new Date(year, number - 1 + amount, 1);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
+
 function monthsBetween(from, to) {
     const result = [];
     for (let month = from; month <= to && result.length < 240; month = addMonths(month, 1)) result.push(month);
     return result;
 }
+
 function shiftHours({ startTime, endTime }) {
     const parse = (value) => {
         const match = String(value || '').match(/^([01]\d|2[0-3]):([0-5]\d)$/);
         return match ? Number(match[1]) * 60 + Number(match[2]) : null;
     };
-    const start = parse(startTime), end = parse(endTime);
+    const start = parse(startTime);
+    const end = parse(endTime);
     if (start === null || end === null) return 0;
     return round(((end <= start ? end + 1440 : end) - start) / 60);
 }
+
 const addToMap = (map, key, value) => map.set(key, round((map.get(key) || 0) + value));
 
 function contractHoursForMonth(employee, periodsByEmployee, month) {
     const periods = periodsByEmployee.get(employeeKey(employee.employeeName)) || [];
-    const first = monthStart(month), last = monthEnd(month);
+    const first = monthStart(month);
+    const last = monthEnd(month);
     const applicable = periods
         .filter((period) => period.effectiveFrom <= last && (!period.effectiveTo || period.effectiveTo >= first))
         .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
@@ -131,6 +151,7 @@ async function ensureColumn(table, column, definition) {
     const columns = await all(`PRAGMA table_info(${table})`);
     if (!columns.some((item) => item.name === column)) await run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
+
 async function ensureRosterEmployees() {
     const rows = await all(
         `SELECT TRIM(employee_name) AS employeeName, MIN(date(roster_date)) AS activeFrom
@@ -138,6 +159,7 @@ async function ensureRosterEmployees() {
          WHERE employee_name IS NOT NULL AND TRIM(employee_name) != '' AND UPPER(TRIM(employee_name)) != 'ALL'
          GROUP BY LOWER(TRIM(employee_name))`
     ).catch((error) => String(error.message).includes('no such table: roster_items') ? [] : Promise.reject(error));
+
     for (const row of rows) {
         await run(
             `INSERT OR IGNORE INTO hour_employee_settings
@@ -148,9 +170,11 @@ async function ensureRosterEmployees() {
         );
     }
 }
+
 async function seedContracts() {
     const seed = await get('SELECT version FROM hour_seed_state WHERE id = 1');
     if (Number(seed?.version || 0) >= SEED_VERSION) return;
+
     for (const contract of DEFAULT_CONTRACTS) {
         await run(
             `INSERT INTO hour_employee_settings
@@ -158,7 +182,7 @@ async function seedContracts() {
               active_from, is_active, updated_by, updated_at)
              VALUES (?, 'contract', ?, 0, '2026-01', ?, 1, 'Aangeleverde contracturen', CURRENT_TIMESTAMP)
              ON CONFLICT(employee_name) DO UPDATE SET contract_type='contract', weekly_contract_hours=excluded.weekly_contract_hours,
-                 active_from=MIN(active_from, excluded.active_from), is_active=1, updated_by=excluded.updated_by,
+                 active_from=MIN(active_from, excluded.active_from), updated_by=excluded.updated_by,
                  updated_at=CURRENT_TIMESTAMP`,
             [contract.employeeName, contract.weeklyHours, contract.effectiveFrom]
         );
@@ -169,6 +193,7 @@ async function seedContracts() {
             [contract.employeeName, contract.effectiveFrom, contract.effectiveTo, contract.weeklyHours]
         );
     }
+
     await run(
         `INSERT INTO hour_seed_state (id, version, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP)
          ON CONFLICT(id) DO UPDATE SET version=excluded.version, updated_at=CURRENT_TIMESTAMP`,
@@ -238,7 +263,9 @@ async function analysisFor(month) {
     const selectedEnd = monthEnd(month);
     const activeEmployees = employees.filter((employee) => employee.isActive && (!employee.activeFrom || employee.activeFrom <= selectedEnd));
     const previousMonth = addMonths(month, -1);
-    const earliest = activeEmployees.map((employee) => [normalizeMonth(employee.openingBankMonth, month), String(employee.activeFrom || '').slice(0, 7) || month].sort().reverse()[0]).sort()[0] || month;
+    const earliest = activeEmployees
+        .map((employee) => [normalizeMonth(employee.openingBankMonth, month), String(employee.activeFrom || '').slice(0, 7) || month].sort().reverse()[0])
+        .sort()[0] || month;
     const fromMonth = [earliest, previousMonth].sort()[0];
     const toMonth = addMonths(month, 1);
 
@@ -253,7 +280,11 @@ async function analysisFor(month) {
         FROM hour_adjustments WHERE date(adjustment_date)>=date(?) AND date(adjustment_date)<date(?)
         ORDER BY date(adjustment_date) DESC, id DESC`, [monthStart(fromMonth), monthStart(toMonth)]);
 
-    const scheduled = new Map(), locations = new Map(), credited = new Map(), bank = new Map();
+    const scheduled = new Map();
+    const locations = new Map();
+    const credited = new Map();
+    const bank = new Map();
+
     for (const shift of shifts) {
         const key = mapKey(shift.employeeName, String(shift.rosterDate || '').slice(0, 7));
         addToMap(scheduled, key, shiftHours(shift));
@@ -266,15 +297,19 @@ async function analysisFor(month) {
     }
 
     const result = activeEmployees.map((employee) => {
-        const key = mapKey(employee.employeeName, month), previousKey = mapKey(employee.employeeName, previousMonth);
-        const scheduledHours = round(scheduled.get(key)), creditedAdjustment = round(credited.get(key));
-        const bankAdjustment = round(bank.get(key)), creditedHours = round(scheduledHours + creditedAdjustment);
+        const key = mapKey(employee.employeeName, month);
+        const previousKey = mapKey(employee.employeeName, previousMonth);
+        const scheduledHours = round(scheduled.get(key));
+        const creditedAdjustment = round(credited.get(key));
+        const bankAdjustment = round(bank.get(key));
+        const creditedHours = round(scheduledHours + creditedAdjustment);
         const previousScheduledHours = round(scheduled.get(previousKey));
         const weeklyContractHours = contractHoursForMonth(employee, periodsByEmployee, month);
         const contractType = weeklyContractHours > 0 ? 'contract' : 'flex';
         const monthlyNorm = contractType === 'contract' ? round(weeklyContractHours * 4.33) : null;
         const monthDelta = contractType === 'contract' ? round(creditedHours - monthlyNorm + bankAdjustment) : null;
         let bankBalance = null;
+
         if (contractType === 'contract') {
             const activeMonth = String(employee.activeFrom || '').slice(0, 7) || month;
             const openingMonth = [normalizeMonth(employee.openingBankMonth, month), activeMonth].sort().reverse()[0];
@@ -285,25 +320,46 @@ async function analysisFor(month) {
                 bankBalance = round(bankBalance + round(scheduled.get(monthKey)) + round(credited.get(monthKey)) - norm + round(bank.get(monthKey)));
             }
         }
+
         return {
-            employeeName: employee.employeeName, contractType, weeklyContractHours, monthlyNorm,
-            scheduledHours, creditedAdjustment, creditedHours, bankAdjustment, monthDelta, bankBalance,
-            previousScheduledHours, trendHours: round(scheduledHours - previousScheduledHours),
-            locations: [...(locations.get(key) || [])].sort(), openingBankHours: round(employee.openingBankHours),
-            openingBankMonth: normalizeMonth(employee.openingBankMonth, month), activeFrom: employee.activeFrom
+            employeeName: employee.employeeName,
+            contractType,
+            weeklyContractHours,
+            monthlyNorm,
+            scheduledHours,
+            creditedAdjustment,
+            creditedHours,
+            bankAdjustment,
+            monthDelta,
+            bankBalance,
+            previousScheduledHours,
+            trendHours: round(scheduledHours - previousScheduledHours),
+            locations: [...(locations.get(key) || [])].sort(),
+            openingBankHours: round(employee.openingBankHours),
+            openingBankMonth: normalizeMonth(employee.openingBankMonth, month),
+            activeFrom: employee.activeFrom
         };
     });
+
     const flex = result.filter((employee) => employee.contractType === 'flex');
     const contracts = result.filter((employee) => employee.contractType === 'contract');
-    const flexAverageHours = flex.length ? round(flex.reduce((sum, employee) => sum + employee.creditedHours, 0) / flex.length) : 0;
+    const flexAverageHours = flex.length
+        ? round(flex.reduce((sum, employee) => sum + employee.creditedHours, 0) / flex.length)
+        : 0;
     for (const employee of flex) employee.flexDifference = round(employee.creditedHours - flexAverageHours);
+
     return {
-        month, previousMonth, generatedAt: new Date().toISOString(),
+        month,
+        previousMonth,
+        generatedAt: new Date().toISOString(),
         summary: {
-            employeeCount: result.length, contractEmployeeCount: contracts.length, flexEmployeeCount: flex.length,
+            employeeCount: result.length,
+            contractEmployeeCount: contracts.length,
+            flexEmployeeCount: flex.length,
             totalScheduledHours: round(result.reduce((sum, employee) => sum + employee.scheduledHours, 0)),
             totalCreditedHours: round(result.reduce((sum, employee) => sum + employee.creditedHours, 0)),
-            contractMonthDelta: round(contracts.reduce((sum, employee) => sum + employee.monthDelta, 0)), flexAverageHours
+            contractMonthDelta: round(contracts.reduce((sum, employee) => sum + employee.monthDelta, 0)),
+            flexAverageHours
         },
         employees: result,
         adjustments: adjustments.filter((adjustment) => String(adjustment.adjustmentDate || '').slice(0, 7) === month),
@@ -311,79 +367,284 @@ async function analysisFor(month) {
     };
 }
 
+function readPeriod(body) {
+    const effectiveFrom = String(body.effectiveFrom || '').trim();
+    const effectiveTo = String(body.effectiveTo || '').trim() || null;
+    const weeklyHours = Number(body.weeklyHours ?? body.weeklyContractHours);
+
+    if (!DATE_RE.test(effectiveFrom)) throw requestError(400, 'Vul een geldige startdatum voor het contract in.');
+    if (effectiveTo && !DATE_RE.test(effectiveTo)) throw requestError(400, 'Vul een geldige stopdatum voor het contract in.');
+    if (effectiveTo && effectiveTo < effectiveFrom) throw requestError(400, 'De contractstop mag niet vóór de contractstart liggen.');
+    if (!Number.isFinite(weeklyHours) || weeklyHours <= 0 || weeklyHours > 60) {
+        throw requestError(400, 'Contracturen moeten hoger zijn dan 0 en maximaal 60 uur per week bedragen.');
+    }
+
+    return { effectiveFrom, effectiveTo, weeklyHours: round(weeklyHours) };
+}
+
+async function employeeExists(employeeName) {
+    return get('SELECT employee_name AS employeeName FROM hour_employee_settings WHERE employee_name=? COLLATE NOCASE', [employeeName]);
+}
+
+async function assertNoPeriodOverlap(employeeName, period, excludeId = null) {
+    const exclusion = excludeId ? 'AND id != ?' : '';
+    const params = [employeeName];
+    if (excludeId) params.push(excludeId);
+    params.push(period.effectiveTo || '9999-12-31', period.effectiveFrom);
+    const overlap = await get(
+        `SELECT id FROM hour_contract_periods
+         WHERE employee_name=? COLLATE NOCASE ${exclusion}
+           AND date(effective_from) <= date(?)
+           AND date(COALESCE(effective_to, '9999-12-31')) >= date(?)
+         LIMIT 1`,
+        params
+    );
+    if (overlap) throw requestError(409, 'Deze contractperiode overlapt met een bestaande contractperiode.');
+}
+
+async function syncEmployeeContractSummary(employeeName, updatedBy) {
+    const latest = await get(
+        `SELECT weekly_hours AS weeklyHours FROM hour_contract_periods
+         WHERE employee_name=? COLLATE NOCASE
+         ORDER BY date(effective_from) DESC, id DESC LIMIT 1`,
+        [employeeName]
+    );
+    await run(
+        `UPDATE hour_employee_settings
+         SET contract_type=?, weekly_contract_hours=?, updated_by=?, updated_at=CURRENT_TIMESTAMP
+         WHERE employee_name=? COLLATE NOCASE`,
+        [latest ? 'contract' : 'flex', latest ? round(latest.weeklyHours) : 0, updatedBy, employeeName]
+    );
+}
+
+async function transaction(work) {
+    await run('BEGIN IMMEDIATE');
+    try {
+        const result = await work();
+        await run('COMMIT');
+        return result;
+    } catch (error) {
+        await run('ROLLBACK').catch(() => {});
+        throw error;
+    }
+}
+
 app.get('/api/hours/analysis', requireRoles('manager', 'admin'), async (req, res) => {
     try {
         const result = await analysisFor(normalizeMonth(req.query.month));
         result.permissions.canEdit = req.hoursUser.role === 'admin';
         res.json(result);
-    } catch (error) { apiError(res, error); }
+    } catch (error) {
+        apiError(res, error);
+    }
 });
+
 app.get('/api/hours/employees', requireRoles('manager', 'admin'), async (req, res) => {
     try {
         await ensureRosterEmployees();
         const { employees, periodsByEmployee } = await employeesWithPeriods();
         res.json({
-            employees: employees.map((employee) => ({ ...employee, contractPeriods: periodsByEmployee.get(employeeKey(employee.employeeName)) || [] })),
+            employees: employees.map((employee) => ({
+                ...employee,
+                contractPeriods: periodsByEmployee.get(employeeKey(employee.employeeName)) || []
+            })),
             permissions: { canEdit: req.hoursUser.role === 'admin' }
         });
-    } catch (error) { apiError(res, error); }
+    } catch (error) {
+        apiError(res, error);
+    }
 });
+
 app.put('/api/hours/employees/:employeeName', requireRoles('admin'), async (req, res) => {
     try {
         const employeeName = String(req.params.employeeName || '').trim();
-        const existing = employeeName ? await get('SELECT active_from AS activeFrom FROM hour_employee_settings WHERE employee_name=? COLLATE NOCASE', [employeeName]) : null;
-        const contractType = String(req.body.contractType || '').trim();
-        const weeklyHours = Number(req.body.weeklyContractHours || 0);
-        const effectiveFrom = String(req.body.effectiveFrom || '').trim();
-        const activeFrom = String(req.body.activeFrom || existing?.activeFrom || effectiveFrom || monthStart(currentMonth())).trim();
-        const openingBankHours = Number(req.body.openingBankHours || 0);
-        const openingBankMonth = normalizeMonth(req.body.openingBankMonth, String(activeFrom).slice(0, 7));
-        const isActive = req.body.isActive === false || req.body.isActive === 0 ? 0 : 1;
         if (!employeeName || employeeName.length > 120) return res.status(400).json({ message: 'Vul een geldige medewerker in.' });
-        if (!CONTRACT_TYPES.has(contractType)) return res.status(400).json({ message: 'Kies flex of contract.' });
-        if (!DATE_RE.test(activeFrom)) return res.status(400).json({ message: 'Vul een geldige startdatum in.' });
-        if (!Number.isFinite(weeklyHours) || weeklyHours < 0 || weeklyHours > 60) return res.status(400).json({ message: 'Contracturen moeten tussen 0 en 60 uur per week liggen.' });
-        if (contractType === 'contract' && (weeklyHours <= 0 || !DATE_RE.test(effectiveFrom))) return res.status(400).json({ message: 'Vul contracturen en een geldige ingangsdatum in.' });
-        if (!Number.isFinite(openingBankHours) || Math.abs(openingBankHours) > 1000) return res.status(400).json({ message: 'De startstand van de urenbank is ongeldig.' });
+
+        const existing = await get(
+            `SELECT employee_name AS employeeName, contract_type AS contractType,
+                    weekly_contract_hours AS weeklyContractHours, opening_bank_hours AS openingBankHours,
+                    opening_bank_month AS openingBankMonth, active_from AS activeFrom, is_active AS isActive
+             FROM hour_employee_settings WHERE employee_name=? COLLATE NOCASE`,
+            [employeeName]
+        );
+        const requestedType = String(req.body.contractType || existing?.contractType || 'flex').trim();
+        const weeklyHours = Number(req.body.weeklyContractHours ?? existing?.weeklyContractHours ?? 0);
+        const effectiveFrom = String(req.body.effectiveFrom || '').trim();
+        const effectiveTo = String(req.body.effectiveTo || '').trim() || null;
+        const activeFrom = String(req.body.activeFrom || existing?.activeFrom || effectiveFrom || monthStart(currentMonth())).trim();
+        const openingBankHours = Number(req.body.openingBankHours ?? existing?.openingBankHours ?? 0);
+        const openingBankMonth = normalizeMonth(
+            req.body.openingBankMonth,
+            existing?.openingBankMonth || String(activeFrom).slice(0, 7)
+        );
+        const isActive = req.body.isActive === false || req.body.isActive === 0 ? 0 : 1;
         const updatedBy = req.hoursUser.displayName || req.hoursUser.username;
-        await run(`INSERT INTO hour_employee_settings
-            (employee_name, contract_type, weekly_contract_hours, opening_bank_hours, opening_bank_month,
-             active_from, is_active, updated_by, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(employee_name) DO UPDATE SET contract_type=excluded.contract_type,
-                weekly_contract_hours=excluded.weekly_contract_hours, opening_bank_hours=excluded.opening_bank_hours,
-                opening_bank_month=excluded.opening_bank_month, active_from=excluded.active_from,
-                is_active=excluded.is_active, updated_by=excluded.updated_by, updated_at=CURRENT_TIMESTAMP`,
-            [employeeName, contractType, contractType === 'contract' ? round(weeklyHours) : 0,
-             round(openingBankHours), openingBankMonth, activeFrom, isActive, updatedBy]);
-        if (contractType === 'contract') {
-            await run(`INSERT INTO hour_contract_periods
-                (employee_name, effective_from, effective_to, weekly_hours, created_by)
-                VALUES (?, ?, NULL, ?, ?)
-                ON CONFLICT(employee_name, effective_from) DO UPDATE SET weekly_hours=excluded.weekly_hours,
-                    effective_to=NULL, created_by=excluded.created_by`,
-                [employeeName, effectiveFrom, round(weeklyHours), updatedBy]);
+
+        if (!CONTRACT_TYPES.has(requestedType)) return res.status(400).json({ message: 'Kies flex of contract.' });
+        if (!DATE_RE.test(activeFrom)) return res.status(400).json({ message: 'Vul een geldige startdatum in.' });
+        if (!Number.isFinite(weeklyHours) || weeklyHours < 0 || weeklyHours > 60) {
+            return res.status(400).json({ message: 'Contracturen moeten tussen 0 en 60 uur per week liggen.' });
         }
+        if (!Number.isFinite(openingBankHours) || Math.abs(openingBankHours) > 1000) {
+            return res.status(400).json({ message: 'De startstand van de urenbank is ongeldig.' });
+        }
+
+        let initialPeriod = null;
+        if (requestedType === 'contract' && effectiveFrom) {
+            initialPeriod = readPeriod({ effectiveFrom, effectiveTo, weeklyHours });
+        } else if (!existing && requestedType === 'contract') {
+            return res.status(400).json({ message: 'Vul voor een nieuwe contractmedewerker een contractstart en uren per week in.' });
+        }
+
+        await transaction(async () => {
+            await run(
+                `INSERT INTO hour_employee_settings
+                 (employee_name, contract_type, weekly_contract_hours, opening_bank_hours, opening_bank_month,
+                  active_from, is_active, updated_by, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                 ON CONFLICT(employee_name) DO UPDATE SET opening_bank_hours=excluded.opening_bank_hours,
+                     opening_bank_month=excluded.opening_bank_month, active_from=excluded.active_from,
+                     is_active=excluded.is_active, updated_by=excluded.updated_by, updated_at=CURRENT_TIMESTAMP`,
+                [employeeName, requestedType, requestedType === 'contract' ? round(weeklyHours) : 0,
+                    round(openingBankHours), openingBankMonth, activeFrom, isActive, updatedBy]
+            );
+
+            if (initialPeriod) {
+                const existingPeriod = await get(
+                    `SELECT id FROM hour_contract_periods
+                     WHERE employee_name=? COLLATE NOCASE AND effective_from=?`,
+                    [employeeName, initialPeriod.effectiveFrom]
+                );
+                await assertNoPeriodOverlap(employeeName, initialPeriod, existingPeriod?.id || null);
+                await run(
+                    `INSERT INTO hour_contract_periods
+                     (employee_name, effective_from, effective_to, weekly_hours, created_by)
+                     VALUES (?, ?, ?, ?, ?)
+                     ON CONFLICT(employee_name, effective_from) DO UPDATE SET
+                         effective_to=excluded.effective_to, weekly_hours=excluded.weekly_hours,
+                         created_by=excluded.created_by`,
+                    [employeeName, initialPeriod.effectiveFrom, initialPeriod.effectiveTo,
+                        initialPeriod.weeklyHours, updatedBy]
+                );
+            }
+
+            await syncEmployeeContractSummary(employeeName, updatedBy);
+        });
+
         res.json({ message: existing ? 'Medewerkerinstellingen opgeslagen.' : 'Medewerker toegevoegd.' });
-    } catch (error) { apiError(res, error); }
+    } catch (error) {
+        apiError(res, error);
+    }
 });
+
+app.post('/api/hours/employees/:employeeName/contract-periods', requireRoles('admin'), async (req, res) => {
+    try {
+        const employeeName = String(req.params.employeeName || '').trim();
+        if (!await employeeExists(employeeName)) return res.status(404).json({ message: 'Medewerker niet gevonden.' });
+        const period = readPeriod(req.body);
+        const updatedBy = req.hoursUser.displayName || req.hoursUser.username;
+
+        const result = await transaction(async () => {
+            await assertNoPeriodOverlap(employeeName, period);
+            const insert = await run(
+                `INSERT INTO hour_contract_periods
+                 (employee_name, effective_from, effective_to, weekly_hours, created_by)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [employeeName, period.effectiveFrom, period.effectiveTo, period.weeklyHours, updatedBy]
+            );
+            await syncEmployeeContractSummary(employeeName, updatedBy);
+            return insert;
+        });
+
+        res.status(201).json({ message: 'Contractperiode toegevoegd.', id: result.lastID });
+    } catch (error) {
+        apiError(res, error);
+    }
+});
+
+app.put('/api/hours/employees/:employeeName/contract-periods/:id', requireRoles('admin'), async (req, res) => {
+    try {
+        const employeeName = String(req.params.employeeName || '').trim();
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ message: 'Ongeldige contractperiode.' });
+        const existing = await get(
+            `SELECT id FROM hour_contract_periods WHERE id=? AND employee_name=? COLLATE NOCASE`,
+            [id, employeeName]
+        );
+        if (!existing) return res.status(404).json({ message: 'Contractperiode niet gevonden.' });
+
+        const period = readPeriod(req.body);
+        const updatedBy = req.hoursUser.displayName || req.hoursUser.username;
+        await transaction(async () => {
+            await assertNoPeriodOverlap(employeeName, period, id);
+            await run(
+                `UPDATE hour_contract_periods
+                 SET effective_from=?, effective_to=?, weekly_hours=?, created_by=?
+                 WHERE id=? AND employee_name=? COLLATE NOCASE`,
+                [period.effectiveFrom, period.effectiveTo, period.weeklyHours, updatedBy, id, employeeName]
+            );
+            await syncEmployeeContractSummary(employeeName, updatedBy);
+        });
+
+        res.json({ message: 'Contractperiode bijgewerkt.' });
+    } catch (error) {
+        if (String(error.message).includes('UNIQUE constraint failed')) {
+            error.status = 409;
+            error.message = 'Er bestaat al een contractperiode met deze startdatum.';
+        }
+        apiError(res, error);
+    }
+});
+
+app.delete('/api/hours/employees/:employeeName/contract-periods/:id', requireRoles('admin'), async (req, res) => {
+    try {
+        const employeeName = String(req.params.employeeName || '').trim();
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ message: 'Ongeldige contractperiode.' });
+        const updatedBy = req.hoursUser.displayName || req.hoursUser.username;
+
+        await transaction(async () => {
+            const result = await run(
+                `DELETE FROM hour_contract_periods WHERE id=? AND employee_name=? COLLATE NOCASE`,
+                [id, employeeName]
+            );
+            if (!result.changes) throw requestError(404, 'Contractperiode niet gevonden.');
+            await syncEmployeeContractSummary(employeeName, updatedBy);
+        });
+
+        res.json({ message: 'Contractperiode verwijderd.' });
+    } catch (error) {
+        apiError(res, error);
+    }
+});
+
 app.post('/api/hours/adjustments', requireRoles('admin'), async (req, res) => {
     try {
         const employeeName = String(req.body.employeeName || '').trim();
         const adjustmentDate = String(req.body.adjustmentDate || '').trim();
         const adjustmentType = String(req.body.adjustmentType || '').trim();
-        const hours = Number(req.body.hours), note = String(req.body.note || '').trim().slice(0, 300);
+        const hours = Number(req.body.hours);
+        const note = String(req.body.note || '').trim().slice(0, 300);
         if (!employeeName || !DATE_RE.test(adjustmentDate)) return res.status(400).json({ message: 'Medewerker en datum zijn verplicht.' });
         if (!ADJUSTMENT_TYPES.has(adjustmentType)) return res.status(400).json({ message: 'Ongeldig correctietype.' });
-        if (!Number.isFinite(hours) || !hours || Math.abs(hours) > 250) return res.status(400).json({ message: 'Correctie-uren moeten tussen -250 en 250 liggen en mogen niet nul zijn.' });
-        const employee = await get('SELECT employee_name AS employeeName FROM hour_employee_settings WHERE employee_name=? COLLATE NOCASE', [employeeName]);
+        if (!Number.isFinite(hours) || !hours || Math.abs(hours) > 250) {
+            return res.status(400).json({ message: 'Correctie-uren moeten tussen -250 en 250 liggen en mogen niet nul zijn.' });
+        }
+        const employee = await employeeExists(employeeName);
         if (!employee) return res.status(404).json({ message: 'Medewerker niet gevonden.' });
-        const result = await run(`INSERT INTO hour_adjustments
-            (employee_name, adjustment_date, adjustment_type, hours, note, created_by) VALUES (?, ?, ?, ?, ?, ?)`,
-            [employee.employeeName, adjustmentDate, adjustmentType, round(hours), note, req.hoursUser.displayName || req.hoursUser.username]);
+        const result = await run(
+            `INSERT INTO hour_adjustments
+             (employee_name, adjustment_date, adjustment_type, hours, note, created_by)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [employee.employeeName, adjustmentDate, adjustmentType, round(hours), note,
+                req.hoursUser.displayName || req.hoursUser.username]
+        );
         res.status(201).json({ message: 'Urencorrectie opgeslagen.', id: result.lastID });
-    } catch (error) { apiError(res, error); }
+    } catch (error) {
+        apiError(res, error);
+    }
 });
+
 app.delete('/api/hours/adjustments/:id', requireRoles('admin'), async (req, res) => {
     try {
         const id = Number(req.params.id);
@@ -391,5 +652,7 @@ app.delete('/api/hours/adjustments/:id', requireRoles('admin'), async (req, res)
         const result = await run('DELETE FROM hour_adjustments WHERE id=?', [id]);
         if (!result.changes) return res.status(404).json({ message: 'Correctie niet gevonden.' });
         res.json({ message: 'Correctie verwijderd.' });
-    } catch (error) { apiError(res, error); }
+    } catch (error) {
+        apiError(res, error);
+    }
 });
