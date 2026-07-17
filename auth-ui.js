@@ -2,322 +2,264 @@ const originalWindowFetch = window.fetch.bind(window);
 
 window.fetch = (input, options) => {
     const requestUrl = typeof input === 'string' ? input : input?.url;
-
     if (typeof requestUrl === 'string' && /^\/api\/roster(?:\?|$)/.test(requestUrl)) {
         const effectiveUrl = requestUrl.replace(/^\/api\/roster/, '/api/roster-effective');
-
-        if (typeof input === 'string') {
-            return originalWindowFetch(effectiveUrl, options);
-        }
-
-        return originalWindowFetch(new Request(effectiveUrl, input), options);
+        return typeof input === 'string'
+            ? originalWindowFetch(effectiveUrl, options)
+            : originalWindowFetch(new Request(effectiveUrl, input), options);
     }
-
     return originalWindowFetch(input, options);
 };
 
-const SIDEBAR_STORAGE_KEY = 'sso_sidebar_collapsed';
-const desktopSidebarQuery = window.matchMedia('(min-width: 901px)');
-
-let currentAuthState = {
-    authenticated: false,
-    role: 'guest',
-    user: null
+const ROLE_LEVEL = { guest: 0, employee: 1, manager: 2, admin: 3 };
+const PAGE_ACCESS = {
+    'index.html': 'guest',
+    'roster.html': 'guest',
+    'login.html': 'guest',
+    'staffing.html': 'manager',
+    'staffing-standards.html': 'manager',
+    'cml.html': 'manager',
+    'hours.html': 'manager',
+    'employee-settings.html': 'admin',
+    'cf.html': 'admin',
+    'dashboard.html': 'admin',
+    'create.html': 'admin'
 };
+const SIDEBAR_STORAGE_KEY = 'sso_sidebar_collapsed';
+const GROUP_STORAGE_PREFIX = 'sso_nav_group_';
+const desktopSidebarQuery = window.matchMedia('(min-width: 901px)');
+let currentAuthState = { authenticated: false, role: 'guest', user: null };
 
-function ensureNavigationStyles() {
-    if (document.querySelector('link[href="navigation.css"]')) {
-        return;
-    }
+const roleAllows = (role, minimumRole) => (ROLE_LEVEL[role] || 0) >= (ROLE_LEVEL[minimumRole] || 0);
+const currentPage = () => window.location.pathname.split('/').pop() || 'index.html';
 
+function ensureStylesheet(href) {
+    if (document.querySelector(`link[href^="${href}"]`)) return;
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
-    stylesheet.href = 'navigation.css';
+    stylesheet.href = `${href}?v=20260717-access-mobile`;
     document.head.appendChild(stylesheet);
-}
-
-function getCurrentPage() {
-    return window.location.pathname.split('/').pop() || 'index.html';
-}
-
-function markCurrentNavigationItem(navLinks) {
-    const currentPage = getCurrentPage();
-
-    navLinks.querySelectorAll('a[href]').forEach((link) => {
-        if (link.getAttribute('href') === currentPage) {
-            link.setAttribute('aria-current', 'page');
-        }
-    });
 }
 
 function closeMobileNavigation(nav) {
     const toggle = nav.querySelector('#nav-toggle');
-    if (toggle) {
-        toggle.checked = false;
-    }
+    if (toggle) toggle.checked = false;
 }
 
-function getStoredSidebarState() {
-    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
-}
-
-function updateCollapseButton(button, isCollapsed) {
+function updateCollapseButton(button, collapsed) {
     if (!button) return;
-
-    button.setAttribute('aria-expanded', String(!isCollapsed));
-    button.setAttribute('aria-label', isCollapsed ? 'Navigatie uitklappen' : 'Navigatie inklappen');
-    button.title = isCollapsed ? 'Navigatie uitklappen' : 'Navigatie inklappen';
-
+    button.setAttribute('aria-expanded', String(!collapsed));
+    button.setAttribute('aria-label', collapsed ? 'Navigatie uitklappen' : 'Navigatie inklappen');
+    button.title = collapsed ? 'Navigatie uitklappen' : 'Navigatie inklappen';
     const icon = button.querySelector('[data-collapse-icon]');
-    if (icon) {
-        icon.textContent = isCollapsed ? '›' : '‹';
-    }
+    if (icon) icon.textContent = collapsed ? '›' : '‹';
 }
 
-function applySidebarState(requestedCollapsed = getStoredSidebarState()) {
-    const isCollapsed = desktopSidebarQuery.matches && requestedCollapsed;
-    document.body.classList.toggle('sidebar-collapsed', isCollapsed);
-
-    document.querySelectorAll('[data-sidebar-collapse]').forEach((button) => {
-        updateCollapseButton(button, isCollapsed);
-    });
+function applySidebarState(requested = localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true') {
+    const collapsed = desktopSidebarQuery.matches && requested;
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
+    document.querySelectorAll('[data-sidebar-collapse]').forEach((button) => updateCollapseButton(button, collapsed));
 }
 
 function toggleDesktopSidebar() {
-    const nextState = !document.body.classList.contains('sidebar-collapsed');
-    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(nextState));
-    applySidebarState(nextState);
+    const collapsed = !document.body.classList.contains('sidebar-collapsed');
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
+    applySidebarState(collapsed);
 }
 
-function navigationItem(href, icon, label, attributes = '') {
-    return `
-        <a class="nav-item" href="${href}" title="${label}" ${attributes}>
-            <span class="nav-item-icon" aria-hidden="true">${icon}</span>
-            <span class="nav-item-label">${label}</span>
-        </a>
-    `;
+function navigationItem(href, icon, label, minimumRole = 'guest', attributes = '') {
+    return `<a class="nav-item" href="${href}" title="${label}" data-min-role="${minimumRole}" ${attributes}>
+        <span class="nav-item-icon" aria-hidden="true">${icon}</span><span class="nav-item-label">${label}</span>
+    </a>`;
+}
+
+function navigationGroup(id, label, icon, items, minimumRole = 'guest') {
+    return `<section class="nav-group" data-nav-group="${id}" data-min-role="${minimumRole}">
+        <button type="button" class="nav-group-toggle" data-nav-group-toggle aria-expanded="true" title="${label}">
+            <span class="nav-group-icon" aria-hidden="true">${icon}</span>
+            <span class="nav-group-label">${label}</span>
+            <span class="nav-group-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="nav-group-items">${items}</div>
+    </section>`;
+}
+
+function setGroupCollapsed(group, collapsed, persist = true) {
+    const id = group.dataset.navGroup;
+    const toggle = group.querySelector('[data-nav-group-toggle]');
+    group.classList.toggle('is-collapsed', collapsed);
+    toggle?.setAttribute('aria-expanded', String(!collapsed));
+    if (persist && id) localStorage.setItem(`${GROUP_STORAGE_PREFIX}${id}`, String(collapsed));
+}
+
+function initializeGroups(navLinks) {
+    const page = currentPage();
+    navLinks.querySelectorAll('[data-nav-group]').forEach((group) => {
+        const containsCurrent = Boolean(group.querySelector(`a[href="${page}"]`));
+        const stored = localStorage.getItem(`${GROUP_STORAGE_PREFIX}${group.dataset.navGroup}`) === 'true';
+        setGroupCollapsed(group, containsCurrent ? false : stored, false);
+        group.querySelector('[data-nav-group-toggle]')?.addEventListener('click', () => {
+            setGroupCollapsed(group, !group.classList.contains('is-collapsed'));
+        });
+    });
 }
 
 function buildNavigation() {
-    ensureNavigationStyles();
-
+    ensureStylesheet('navigation.css');
+    ensureStylesheet('responsive.css');
     const navigationElements = document.querySelectorAll('nav');
-    if (!navigationElements.length) {
-        return;
-    }
-
+    if (!navigationElements.length) return;
     document.body.classList.add('has-sidebar-navigation');
 
     navigationElements.forEach((nav) => {
         nav.setAttribute('aria-label', 'Hoofdnavigatie');
-
-        const mobileToggleLabel = nav.querySelector('.nav-toggle-label');
-        if (mobileToggleLabel) {
-            mobileToggleLabel.setAttribute('aria-label', 'Navigatie openen of sluiten');
-            mobileToggleLabel.title = 'Navigatie openen of sluiten';
+        const toggleLabel = nav.querySelector('.nav-toggle-label');
+        if (toggleLabel) {
+            toggleLabel.setAttribute('aria-label', 'Navigatie openen of sluiten');
+            toggleLabel.title = 'Navigatie openen of sluiten';
         }
-
         const navLinks = nav.querySelector('.nav-links');
-        if (!navLinks) {
-            return;
-        }
+        if (!navLinks) return;
 
         navLinks.innerHTML = `
             <div class="nav-sidebar-head">
                 <div class="nav-brand" aria-label="Sport Society Overview">
-                    <span class="nav-brand-kicker">Sport Society</span>
-                    <strong class="nav-brand-name">Overview</strong>
-                    <strong class="nav-brand-short" aria-hidden="true">SSO</strong>
+                    <span class="nav-brand-kicker">Sport Society</span><strong class="nav-brand-name">Overview</strong><strong class="nav-brand-short" aria-hidden="true">SSO</strong>
                 </div>
-                <button type="button" class="nav-collapse-button" data-sidebar-collapse aria-expanded="true">
-                    <span data-collapse-icon aria-hidden="true">‹</span>
-                </button>
+                <button type="button" class="nav-collapse-button" data-sidebar-collapse aria-expanded="true"><span data-collapse-icon aria-hidden="true">‹</span></button>
             </div>
-
-            <p class="nav-section-label">Algemeen</p>
-            ${navigationItem('index.html', '⌂', 'Home')}
-            ${navigationItem('roster.html', '▦', 'Rooster')}
-
-            <p class="nav-section-label" data-manager-only hidden>Operationeel</p>
-            ${navigationItem('staffing.html', '◫', 'Bezettingsanalyse', 'data-manager-only hidden')}
-            ${navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden', 'data-manager-only hidden')}
-            ${navigationItem('cml.html', '↔', 'Roosterwijzigingen', 'data-manager-only hidden')}
-
-            <p class="nav-section-label" data-manager-only hidden>Management</p>
-            ${navigationItem('hours.html', '◷', 'Urenanalyse &amp; urenbank', 'data-manager-only hidden')}
-
-            <p class="nav-section-label" data-admin-only hidden>Admin</p>
-            ${navigationItem('employee-settings.html', '♙', 'Medewerkers', 'data-admin-only hidden')}
-            ${navigationItem('cf.html', '＋', 'Wijziging registreren', 'data-admin-only hidden')}
-            ${navigationItem('dashboard.html', '◇', 'Preview &amp; integratiestatus', 'data-admin-only hidden')}
-
+            ${navigationGroup('general', 'Algemeen', '⌂',
+                navigationItem('index.html', '⌂', 'Home') + navigationItem('roster.html', '▦', 'Rooster'))}
+            ${navigationGroup('operational', 'Operationeel', '◫',
+                navigationItem('staffing.html', '◫', 'Bezettingsanalyse', 'manager') +
+                navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden', 'manager') +
+                navigationItem('cml.html', '↔', 'Roosterwijzigingen', 'manager'), 'manager')}
+            ${navigationGroup('management', 'Management', '◷',
+                navigationItem('hours.html', '◷', 'Urenanalyse &amp; urenbank', 'manager'), 'manager')}
+            ${navigationGroup('admin', 'Admin', '◆',
+                navigationItem('employee-settings.html', '♙', 'Medewerkers', 'admin') +
+                navigationItem('cf.html', '＋', 'Wijziging registreren', 'admin') +
+                navigationItem('dashboard.html', '◇', 'Preview &amp; integratiestatus', 'admin') +
+                navigationItem('create.html', '◎', 'Accounts', 'admin'), 'admin')}
             <div class="nav-spacer" aria-hidden="true"></div>
-            <a class="nav-item nav-account-name" href="login.html" title="Inloggen" data-auth-entry>
-                <span class="nav-item-icon" aria-hidden="true">●</span>
-                <span class="nav-item-label">Inloggen</span>
-            </a>
+            ${navigationGroup('account', 'Account', '●',
+                navigationItem('login.html', '●', 'Inloggen', 'guest', 'data-auth-entry'))}
         `;
 
-        markCurrentNavigationItem(navLinks);
-
+        const page = currentPage();
+        navLinks.querySelector(`a[href="${page}"]`)?.setAttribute('aria-current', 'page');
         navLinks.querySelector('[data-sidebar-collapse]')?.addEventListener('click', toggleDesktopSidebar);
-
-        navLinks.querySelectorAll('a[href]').forEach((link) => {
-            link.addEventListener('click', () => closeMobileNavigation(nav));
-        });
+        navLinks.querySelectorAll('a[href]').forEach((link) => link.addEventListener('click', () => closeMobileNavigation(nav)));
+        initializeGroups(navLinks);
     });
-
     applySidebarState();
 }
 
 async function fetchAuthState() {
     try {
-        const response = await fetch('/api/auth/me');
-
-        if (!response.ok) {
-            throw new Error('Sessie kon niet worden opgehaald.');
-        }
-
+        const response = await fetch('/api/access/me');
+        if (!response.ok) throw new Error('Sessie kon niet worden opgehaald.');
         currentAuthState = await response.json();
     } catch (error) {
         console.error(error);
-        currentAuthState = {
-            authenticated: false,
-            role: 'guest',
-            user: null
-        };
+        currentAuthState = { authenticated: false, role: 'guest', user: null };
     }
-
-    if (currentAuthState.authenticated) {
-        localStorage.setItem('demoRole', currentAuthState.role);
-    } else {
-        localStorage.removeItem('demoRole');
-    }
-
+    if (currentAuthState.authenticated) localStorage.setItem('demoRole', currentAuthState.role);
+    else localStorage.removeItem('demoRole');
     window.currentAuthState = currentAuthState;
     return currentAuthState;
 }
 
 function setNavigationLinkLabel(link, label) {
-    const labelElement = link.querySelector('.nav-item-label');
-    if (labelElement) {
-        labelElement.textContent = label;
-    } else {
-        link.textContent = label;
-    }
+    const element = link.querySelector('.nav-item-label');
+    if (element) element.textContent = label;
     link.title = label;
 }
 
 function createLogoutLink(navLinks) {
-    if (navLinks.querySelector('[data-auth-logout]')) {
-        return;
-    }
-
-    const logoutLink = document.createElement('a');
-    logoutLink.href = '#';
-    logoutLink.className = 'nav-item nav-logout-link';
-    logoutLink.title = 'Uitloggen';
-    logoutLink.dataset.authLogout = '';
-    logoutLink.innerHTML = `
-        <span class="nav-item-icon" aria-hidden="true">↪</span>
-        <span class="nav-item-label">Uitloggen</span>
-    `;
-
-    logoutLink.addEventListener('click', async (event) => {
+    const container = navLinks.querySelector('[data-nav-group="account"] .nav-group-items');
+    if (!container || container.querySelector('[data-auth-logout]')) return;
+    const link = document.createElement('a');
+    link.href = '#';
+    link.className = 'nav-item nav-logout-link';
+    link.dataset.authLogout = '';
+    link.innerHTML = '<span class="nav-item-icon" aria-hidden="true">↪</span><span class="nav-item-label">Uitloggen</span>';
+    link.addEventListener('click', async (event) => {
         event.preventDefault();
-
-        try {
-            await fetch('/api/auth/logout', {
-                method: 'POST'
-            });
-        } finally {
+        try { await fetch('/api/auth/logout', { method: 'POST' }); }
+        finally {
             localStorage.removeItem('demoRole');
             window.location.href = 'login.html';
         }
     });
+    container.appendChild(link);
+}
 
-    navLinks.appendChild(logoutLink);
+function applyRoleVisibility(authState) {
+    document.querySelectorAll('[data-min-role]').forEach((element) => {
+        element.hidden = !roleAllows(authState.role, element.dataset.minRole);
+    });
+    document.querySelectorAll('[data-admin-only], [data-admin-content]').forEach((element) => {
+        element.hidden = authState.role !== 'admin';
+    });
+    document.querySelectorAll('[data-manager-only]').forEach((element) => {
+        element.hidden = !roleAllows(authState.role, 'manager');
+    });
+    document.querySelectorAll('[data-nav-group]').forEach((group) => {
+        const visibleItems = [...group.querySelectorAll('.nav-item')].some((item) => !item.hidden);
+        group.hidden = !roleAllows(authState.role, group.dataset.minRole || 'guest') || !visibleItems;
+    });
 }
 
 function updateAuthNavigation(authState) {
     document.querySelectorAll('[data-auth-entry]').forEach((link) => {
-        if (!authState.authenticated) {
-            link.href = 'login.html';
-            setNavigationLinkLabel(link, 'Inloggen');
-            link.setAttribute('aria-label', 'Inloggen');
-            return;
-        }
-
-        const accountLabel = authState.user?.displayName || authState.user?.username || 'Account';
-        link.href = '#';
-        setNavigationLinkLabel(link, accountLabel);
-        link.setAttribute('aria-label', `Ingelogd als ${accountLabel}`);
-        link.addEventListener('click', (event) => event.preventDefault(), { once: true });
+        link.href = 'login.html';
+        const label = authState.authenticated
+            ? (authState.user?.displayName || authState.user?.username || 'Account')
+            : 'Inloggen';
+        setNavigationLinkLabel(link, label);
+        link.setAttribute('aria-label', authState.authenticated ? `Account van ${label}` : 'Inloggen');
     });
-
     document.querySelectorAll('.nav-links').forEach((navLinks) => {
-        if (authState.authenticated) {
-            createLogoutLink(navLinks);
-        }
+        if (authState.authenticated) createLogoutLink(navLinks);
     });
-
-    document.querySelectorAll('[data-admin-only]').forEach((element) => {
-        element.hidden = authState.role !== 'admin';
-    });
-
-    document.querySelectorAll('[data-admin-content]').forEach((element) => {
-        element.hidden = authState.role !== 'admin';
-    });
-
-    document.querySelectorAll('[data-manager-only]').forEach((element) => {
-        element.hidden = !['manager', 'admin'].includes(authState.role);
-    });
+    applyRoleVisibility(authState);
 }
 
-function protectAdminPage(authState) {
-    if (!document.body.hasAttribute('data-admin-page') || authState.role === 'admin') {
-        return;
+async function createPageIsBootstrap() {
+    if (currentPage() !== 'create.html') return false;
+    try {
+        const response = await fetch('/api/auth/setup-status');
+        const payload = await response.json();
+        return Boolean(payload.needsBootstrap);
+    } catch {
+        return false;
     }
-
-    if (!authState.authenticated) {
-        const nextPage = encodeURIComponent(window.location.pathname.split('/').pop() || 'cf.html');
-        window.location.replace(`login.html?next=${nextPage}`);
-        return;
-    }
-
-    window.location.replace('index.html');
 }
 
-function protectManagerPage(authState) {
-    if (!document.body.hasAttribute('data-manager-page') || ['manager', 'admin'].includes(authState.role)) {
-        return;
-    }
-
+async function protectCurrentPage(authState) {
+    const page = currentPage();
+    const minimumRole = PAGE_ACCESS[page] || 'guest';
+    if (minimumRole === 'guest' || roleAllows(authState.role, minimumRole)) return true;
+    if (page === 'create.html' && await createPageIsBootstrap()) return true;
     if (!authState.authenticated) {
-        const nextPage = encodeURIComponent(window.location.pathname.split('/').pop() || 'hours.html');
-        window.location.replace(`login.html?next=${nextPage}`);
-        return;
+        window.location.replace(`login.html?next=${encodeURIComponent(page)}`);
+    } else {
+        window.location.replace('index.html');
     }
-
-    window.location.replace('index.html');
+    return false;
 }
 
 desktopSidebarQuery.addEventListener?.('change', () => applySidebarState());
-
 document.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
-    document.querySelectorAll('nav').forEach(closeMobileNavigation);
+    if (event.key === 'Escape') document.querySelectorAll('nav').forEach(closeMobileNavigation);
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
     buildNavigation();
-
     const authState = await fetchAuthState();
     updateAuthNavigation(authState);
-    protectAdminPage(authState);
-    protectManagerPage(authState);
-
-    document.dispatchEvent(new CustomEvent('authready', {
-        detail: authState
-    }));
+    const accessible = await protectCurrentPage(authState);
+    if (!accessible) return;
+    document.dispatchEvent(new CustomEvent('authready', { detail: authState }));
 });
