@@ -1,6 +1,13 @@
 const ALL_LOCATIONS = ['Achterveld', 'Barneveld', 'Voorthuizen', 'Wekerom', 'Harskamp'];
 const DAYS = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'].map((label, value) => ({ value, label }));
 const MONTHS = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
+const FIXED_SHIFT_LABELS = {
+    Barneveld: 'Ma–do 07:00–12:00 en 16:00–21:30 · vr 07:00–12:00 · za 08:30–12:00',
+    Voorthuizen: 'Ma–do 07:00–12:00 en 16:00–21:30 · vr 07:00–12:00 · za 08:30–12:00',
+    Wekerom: 'Ma–do 07:00–12:00 en 16:00–21:30 · vr 07:00–12:00 · za 08:30–12:00',
+    Achterveld: 'Ma–do 07:00–12:00 en 16:00–21:30 · vr 07:00–12:00 · za–zo 08:30–12:00',
+    Harskamp: 'Ma–do 08:30–12:00 en 16:00–21:00 · vr–za 08:30–12:00'
+};
 const $ = (id) => document.getElementById(id);
 const form = $('standards-form');
 const message = $('standards-message');
@@ -15,6 +22,7 @@ const locationTabs = $('location-tabs');
 const locationPickerCard = document.querySelector('.location-picker-card');
 const activeLocationTitle = $('active-location-title');
 const activeLocationSummary = $('active-location-summary');
+const activeStandardShifts = $('active-standard-shifts');
 const locationSeparateRoom = $('location-separate-room');
 const locationLessonMode = $('location-lesson-mode');
 const locationLessonMinimum = $('location-lesson-minimum');
@@ -26,11 +34,11 @@ const fullLessonVulnerable = $('full-lesson-vulnerable');
 const participantThreshold = $('participant-threshold');
 const reloadButton = $('reload-standards');
 const saveButton = $('save-standards');
-let currentPayload = null;
 let draftStandards = null;
 let availableLocations = [];
 let activeLocation = null;
 let canEdit = false;
+let canEditGlobal = false;
 
 const escapeHtml = (value) => String(value ?? '')
     .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -42,11 +50,13 @@ function showMessage(text, type = 'success') {
     message.className = `standards-message is-${type}`;
     message.textContent = text;
 }
+
 function hideMessage() {
     message.hidden = true;
     message.textContent = '';
     message.className = 'standards-message';
 }
+
 function formatUpdatedAt(value) {
     if (!value) return 'Nog niet bijgewerkt';
     const parsed = new Date(String(value).endsWith('Z') ? value : `${value}Z`);
@@ -54,6 +64,7 @@ function formatUpdatedAt(value) {
         dateStyle: 'medium', timeStyle: 'short'
     }).format(parsed);
 }
+
 function lessonModeLabel(mode) {
     return mode === 'hard' ? 'Harde norm' : mode === 'advice' ? 'Adviesregel' : 'Geen lesregel';
 }
@@ -61,14 +72,17 @@ function lessonModeLabel(mode) {
 function renderWeekdays(selected = []) {
     eveningDays.innerHTML = DAYS.map((day) => `<label><input type="checkbox" name="evening-day" value="${day.value}" ${selected.includes(day.value) ? 'checked' : ''}><span>${day.label}</span></label>`).join('');
 }
+
 function renderLocationTabs() {
     locationTabs.innerHTML = availableLocations.map((location) => `<button type="button" class="location-tab ${location === activeLocation ? 'is-active' : ''}" data-location-tab="${escapeHtml(location)}" role="tab" aria-selected="${location === activeLocation}">${escapeHtml(location)}</button>`).join('');
     locationTabs.querySelectorAll('[data-location-tab]').forEach((button) => button.addEventListener('click', () => switchLocation(button.dataset.locationTab)));
     locationPickerCard.hidden = availableLocations.length <= 1;
 }
+
 function renderExcludedMonths(selected = []) {
     locationExcludedMonths.innerHTML = MONTHS.map((month, index) => `<label><input type="checkbox" name="excluded-month" value="${index + 1}" ${selected.includes(index + 1) ? 'checked' : ''}><span>${month}</span></label>`).join('');
 }
+
 function createExceptionRow(window = {}) {
     const row = document.createElement('article');
     row.className = 'exception-row';
@@ -83,11 +97,15 @@ function createExceptionRow(window = {}) {
     });
     exceptionList.appendChild(row);
 }
+
 function renderExceptionEmptyState() {
     const hasRows = Boolean(exceptionList.querySelector('.exception-row'));
     exceptionList.querySelector('.exception-empty-state')?.remove();
-    if (!hasRows) exceptionList.insertAdjacentHTML('beforeend', `<p class="exception-empty-state">Voor ${escapeHtml(activeLocation)} zijn geen uitzonderingsvensters ingesteld.</p>`);
+    if (!hasRows) {
+        exceptionList.insertAdjacentHTML('beforeend', `<p class="exception-empty-state">Voor ${escapeHtml(activeLocation)} zijn geen uitzonderingsvensters ingesteld.</p>`);
+    }
 }
+
 function renderExceptions(windows = []) {
     exceptionList.innerHTML = '';
     windows.forEach(createExceptionRow);
@@ -100,7 +118,9 @@ function readActiveLocationFromForm() {
     standard.separateLessonRoom = locationSeparateRoom.checked;
     standard.lessonMode = locationLessonMode.value;
     standard.lessonMinimum = Number(locationLessonMinimum.value);
-    standard.excludedMonths = [...locationExcludedMonths.querySelectorAll('input[name="excluded-month"]:checked')].map((input) => Number(input.value)).sort((a, b) => a - b);
+    standard.excludedMonths = [...locationExcludedMonths.querySelectorAll('input[name="excluded-month"]:checked')]
+        .map((input) => Number(input.value))
+        .sort((a, b) => a - b);
     standard.singleCoverageWindows = [...exceptionList.querySelectorAll('.exception-row')].map((row) => ({
         day: Number(row.querySelector('[data-window-field="day"]').value),
         start: row.querySelector('[data-window-field="start"]').value,
@@ -108,15 +128,27 @@ function readActiveLocationFromForm() {
         label: row.querySelector('[data-window-field="label"]').value.trim()
     }));
 }
+
 function applyReadOnlyState() {
-    const readOnly = !canEdit;
-    form.classList.toggle('is-readonly', readOnly);
-    form.querySelectorAll('input, select').forEach((element) => { element.disabled = readOnly; });
-    saveButton.hidden = readOnly;
-    addWindowButton.hidden = readOnly;
-    reloadButton.hidden = readOnly;
-    exceptionList.querySelectorAll('[data-remove-window]').forEach((button) => { button.hidden = readOnly; });
+    form.classList.toggle('is-readonly', !canEdit);
+    form.querySelectorAll('input, select').forEach((element) => {
+        element.disabled = !canEdit;
+    });
+
+    if (canEdit && !canEditGlobal) {
+        [eveningEnabled, eveningStart, eveningEnd, eveningMinimum, fullLessonVulnerable, participantThreshold]
+            .forEach((element) => { element.disabled = true; });
+        eveningDays.querySelectorAll('input').forEach((element) => { element.disabled = true; });
+    }
+
+    saveButton.hidden = !canEdit;
+    addWindowButton.hidden = !canEdit;
+    reloadButton.hidden = !canEdit;
+    exceptionList.querySelectorAll('[data-remove-window]').forEach((button) => {
+        button.hidden = !canEdit;
+    });
 }
+
 function renderActiveLocation() {
     const standard = draftStandards?.locations?.[activeLocation];
     if (!standard) return showMessage('Voor deze vestiging zijn geen standaarden gevonden.', 'error');
@@ -124,6 +156,7 @@ function renderActiveLocation() {
     exceptionLocationTitle.textContent = `Enkele bezetting toegestaan — ${activeLocation}`;
     activeLocationSummary.textContent = lessonModeLabel(standard.lessonMode);
     activeLocationSummary.className = `location-summary-pill is-${standard.lessonMode}`;
+    activeStandardShifts.textContent = FIXED_SHIFT_LABELS[activeLocation] || 'Geen vaste standaarddiensten ingesteld.';
     locationSeparateRoom.checked = Boolean(standard.separateLessonRoom);
     locationLessonMode.value = standard.lessonMode;
     locationLessonMinimum.value = standard.lessonMinimum;
@@ -131,6 +164,7 @@ function renderActiveLocation() {
     renderExceptions(standard.singleCoverageWindows || []);
     applyReadOnlyState();
 }
+
 function switchLocation(location) {
     if (!availableLocations.includes(location) || location === activeLocation || !draftStandards) return;
     readActiveLocationFromForm();
@@ -141,9 +175,10 @@ function switchLocation(location) {
 }
 
 function renderStandards(payload) {
-    currentPayload = payload;
     canEdit = Boolean(payload.permissions?.canEdit);
-    availableLocations = (payload.permissions?.allowedLocations || ALL_LOCATIONS).filter((location) => payload.standards?.locations?.[location]);
+    canEditGlobal = Boolean(payload.permissions?.canEditGlobal);
+    availableLocations = (payload.permissions?.allowedLocations || ALL_LOCATIONS)
+        .filter((location) => payload.standards?.locations?.[location]);
     draftStandards = clone(payload.standards);
     activeLocation = availableLocations.includes(activeLocation) ? activeLocation : availableLocations[0];
     if (!activeLocation) throw new Error('Er is geen vestiging aan dit profiel gekoppeld.');
@@ -158,25 +193,30 @@ function renderStandards(payload) {
     fullLessonVulnerable.checked = draftStandards.lessonDemand.markFullOrWaitlistVulnerable;
     participantThreshold.value = draftStandards.lessonDemand.highParticipantThreshold;
 
-    editStatus.textContent = canEdit ? 'Admin · alle vestigingen bewerkbaar' : `Manager · ${activeLocation} · alleen bekijken`;
+    editStatus.textContent = canEditGlobal
+        ? 'Admin · alle vestigingen en algemene regels bewerkbaar'
+        : `Manager · ${activeLocation} bewerkbaar`;
     editStatus.classList.toggle('is-readonly', !canEdit);
     meta.textContent = `Laatst bijgewerkt: ${formatUpdatedAt(payload.updatedAt)}${payload.updatedBy ? ` door ${payload.updatedBy}` : ''}.`;
     applyReadOnlyState();
 }
+
 function collectStandards() {
     readActiveLocationFromForm();
     draftStandards.version = 1;
-    draftStandards.eveningPeak = {
-        enabled: eveningEnabled.checked,
-        days: [...document.querySelectorAll('input[name="evening-day"]:checked')].map((input) => Number(input.value)),
-        start: eveningStart.value,
-        end: eveningEnd.value,
-        minimum: Number(eveningMinimum.value)
-    };
-    draftStandards.lessonDemand = {
-        markFullOrWaitlistVulnerable: fullLessonVulnerable.checked,
-        highParticipantThreshold: Number(participantThreshold.value)
-    };
+    if (canEditGlobal) {
+        draftStandards.eveningPeak = {
+            enabled: eveningEnabled.checked,
+            days: [...document.querySelectorAll('input[name="evening-day"]:checked')].map((input) => Number(input.value)),
+            start: eveningStart.value,
+            end: eveningEnd.value,
+            minimum: Number(eveningMinimum.value)
+        };
+        draftStandards.lessonDemand = {
+            markFullOrWaitlistVulnerable: fullLessonVulnerable.checked,
+            highParticipantThreshold: Number(participantThreshold.value)
+        };
+    }
     draftStandards.reformerExcluded = true;
     return clone(draftStandards);
 }
@@ -185,12 +225,13 @@ async function loadStandards() {
     hideMessage();
     editStatus.textContent = 'Laden...';
     try {
-        const response = await fetch('/api/access/staffing-standards');
+        const response = await fetch('/api/location-staffing-standards');
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.message || 'Standaarden konden niet worden geladen.');
         renderStandards(payload);
     } catch (error) {
         canEdit = false;
+        canEditGlobal = false;
         applyReadOnlyState();
         editStatus.textContent = 'Niet beschikbaar';
         editStatus.classList.add('is-readonly');
@@ -203,11 +244,13 @@ addWindowButton.addEventListener('click', () => {
     createExceptionRow({ day: 1, start: '08:00', end: '12:00' });
     applyReadOnlyState();
 });
+
 reloadButton.addEventListener('click', loadStandards);
 locationLessonMode.addEventListener('change', () => {
     activeLocationSummary.textContent = lessonModeLabel(locationLessonMode.value);
     activeLocationSummary.className = `location-summary-pill is-${locationLessonMode.value}`;
 });
+
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!canEdit) return;
@@ -215,19 +258,20 @@ form.addEventListener('submit', async (event) => {
     saveButton.disabled = true;
     saveButton.textContent = 'Opslaan...';
     try {
-        const response = await fetch('/api/staffing-standards', {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        const response = await fetch('/api/location-staffing-standards', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ standards: collectStandards() })
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.message || 'Opslaan is mislukt.');
         await loadStandards();
-        showMessage('Alle bezettingsstandaarden zijn opgeslagen en direct actief in de analyse.', 'success');
+        showMessage(payload.message || 'Bezettingsstandaarden opgeslagen en direct actief in de analyse.', 'success');
     } catch (error) {
         showMessage(error.message, 'error');
     } finally {
         saveButton.disabled = false;
-        saveButton.textContent = 'Alle standaarden opslaan';
+        saveButton.textContent = 'Standaarden opslaan';
     }
 });
 
