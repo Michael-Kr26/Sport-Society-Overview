@@ -13,4 +13,5 @@ function run(script, includeWorkbook = true) {
 
 run('import-roster.js');
 run('link-roster-hours.js');
+run('import-hour-summaries.js');
 run('migrate-employee-names.js', false);
