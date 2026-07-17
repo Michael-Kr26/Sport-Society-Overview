@@ -15,6 +15,14 @@ const METRICS = {
     'overuren na deze maand': 'overtimeAfterMonth'
 };
 const METRIC_FIELDS = Object.values(METRICS);
+const REQUIRED_FIELDS = ['scheduledHours', ...METRIC_FIELDS];
+const FIELD_LABELS = {
+    scheduledHours: 'Ingepland',
+    minimumHours: 'Minstens',
+    overtimeThisMonth: 'Overuren deze maand',
+    overtimePreviousMonth: 'Overuren vorige maand',
+    overtimeAfterMonth: 'Overuren na deze maand'
+};
 const MONTH_ALIASES = [
     [1, ['januari', 'jan']],
     [2, ['februari', 'feb']],
@@ -140,18 +148,21 @@ function parseEmployeeSummary(worksheet, block, dateRows) {
         }
     }
 
-    const missingFields = METRIC_FIELDS.filter((field) => !Number.isFinite(values[field]));
-    const scheduledHours = Number.isFinite(values.minimumHours) && Number.isFinite(values.overtimeThisMonth)
-        ? Math.round((values.minimumHours + values.overtimeThisMonth) * 100) / 100
-        : null;
     const minimumRow = rows.minimumHours || null;
-    const sheetTotalHours = minimumRow && minimumRow > 1
+    const scheduledHours = minimumRow && minimumRow > 1
         ? numberValue(worksheet.getRow(minimumRow - 1).getCell(block.hoursColumn))
         : null;
+    const checkTotal = Number.isFinite(values.minimumHours) && Number.isFinite(values.overtimeThisMonth)
+        ? Math.round((values.minimumHours + values.overtimeThisMonth) * 100) / 100
+        : null;
+    const completeValues = { scheduledHours, ...values };
+    const missingFields = REQUIRED_FIELDS.filter((field) => !Number.isFinite(completeValues[field]));
     const issues = [];
-    if (missingFields.length) issues.push(`Ontbrekend: ${missingFields.join(', ')}`);
-    if (Number.isFinite(sheetTotalHours) && Number.isFinite(scheduledHours) && Math.abs(sheetTotalHours - scheduledHours) > 0.01) {
-        issues.push(`Totaalcel ${sheetTotalHours} wijkt af van Minstens + overuren (${scheduledHours})`);
+    if (missingFields.length) {
+        issues.push(`Ontbrekend: ${missingFields.map((field) => FIELD_LABELS[field] || field).join(', ')}`);
+    }
+    if (Number.isFinite(scheduledHours) && Number.isFinite(checkTotal) && Math.abs(scheduledHours - checkTotal) > 0.01) {
+        issues.push(`Ingepland ${scheduledHours} wijkt af van Minstens + overuren (${checkTotal})`);
     }
 
     return {
@@ -159,7 +170,7 @@ function parseEmployeeSummary(worksheet, block, dateRows) {
         sourceColumn: worksheet.getColumn(block.hoursColumn).letter,
         ...values,
         scheduledHours,
-        sheetTotalHours,
+        sheetTotalHours: scheduledHours,
         isComplete: missingFields.length === 0,
         missingFields,
         issues
@@ -208,7 +219,17 @@ const run = (db, sql, params = []) => new Promise((resolve, reject) => {
         else resolve({ lastID: this.lastID, changes: this.changes });
     });
 });
+const all = (db, sql, params = []) => new Promise((resolve, reject) => {
+    db.all(sql, params, (error, rows) => error ? reject(error) : resolve(rows || []));
+});
 const close = (db) => new Promise((resolve, reject) => db.close((error) => error ? reject(error) : resolve()));
+
+async function ensureColumn(db, table, column, definition) {
+    const columns = await all(db, `PRAGMA table_info(${table})`);
+    if (!columns.some((item) => item.name === column)) {
+        await run(db, `ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    }
+}
 
 async function createTables(db) {
     await run(db, `CREATE TABLE IF NOT EXISTS excel_hour_periods (
@@ -240,6 +261,7 @@ async function createTables(db) {
         period_key TEXT NOT NULL,
         employee_name TEXT NOT NULL COLLATE NOCASE,
         minimum_hours REAL,
+        scheduled_hours REAL,
         overtime_this_month REAL,
         overtime_previous_month REAL,
         overtime_after_month REAL,
@@ -248,6 +270,7 @@ async function createTables(db) {
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (period_key, employee_name)
     )`);
+    await ensureColumn(db, 'excel_hour_overrides', 'scheduled_hours', 'REAL');
     await run(db, 'CREATE INDEX IF NOT EXISTS idx_excel_hour_summary_employee ON excel_hour_summaries(employee_name, period_key)');
 }
 
@@ -306,9 +329,12 @@ function printSummary(parsed) {
         console.table([{
             pagina: current.sheetName,
             weken: current.weekCount,
+            ingeplandUitTabel: leroy.scheduledHours,
             minstens: leroy.minimumHours,
             overurenDezeMaand: leroy.overtimeThisMonth,
-            ingepland: leroy.scheduledHours,
+            controleMinstensPlusOveruren: Number.isFinite(leroy.minimumHours) && Number.isFinite(leroy.overtimeThisMonth)
+                ? Math.round((leroy.minimumHours + leroy.overtimeThisMonth) * 100) / 100
+                : null,
             overurenVorigeMaand: leroy.overtimePreviousMonth,
             overurenNaDezeMaand: leroy.overtimeAfterMonth
         }]);
