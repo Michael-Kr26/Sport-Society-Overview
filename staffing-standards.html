@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="staffing-standards.css">
     <script src="auth-ui.js" defer></script>
-    <script src="staffing-standards.js" defer></script>
+    <script src="staffing-standards.js?v=20260717-manager-edit" defer></script>
     <title>Sport Society - Bezettingsstandaarden</title>
 </head>
 <body data-manager-page>
@@ -30,9 +30,8 @@
                 </div>
                 <h2>Bezettingsstandaarden</h2>
                 <p>
-                    Algemene normen en vestigingsregels worden direct gebruikt door de bezettingsanalyse.
-                    Per locatie wordt alleen de geselecteerde vestiging getoond, zodat het beheer overzichtelijk
-                    blijft wanneer later meer instelbare regels worden toegevoegd.
+                    Managers beheren de vestigingsregels van hun eigen profielvestiging. Een Admin beheert
+                    daarnaast alle locaties en de algemene avond- en drukteregels.
                 </p>
                 <p id="standards-meta" class="standards-meta"></p>
             </div>
@@ -54,6 +53,7 @@
                     </label>
                 </div>
 
+                <p class="section-copy">Alleen een Admin kan deze algemene norm wijzigen.</p>
                 <div class="evening-grid">
                     <label>
                         Starttijd
@@ -98,6 +98,12 @@
                     <span id="active-location-summary" class="location-summary-pill"></span>
                 </div>
 
+                <div class="section-copy">
+                    <strong>Vaste standaarddiensten</strong>
+                    <p id="active-standard-shifts">Dienstvensters laden...</p>
+                    <p>Deze tijden zijn vast ingebouwd en vormen de basis voor de zeswekenanalyse van geen en enkele bezetting.</p>
+                </div>
+
                 <div class="location-editor-grid">
                     <label class="switch-field location-room-field">
                         <input type="checkbox" id="location-separate-room">
@@ -135,8 +141,8 @@
                     <button type="button" id="add-window" class="standards-secondary-button">Tijdsvenster toevoegen</button>
                 </div>
                 <p class="section-copy">
-                    Binnen deze tijdsvensters wordt de lesregel van de geselecteerde locatie niet gebruikt om
-                    dubbele bezetting af te dwingen of te adviseren. De algemene avondnorm blijft wel van kracht.
+                    Binnen deze tijdsvensters geldt één medewerker als voldoende voor de vaste standaarddienst.
+                    De algemene harde avondnorm blijft wel van kracht.
                 </p>
                 <div id="exception-list" class="exception-list"></div>
             </section>
@@ -148,6 +154,7 @@
                         <h2>Volle lessen en wachtlijsten</h2>
                     </div>
                 </div>
+                <p class="section-copy">Alleen een Admin kan deze algemene signalering wijzigen.</p>
                 <div class="demand-grid">
                     <label class="switch-field">
                         <input type="checkbox" id="full-lesson-vulnerable">
@@ -162,7 +169,7 @@
 
             <section class="standards-actions">
                 <button type="button" id="reload-standards" class="standards-secondary-button">Wijzigingen terugdraaien</button>
-                <button type="submit" id="save-standards" class="admin-button">Alle standaarden opslaan</button>
+                <button type="submit" id="save-standards" class="admin-button">Standaarden opslaan</button>
             </section>
         </form>
     </main>
