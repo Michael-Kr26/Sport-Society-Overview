@@ -47,6 +47,15 @@ async function waitForTable(table, attempts = 120) {
     return false;
 }
 
+async function waitForEmployee(employeeName, attempts = 120) {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+        const row = await get('SELECT employee_name FROM hour_employee_settings WHERE employee_name=? COLLATE NOCASE', [employeeName]);
+        if (row) return true;
+        await sleep(50);
+    }
+    return false;
+}
+
 async function ensureEmploymentEnd() {
     if (!await waitForTable('hour_employee_settings')) {
         throw new Error('De medewerkerstabel kon niet worden voorbereid.');
@@ -58,9 +67,11 @@ async function ensureEmploymentEnd() {
 
     // Aangeleverde personeelswijziging: 17 juli 2026 is Mario's laatste werkdag.
     // Alleen invullen wanneer nog geen datum is ingesteld, zodat latere adminwijzigingen behouden blijven.
-    await run(`UPDATE hour_employee_settings
-        SET active_until='2026-07-17', updated_by='Aangeleverde laatste werkdag', updated_at=CURRENT_TIMESTAMP
-        WHERE employee_name='Mario' COLLATE NOCASE AND active_until IS NULL`);
+    if (await waitForEmployee('Mario')) {
+        await run(`UPDATE hour_employee_settings
+            SET active_until='2026-07-17', updated_by='Aangeleverde laatste werkdag', updated_at=CURRENT_TIMESTAMP
+            WHERE employee_name='Mario' COLLATE NOCASE AND active_until IS NULL`);
+    }
 }
 const ready = ensureEmploymentEnd();
 
