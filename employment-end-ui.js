@@ -3,11 +3,9 @@
     const message = document.getElementById('employee-message');
     const statusByEmployee = new Map();
     let observer = null;
+    let decorateScheduled = false;
 
     const employeeKey = (value) => String(value || '').trim().toLocaleLowerCase('nl-NL');
-    const escapeHtml = (value) => String(value ?? '')
-        .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 
     function formatDate(value) {
         if (!value) return '';
@@ -36,6 +34,10 @@
         return statusByEmployee.get(employeeKey(name)) || null;
     }
 
+    function setTextIfChanged(element, text) {
+        if (element && element.textContent !== text) element.textContent = text;
+    }
+
     function decorateCard(card) {
         const form = card.querySelector('[data-profile-form]');
         const name = form?.dataset.employeeName;
@@ -61,7 +63,8 @@
         }
 
         const input = field.querySelector('[data-employment-end-input]');
-        if (input && document.activeElement !== input) input.value = status?.activeUntil || '';
+        const nextValue = status?.activeUntil || '';
+        if (input && document.activeElement !== input && input.value !== nextValue) input.value = nextValue;
 
         const title = card.querySelector('.employee-item-title');
         let badge = title?.querySelector('[data-employment-end-badge]');
@@ -72,7 +75,7 @@
                 badge.className = 'employee-badge is-inactive';
                 title?.appendChild(badge);
             }
-            badge.textContent = `Laatste werkdag ${formatDate(status.activeUntil)}`;
+            setTextIfChanged(badge, `Laatste werkdag ${formatDate(status.activeUntil)}`);
         } else {
             badge?.remove();
         }
@@ -83,7 +86,7 @@
             if (status?.activeUntil) {
                 const suffix = existing || document.createElement('span');
                 suffix.dataset.employmentEndMeta = '';
-                suffix.textContent = ` · zichtbaar t/m maandpagina ${status.activeUntil.slice(0, 7)}`;
+                setTextIfChanged(suffix, ` · zichtbaar t/m maandpagina ${status.activeUntil.slice(0, 7)}`);
                 if (!existing) meta.appendChild(suffix);
             } else {
                 existing?.remove();
@@ -95,6 +98,15 @@
         list?.querySelectorAll('[data-employee-card]').forEach(decorateCard);
     }
 
+    function scheduleDecoration() {
+        if (decorateScheduled) return;
+        decorateScheduled = true;
+        window.requestAnimationFrame(() => {
+            decorateScheduled = false;
+            decorateAllCards();
+        });
+    }
+
     async function loadStatuses() {
         try {
             const payload = await requestJson('/api/hours/employment-status');
@@ -102,7 +114,7 @@
             for (const employee of payload.employees || []) {
                 statusByEmployee.set(employeeKey(employee.employeeName), employee);
             }
-            decorateAllCards();
+            scheduleDecoration();
         } catch (error) {
             console.error(error);
             setMessage(error.message, 'error');
@@ -128,8 +140,10 @@
 
     function startObserver() {
         if (!list || observer) return;
-        observer = new MutationObserver(() => decorateAllCards());
-        observer.observe(list, { childList: true, subtree: true });
+        observer = new MutationObserver(scheduleDecoration);
+        // Alleen het vervangen/toevoegen van medewerkerkaarten volgen.
+        // Wijzigingen binnen een kaart worden bewust genegeerd om een renderlus te voorkomen.
+        observer.observe(list, { childList: true });
     }
 
     document.addEventListener('authready', (event) => {
