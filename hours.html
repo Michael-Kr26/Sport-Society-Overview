@@ -4,78 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="hours.css?v=20260717-employees">
-    <script src="auth-ui.js" defer></script>
-    <script src="hours-linked-ui.js?v=20260717-lucas-location-hours" defer></script>
-    <script src="hours.js?v=20260717-employees" defer></script>
+    <link rel="stylesheet" href="hours.css?v=20260717-excel-periods">
+    <script src="auth-ui.js?v=20260717-usability" defer></script>
+    <script src="hours-linked-ui.js?v=20260717-excel-periods" defer></script>
+    <script src="hours.js?v=20260717-excel-periods" defer></script>
     <title>Sport Society - Urenanalyse en urenbank</title>
 </head>
 <body data-manager-page>
-    <header><h1>Sport Society Overview</h1><p>Urenanalyse, contractnormen en urenbank</p></header>
+    <header><h1>Sport Society Overview</h1><p>Excel-uren, maandstanden en urenbank</p></header>
     <nav><input type="checkbox" id="nav-toggle"><label for="nav-toggle" class="nav-toggle-label"><span></span></label><div class="nav-links"></div></nav>
 
     <main class="hours-page">
         <section class="hours-card hours-intro">
             <div class="hours-heading-row">
                 <div>
-                    <p class="hours-label">Operationele urensturing</p>
-                    <h2>Ingeplande uren en urenbank per medewerker</h2>
+                    <p class="hours-label">Primaire bron: rooster-Excel</p>
+                    <h2>Urenoverzicht per maandpagina</h2>
                 </div>
-                <a href="employee-settings.html" class="admin-button" data-admin-only hidden>Medewerkers beheren</a>
+                <div class="hours-heading-actions">
+                    <a href="help.html#urenanalyse" class="roster-secondary-button">Handleiding</a>
+                    <a href="employee-settings.html" class="admin-button" data-admin-only hidden>Medewerkers beheren</a>
+                </div>
             </div>
-            <p>Flexmedewerkers worden onderling vergeleken. Voor vaste uren geldt een maandnorm van contracturen per week × 4,33; de cumulatieve urenbank is daarbij de primaire KPI.</p>
+            <p>Minstens, overuren deze maand, overuren vorige maand en overuren na deze maand worden rechtstreeks van iedere Excel-maandpagina overgenomen. Het aantal weken wordt bepaald op basis van de datumregels in kolom A.</p>
         </section>
 
-        <section class="hours-card">
+        <section class="hours-card hours-toolbar-card">
             <form id="hours-filter-form" class="hours-filter-bar">
-                <label>Maand<input type="month" id="month-filter" required></label>
-                <label>Contracttype
+                <label>Maandpagina<input type="month" id="month-filter" required></label>
+                <label>Weergave
                     <select id="contract-type-filter">
-                        <option value="all">Alle medewerkers</option>
-                        <option value="contract">Vaste uren</option>
-                        <option value="flex">Flexcontract</option>
+                        <option value="all">Vaste uren en flex</option>
+                        <option value="contract">Alleen vaste uren</option>
+                        <option value="flex">Alleen flexmedewerkers</option>
                     </select>
                 </label>
-                <button type="submit" class="admin-button">Analyseren</button>
+                <button type="submit" class="admin-button">Overzicht laden</button>
             </form>
             <p id="hours-message" class="hours-message" aria-live="polite"></p>
+            <div id="excel-period-status" class="excel-period-status" aria-live="polite"></div>
         </section>
 
         <section id="hours-summary" class="hours-summary" aria-live="polite"></section>
 
         <section id="contract-section" class="hours-card">
             <div class="hours-results-header">
-                <div><p class="hours-label">Hoofd-KPI</p><h2>Urenbank vaste uren</h2></div>
+                <div><p class="hours-label">Excel-standen</p><h2>Vaste uren</h2></div>
                 <p id="contract-count" class="hours-result-count">Laden...</p>
             </div>
-            <div id="contract-results" class="hours-table-wrap"><p class="empty-state">Urenbank laden...</p></div>
+            <div id="contract-results" class="hours-table-wrap"><p class="empty-state">Excel-uren laden...</p></div>
         </section>
 
         <section id="flex-section" class="hours-card">
             <div class="hours-results-header">
-                <div><p class="hours-label">Flexvergelijking</p><h2>Ingeplande en gecorrigeerde uren</h2></div>
+                <div><p class="hours-label">Roostervergelijking</p><h2>Flexmedewerkers</h2></div>
                 <p id="flex-count" class="hours-result-count">Laden...</p>
             </div>
+            <p class="hours-section-note">Flexmedewerkers hebben geen vier vaste Excel-velden. Hun overzicht blijft gebaseerd op de geïmporteerde diensten.</p>
             <div id="flex-results" class="hours-table-wrap"><p class="empty-state">Flexanalyse laden...</p></div>
         </section>
 
-        <section class="hours-card" data-admin-content hidden>
-            <div class="hours-results-header"><div><p class="hours-label">Correcties</p><h2>Uren of bankstand corrigeren</h2></div></div>
-            <form id="adjustment-form" class="adjustment-form">
-                <label>Medewerker<select id="adjustment-employee" required></select></label>
-                <label>Datum<input type="date" id="adjustment-date" required></label>
-                <label>Type<select id="adjustment-type"><option value="credited">Correctie meegetelde uren</option><option value="bank">Directe correctie urenbank</option></select></label>
-                <label>Uren<input type="number" id="adjustment-hours" step="0.25" min="-250" max="250" required></label>
-                <label class="adjustment-note">Toelichting<input type="text" id="adjustment-note" maxlength="300" placeholder="Bijvoorbeeld verlofuren of handmatige correctie"></label>
-                <button type="submit" class="admin-button">Correctie opslaan</button>
+        <section id="excel-quality-section" class="hours-card excel-quality-section" data-admin-content hidden>
+            <div class="hours-results-header">
+                <div><p class="hours-label">Datakwaliteit</p><h2>Excel-problemen en handmatige maandcorrecties</h2></div>
+                <p id="excel-issue-count" class="hours-result-count">Geen controle uitgevoerd</p>
+            </div>
+            <p class="hours-section-note">Een ontbrekend veld wordt niet stilzwijgend als nul behandeld. De applicatie gebruikt tijdelijk de meest recente complete maand en toont hieronder wat een admin moet controleren.</p>
+            <div id="excel-issues" class="excel-issues"></div>
+
+            <form id="excel-override-form" class="excel-override-form">
+                <div class="override-form-heading">
+                    <div><strong>Maand handmatig corrigeren</strong><span>Lege invoervelden blijven uit Excel komen.</span></div>
+                    <span id="override-period-label" class="period-chip"></span>
+                </div>
+                <label>Medewerker<select id="override-employee" required></select></label>
+                <label>Minstens<input type="number" id="override-minimum" step="0.25"></label>
+                <label>Overuren deze maand<input type="number" id="override-this" step="0.25"></label>
+                <label>Overuren vorige maand<input type="number" id="override-previous" step="0.25"></label>
+                <label>Overuren na deze maand<input type="number" id="override-after" step="0.25"></label>
+                <label class="override-note">Toelichting<input type="text" id="override-note" maxlength="500" placeholder="Waarom wijkt deze maand af van Excel?"></label>
+                <div class="override-actions">
+                    <button type="submit" class="admin-button">Correctie opslaan</button>
+                    <button type="button" id="override-delete" class="hours-delete-button">Correctie verwijderen</button>
+                </div>
             </form>
-            <div id="adjustment-list" class="adjustment-list"></div>
         </section>
 
         <section class="hours-card hours-method">
             <p class="hours-label">Berekeningsmethode</p>
-            <h2>Opbouw urenbank</h2>
-            <p>Meegetelde uren = de gekoppelde Excel-kolom Uren (met begin- en eindtijd als terugval) + urencorrecties. Maandmutatie = meegetelde uren − maandnorm + directe bankcorrecties. De cumulatieve urenbank telt deze mutaties op vanaf de ingestelde startmaand en startstand.</p>
+            <h2>Wat betekenen de waarden?</h2>
+            <div class="hours-method-grid">
+                <p><strong>Maandnorm</strong><span>Exact de Excelwaarde onder ‘Minstens’.</span></p>
+                <p><strong>Ingepland</strong><span>Minstens + overuren deze maand.</span></p>
+                <p><strong>Vorige stand</strong><span>Exact ‘Overuren vorige maand’.</span></p>
+                <p><strong>Urenbank</strong><span>Exact ‘Overuren na deze maand’.</span></p>
+            </div>
         </section>
     </main>
     <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
