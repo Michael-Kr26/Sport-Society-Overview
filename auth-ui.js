@@ -147,6 +147,7 @@ function buildNavigation() {
             ${navigationItem('hours.html', '◷', 'Urenanalyse &amp; urenbank', 'data-manager-only hidden')}
 
             <p class="nav-section-label" data-admin-only hidden>Admin</p>
+            ${navigationItem('employee-settings.html', '♙', 'Medewerkers', 'data-admin-only hidden')}
             ${navigationItem('cf.html', '＋', 'Wijziging registreren', 'data-admin-only hidden')}
             ${navigationItem('dashboard.html', '◇', 'Preview &amp; integratiestatus', 'data-admin-only hidden')}
 
