@@ -62,13 +62,46 @@ Bij het opslaan van een laatste werkdag wordt een lopende contractperiode die ov
 2. `normalize-roster-headers.js` om numerieke tussenkoppen niet als medewerkersnaam te behandelen;
 3. `link-roster-hours.js` voor de koppeling van diensten, Uren-cellen en locatiekleuren;
 4. `import-hour-summaries.js` voor het eindtotaal, de vier maandvelden en het weekaantal;
-5. `migrate-employee-names.js` voor de samenvoeging van `Lucas V` naar `Lucas Veenendaal`.
+5. `normalize-zero-hour-summaries.js` om iedere expliciete nulvorm als geldige waarde `0` vast te leggen;
+6. `migrate-employee-names.js` voor de samenvoeging van `Lucas V` naar `Lucas Veenendaal`.
 
 De tabellen `excel_hour_periods` en `excel_hour_summaries` worden bij iedere import opnieuw opgebouwd. Handmatige admincorrecties staan afzonderlijk in `excel_hour_overrides` en blijven daardoor behouden bij een nieuwe import.
 
-## Ontbrekende of afwijkende waarden
+## Volledige verversopdracht
 
-Een leeg of ongeldig Excelveld wordt nooit automatisch als nul behandeld.
+Gebruik op Windows de opdracht:
+
+```powershell
+npm run refresh:roster -- ".\data\imports\Rooster.xlsx" "2026-10"
+```
+
+Deze opdracht:
+
+1. weigert te starten wanneer Excel nog geopend is;
+2. maakt eerst een back-up in `data/backups`;
+3. opent het rooster onzichtbaar met de lokaal geïnstalleerde Excel-applicatie;
+4. werkt externe koppelingen en gegevensverbindingen bij;
+5. voert een volledige formuleherberekening uit;
+6. slaat het bestand op en sluit Excel;
+7. voert de volledige roosterimport uit;
+8. rapporteert per actieve contractmedewerker of de gekozen maand exact, via terugval of helemaal niet uitleesbaar is.
+
+De tweede parameter is optioneel. Zonder maand controleert het rapport de meest recente geïmporteerde Excelpagina.
+
+Een groen bronlabel betekent dat alle vijf waarden van de gekozen maandpagina komen. Een geel bronlabel betekent dat minimaal één veld op die pagina ontbreekt en dat tijdelijk de meest recente complete eerdere maand wordt gebruikt.
+
+## Nulwaarden
+
+Iedere expliciete nul wordt als geldige waarde gelezen. Dit omvat onder meer:
+
+- numeriek `0` en `-0`;
+- tekst `0`, `0,0` en `0.00`;
+- `0 u` en `0 uur`;
+- een formule waarvan de opgeslagen uitkomst numeriek nul is.
+
+Een werkelijk lege cel blijft ontbrekend. De broncontrole vermeldt dan exact welk van de vijf velden ontbreekt.
+
+## Ontbrekende of afwijkende waarden
 
 De applicatie zoekt bij een onvolledige medewerkerregel naar de meest recente eerdere maand waarin alle vijf waarden leesbaar zijn. Die maand wordt tijdelijk gebruikt en duidelijk als terugvalbron gemarkeerd.
 
