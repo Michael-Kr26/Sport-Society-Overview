@@ -17,6 +17,73 @@
         });
     }
 
+    function monthBounds(month) {
+        const [year, number] = String(month || '').split('-').map(Number);
+        if (!year || !number) return { first: '', last: '' };
+        return {
+            first: `${year}-${String(number).padStart(2, '0')}-01`,
+            last: new Date(year, number, 0).toISOString().slice(0, 10)
+        };
+    }
+
+    function visibleInMonth(status, month) {
+        if (!status) return true;
+        if (!status.isActive) return false;
+        const { first, last } = monthBounds(month);
+        if (status.activeFrom && last && status.activeFrom > last) return false;
+        if (status.activeUntil && first && status.activeUntil < first) return false;
+        return true;
+    }
+
+    function recalculateSummary(payload) {
+        const employees = payload.employees || [];
+        const contracts = employees.filter((employee) => employee.contractType === 'contract');
+        const flex = employees.filter((employee) => employee.contractType === 'flex');
+        const numeric = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
+        const flexAverageHours = flex.length
+            ? round(flex.reduce((sum, employee) => sum + numeric(employee.creditedHours), 0) / flex.length)
+            : 0;
+        flex.forEach((employee) => {
+            employee.flexDifference = round(numeric(employee.creditedHours) - flexAverageHours);
+        });
+
+        payload.summary = {
+            ...(payload.summary || {}),
+            employeeCount: employees.length,
+            contractEmployeeCount: contracts.length,
+            flexEmployeeCount: flex.length,
+            totalScheduledHours: round(employees.reduce((sum, employee) => sum + numeric(employee.scheduledHours), 0)),
+            totalCreditedHours: round(employees.reduce((sum, employee) => sum + numeric(employee.creditedHours), 0)),
+            contractMinimumHours: round(contracts.reduce((sum, employee) => sum + numeric(employee.monthlyNorm), 0)),
+            contractMonthDelta: round(contracts.reduce((sum, employee) => sum + numeric(employee.monthDelta), 0)),
+            flexAverageHours,
+            excelIssueCount: (payload.excelIssues || []).length
+        };
+        return payload;
+    }
+
+    function applyEmploymentVisibility(payload, employment, month) {
+        const statuses = new Map((employment?.employees || []).map((employee) => [employeeKey(employee.employeeName), employee]));
+        const visibleNames = new Set();
+
+        payload.employees = (payload.employees || []).filter((employee) => {
+            const status = statuses.get(employeeKey(employee.employeeName));
+            const visible = visibleInMonth(status, month);
+            if (visible) {
+                visibleNames.add(employeeKey(employee.employeeName));
+                employee.activeUntil = status?.activeUntil || null;
+            }
+            return visible;
+        });
+
+        payload.excelIssues = (payload.excelIssues || []).filter((issue) => {
+            if (!issue.employeeName) return true;
+            return visibleNames.has(employeeKey(issue.employeeName));
+        });
+        payload.employmentStatusApplied = true;
+        return recalculateSummary(payload);
+    }
+
     function overlayExcelAnalysis(payload, excel) {
         const byEmployee = new Map((payload.employees || []).map((employee) => [employeeKey(employee.employeeName), employee]));
 
@@ -56,30 +123,8 @@
             employee.excel = excelEmployee;
         }
 
-        const activeIssues = activeExcelIssues(excel);
-        const employees = payload.employees || [];
-        const contracts = employees.filter((employee) => employee.contractType === 'contract');
-        const flex = employees.filter((employee) => employee.contractType === 'flex');
-        const numeric = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
-        const flexAverageHours = flex.length
-            ? round(flex.reduce((sum, employee) => sum + numeric(employee.creditedHours), 0) / flex.length)
-            : 0;
-        flex.forEach((employee) => { employee.flexDifference = round(numeric(employee.creditedHours) - flexAverageHours); });
-
-        payload.summary = {
-            ...payload.summary,
-            employeeCount: employees.length,
-            contractEmployeeCount: contracts.length,
-            flexEmployeeCount: flex.length,
-            totalScheduledHours: round(employees.reduce((sum, employee) => sum + numeric(employee.scheduledHours), 0)),
-            totalCreditedHours: round(employees.reduce((sum, employee) => sum + numeric(employee.creditedHours), 0)),
-            contractMinimumHours: round(contracts.reduce((sum, employee) => sum + numeric(employee.monthlyNorm), 0)),
-            contractMonthDelta: round(contracts.reduce((sum, employee) => sum + numeric(employee.monthDelta), 0)),
-            flexAverageHours,
-            excelIssueCount: activeIssues.length
-        };
         payload.excelPeriod = excel.period || null;
-        payload.excelIssues = activeIssues;
+        payload.excelIssues = activeExcelIssues(excel);
         payload.excelAvailablePeriods = excel.availablePeriods || [];
         payload.excelRequestedMonth = excel.requestedMonth || payload.month;
         payload.permissions = {
@@ -87,7 +132,7 @@
             canEdit: Boolean(excel.permissions?.canEdit)
         };
         payload.hoursSource = 'Excel: eindtotaal urentabel, Minstens en overurenvelden per maandpagina';
-        return payload;
+        return recalculateSummary(payload);
     }
 
     window.fetch = async (input, options) => {
@@ -103,10 +148,16 @@
             const payload = await response.clone().json();
             const parsedUrl = new URL(requestUrl, window.location.origin);
             const month = parsedUrl.searchParams.get('month') || payload.month;
-            const excelResponse = await originalFetch(`/api/hours/excel-analysis?month=${encodeURIComponent(month)}`);
+            const [excelResponse, employmentResponse] = await Promise.all([
+                originalFetch(`/api/hours/excel-analysis?month=${encodeURIComponent(month)}`),
+                originalFetch('/api/hours/employment-status')
+            ]);
             if (!excelResponse.ok) return response;
             const excel = await excelResponse.json();
-            const corrected = overlayExcelAnalysis(payload, excel);
+            const employment = employmentResponse.ok
+                ? await employmentResponse.json().catch(() => ({ employees: [] }))
+                : { employees: [] };
+            const corrected = applyEmploymentVisibility(overlayExcelAnalysis(payload, excel), employment, month);
             const headers = new Headers(response.headers);
             headers.set('Content-Type', 'application/json; charset=utf-8');
             headers.delete('Content-Length');
@@ -116,7 +167,7 @@
                 headers
             });
         } catch (error) {
-            console.warn('Het Excel-maandoverzicht kon niet over de urenanalyse worden gelegd.', error);
+            console.warn('Het Excel-maandoverzicht of de uitdienstdatum kon niet over de urenanalyse worden gelegd.', error);
             return response;
         }
     };
