@@ -39,6 +39,21 @@ Daarmee geldt bijvoorbeeld:
 
 Een datumregel is geldig wanneer kolom A een datum bevat en kolom B een Nederlandse weekdag bevat. Een niet-volledig veelvoud van zeven wordt als structuurprobleem aan admins gemeld.
 
+## Laatste werkdag en zichtbaarheid
+
+`hour_employee_settings.active_until` bevat de inclusieve laatste werkdag van een medewerker.
+
+Voor een gekozen maandpagina geldt:
+
+- de medewerker is zichtbaar wanneer de laatste werkdag op of na de eerste dag van die maand ligt;
+- de medewerker verdwijnt wanneer de laatste werkdag vóór de eerste dag van die maand ligt;
+- historische Excelstanden en contractgegevens blijven in de database bewaard;
+- Excel-controlepunten van een uitdienstmedewerker worden in latere maandpagina’s eveneens niet getoond.
+
+Voorbeeld: een laatste werkdag van `2026-07-17` betekent zichtbaar op `Jul 26` en niet zichtbaar vanaf `Aug 26`.
+
+Bij het opslaan van een laatste werkdag wordt een lopende contractperiode die over die datum heen loopt automatisch op dezelfde datum beëindigd. Het verwijderen van een laatste werkdag heropent een eerder beëindigde contractperiode niet automatisch.
+
 ## Importketen
 
 `npm run import:roster` voert achtereenvolgens uit:
@@ -97,6 +112,7 @@ Flexmedewerkers hebben niet noodzakelijk de vaste maandwaarden. Hun vergelijking
 De adminpagina `employee-settings.html` blijft bedoeld voor:
 
 - activeren en deactiveren van medewerkers;
+- een inclusieve laatste werkdag vastleggen;
 - contractperiodes met start- en stopdatum;
 - contracturen per week;
 - historische contractinformatie.
