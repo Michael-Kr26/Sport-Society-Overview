@@ -22,9 +22,17 @@ Flexmedewerkers krijgen geen maandnorm of urenbank. Zij worden vergeleken op ing
 
 ## Filters en medewerkersbeheer
 
-De urenpagina kan worden gefilterd op alle medewerkers, vaste uren of flexcontract. De filter werkt door in de samenvatting, tabellen, medewerkerinstellingen en correcties.
+De urenpagina kan worden gefilterd op alle medewerkers, vaste uren of flexcontract. De filter werkt door in de samenvatting, tabellen en urencorrecties.
 
-Een admin kan een medewerker vooraf toevoegen met een startmaand. De medewerker verschijnt pas vanaf die maand in de analyse en de contractnorm start op dezelfde datum. Verwijderen is een veilige deactivatie: historische contractperiodes, uren en correcties blijven bewaard en de medewerker kan worden hersteld.
+Medewerkerinstellingen staan op de afzonderlijke adminpagina `employee-settings.html`. Daar kan een admin:
+
+- een medewerker vooraf toevoegen met een toekomstige startmaand;
+- de startstand en startmaand van de urenbank beheren;
+- een medewerker veilig deactiveren of herstellen;
+- meerdere contractperiodes vastleggen;
+- per contractperiode uren per week, contractstart en optionele contractstop instellen.
+
+Contractperiodes mogen elkaar niet overlappen. Na de stopdatum wordt de medewerker in maanden zonder andere contractperiode als flexmedewerker behandeld. Historische periodes, uren en correcties blijven bewaard.
 
 ## Ingevoerde contracturen
 
