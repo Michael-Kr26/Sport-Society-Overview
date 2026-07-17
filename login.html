@@ -6,21 +6,30 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="login.css">
     <script src="auth-ui.js" defer></script>
-    <script src="login.js" defer></script>
-    <title>Sport Society - Inloggen</title>
+    <script src="login.js?v=20260717-access-mobile" defer></script>
+    <title>Sport Society - Inloggen en account</title>
 </head>
 <body>
-    <header><h1>Sport Society Overview</h1><p>Inloggen</p></header>
+    <header><h1>Sport Society Overview</h1><p>Inloggen en account</p></header>
     <nav><input type="checkbox" id="nav-toggle"><label for="nav-toggle" class="nav-toggle-label"><span></span></label><div class="nav-links"></div></nav>
     <main class="login-page">
         <section class="login-card">
-            <div class="card-header"><p class="card-label">Account</p><h2>Inloggen</h2></div>
-            <p class="login-intro">Log in met je gebruikersnaam en wachtwoord. Je beschikbare functies worden bepaald door je accountrol.</p>
+            <div class="card-header"><p class="card-label">Account</p><h2 id="login-title">Inloggen</h2></div>
+            <p id="login-intro" class="login-intro">Log in met je gebruikersnaam en wachtwoord. Je beschikbare functies worden bepaald door je accountrol.</p>
             <form id="login-form" class="login-form">
                 <label>Gebruikersnaam<input type="text" id="login-username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
                 <label>Wachtwoord<input type="password" id="login-password" autocomplete="current-password" required></label>
                 <button type="submit" class="admin-button">Inloggen</button>
             </form>
+            <section id="current-account" class="current-account" hidden>
+                <dl class="account-details">
+                    <div><dt>Naam</dt><dd id="account-display-name">-</dd></div>
+                    <div><dt>Gebruikersnaam</dt><dd id="account-username">-</dd></div>
+                    <div><dt>Rol</dt><dd id="account-role">-</dd></div>
+                    <div><dt>Vestiging</dt><dd id="account-location">-</dd></div>
+                </dl>
+                <button type="button" id="account-logout" class="admin-button">Uitloggen</button>
+            </section>
             <p id="login-status" class="login-status" aria-live="polite"></p>
         </section>
     </main>
