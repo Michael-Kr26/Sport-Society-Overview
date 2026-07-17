@@ -38,6 +38,7 @@
         .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     const employeeKey = (value) => String(value || '').trim().toLocaleLowerCase('nl-NL');
+    const hasNumber = (value) => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
     const currentMonth = () => {
         const date = new Date();
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -46,7 +47,7 @@
         ? contractTypeFilter.value
         : 'all';
     const typeMatches = (type, filter = selectedType()) => filter === 'all' || type === filter;
-    const numeric = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
+    const numeric = (value) => hasNumber(value) ? Number(value) : 0;
 
     function formatMonth(month) {
         const [year, number] = String(month || '').split('-').map(Number);
@@ -56,7 +57,7 @@
     }
 
     function formatHours(value, signed = false) {
-        if (!Number.isFinite(Number(value))) return '—';
+        if (!hasNumber(value)) return '—';
         const number = Number(value);
         const formatted = new Intl.NumberFormat('nl-NL', {
             minimumFractionDigits: Number.isInteger(number) ? 0 : 1,
@@ -66,7 +67,7 @@
     }
 
     function balanceClass(value) {
-        if (!Number.isFinite(Number(value))) return 'is-unknown';
+        if (!hasNumber(value)) return 'is-unknown';
         const number = Number(value);
         if (number < -0.01) return 'is-negative';
         if (number > 0.01) return 'is-positive';
@@ -285,10 +286,10 @@
     function prefillOverridePlaceholders() {
         const employee = selectedOverrideEmployee();
         const excel = employee?.excel || {};
-        overrideMinimum.placeholder = Number.isFinite(excel.minimumHours) ? String(excel.minimumHours) : 'Ontbreekt';
-        overrideThis.placeholder = Number.isFinite(excel.overtimeThisMonth) ? String(excel.overtimeThisMonth) : 'Ontbreekt';
-        overridePrevious.placeholder = Number.isFinite(excel.overtimePreviousMonth) ? String(excel.overtimePreviousMonth) : 'Ontbreekt';
-        overrideAfter.placeholder = Number.isFinite(excel.overtimeAfterMonth) ? String(excel.overtimeAfterMonth) : 'Ontbreekt';
+        overrideMinimum.placeholder = hasNumber(excel.minimumHours) ? String(excel.minimumHours) : 'Ontbreekt';
+        overrideThis.placeholder = hasNumber(excel.overtimeThisMonth) ? String(excel.overtimeThisMonth) : 'Ontbreekt';
+        overridePrevious.placeholder = hasNumber(excel.overtimePreviousMonth) ? String(excel.overtimePreviousMonth) : 'Ontbreekt';
+        overrideAfter.placeholder = hasNumber(excel.overtimeAfterMonth) ? String(excel.overtimeAfterMonth) : 'Ontbreekt';
         overrideMinimum.value = '';
         overrideThis.value = '';
         overridePrevious.value = '';
