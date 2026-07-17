@@ -237,11 +237,11 @@ async function printLucasSummary(db) {
         ROUND(SUM(COALESCE(declared_hours, 0)), 2) AS declaredHours,
         SUM(CASE WHEN declared_hours IS NOT NULL THEN 1 ELSE 0 END) AS linkedShifts
         FROM roster_items
-        WHERE item_type='shift' AND LOWER(TRIM(employee_name))='lucas v'
+        WHERE item_type='shift' AND LOWER(TRIM(employee_name))='lucas veenendaal'
         GROUP BY location ORDER BY location`);
-    console.log('\n=== Lucas V: gekoppelde uren en locaties ===');
+    console.log('\n=== Lucas Veenendaal: gekoppelde uren en locaties ===');
     if (rows.length) console.table(rows);
-    else console.log('Geen diensten voor Lucas V gevonden in de geïmporteerde periode.');
+    else console.log('Geen diensten voor Lucas Veenendaal gevonden in de geïmporteerde periode.');
 }
 
 async function main() {
