@@ -192,6 +192,9 @@ async function mergeLucasSettings() {
 }
 
 async function seedContracts() {
+    const seed = await get('SELECT version FROM hour_seed_state WHERE id=1');
+    if (Number(seed?.version || 0) >= 1) return;
+
     for (const [employeeName, weeklyHours, effectiveFrom, effectiveTo] of DEFAULT_CONTRACTS) {
         await run(
             `INSERT OR IGNORE INTO hour_employee_settings (
