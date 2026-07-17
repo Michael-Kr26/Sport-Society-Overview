@@ -16,6 +16,7 @@
     const PAGE_ACCESS = {
         'index.html': 'guest',
         'roster.html': 'guest',
+        'help.html': 'guest',
         'login.html': 'guest',
         'staffing.html': 'manager',
         'staffing-standards.html': 'manager',
@@ -38,7 +39,7 @@
         if (document.querySelector(`link[href^="${href}"]`)) return;
         const stylesheet = document.createElement('link');
         stylesheet.rel = 'stylesheet';
-        stylesheet.href = `${href}?v=20260717-navigation-close`;
+        stylesheet.href = `${href}?v=20260717-navigation-guide`;
         document.head.appendChild(stylesheet);
     }
 
@@ -159,7 +160,9 @@
                     <button type="button" class="nav-collapse-button" data-sidebar-collapse aria-expanded="true"><span data-collapse-icon aria-hidden="true">‹</span></button>
                 </div>
                 ${navigationGroup('general', 'Algemeen', '⌂',
-                    navigationItem('index.html', '⌂', 'Home') + navigationItem('roster.html', '▦', 'Rooster'))}
+                    navigationItem('index.html', '⌂', 'Home') +
+                    navigationItem('roster.html', '▦', 'Rooster') +
+                    navigationItem('help.html', '?', 'Handleiding'))}
                 ${navigationGroup('operational', 'Operationeel', '◫',
                     navigationItem('staffing.html', '◫', 'Bezettingsanalyse', 'manager') +
                     navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden', 'manager') +
