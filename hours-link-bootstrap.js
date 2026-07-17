@@ -23,7 +23,14 @@ db.configure('busyTimeout', 5000);
 
 const COOKIE = 'sso_session';
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-const FIELDS = ['minimumHours', 'overtimeThisMonth', 'overtimePreviousMonth', 'overtimeAfterMonth'];
+const FIELDS = ['scheduledHours', 'minimumHours', 'overtimeThisMonth', 'overtimePreviousMonth', 'overtimeAfterMonth'];
+const FIELD_LABELS = {
+    scheduledHours: 'Ingepland',
+    minimumHours: 'Minstens',
+    overtimeThisMonth: 'Overuren deze maand',
+    overtimePreviousMonth: 'Overuren vorige maand',
+    overtimeAfterMonth: 'Overuren na deze maand'
+};
 
 const run = (sql, params = []) => new Promise((resolve, reject) => {
     db.run(sql, params, function (error) {
@@ -43,6 +50,13 @@ const employeeKey = (value) => String(value || '').trim().toLocaleLowerCase('nl-
 function parseJson(value, fallback = []) {
     try { return JSON.parse(value || ''); }
     catch { return fallback; }
+}
+
+async function ensureColumn(table, column, definition) {
+    const columns = await all(`PRAGMA table_info(${table})`);
+    if (!columns.some((item) => item.name === column)) {
+        await run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    }
 }
 
 async function createTables() {
@@ -75,6 +89,7 @@ async function createTables() {
         period_key TEXT NOT NULL,
         employee_name TEXT NOT NULL COLLATE NOCASE,
         minimum_hours REAL,
+        scheduled_hours REAL,
         overtime_this_month REAL,
         overtime_previous_month REAL,
         overtime_after_month REAL,
@@ -83,6 +98,7 @@ async function createTables() {
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (period_key, employee_name)
     )`);
+    await ensureColumn('excel_hour_overrides', 'scheduled_hours', 'REAL');
     await run('CREATE INDEX IF NOT EXISTS idx_excel_hour_summary_employee ON excel_hour_summaries(employee_name, period_key)');
 }
 const ready = createTables();
@@ -141,11 +157,11 @@ function publicSummary(row) {
         periodKey: row.periodKey,
         employeeName: row.employeeName,
         sourceColumn: row.sourceColumn || null,
+        scheduledHours: row.scheduledHours === null ? null : Number(row.scheduledHours),
         minimumHours: row.minimumHours === null ? null : Number(row.minimumHours),
         overtimeThisMonth: row.overtimeThisMonth === null ? null : Number(row.overtimeThisMonth),
         overtimePreviousMonth: row.overtimePreviousMonth === null ? null : Number(row.overtimePreviousMonth),
         overtimeAfterMonth: row.overtimeAfterMonth === null ? null : Number(row.overtimeAfterMonth),
-        scheduledHours: row.scheduledHours === null ? null : Number(row.scheduledHours),
         sheetTotalHours: row.sheetTotalHours === null ? null : Number(row.sheetTotalHours),
         missingFields: parseJson(row.missingFieldsJson),
         sourceIssues: parseJson(row.issuesJson)
@@ -157,6 +173,7 @@ function publicOverride(row) {
     return {
         periodKey: row.periodKey,
         employeeName: row.employeeName,
+        scheduledHours: row.scheduledHours === null ? null : Number(row.scheduledHours),
         minimumHours: row.minimumHours === null ? null : Number(row.minimumHours),
         overtimeThisMonth: row.overtimeThisMonth === null ? null : Number(row.overtimeThisMonth),
         overtimePreviousMonth: row.overtimePreviousMonth === null ? null : Number(row.overtimePreviousMonth),
@@ -173,9 +190,6 @@ function mergeSummary(raw, override) {
         if (override && override[field] !== null && override[field] !== undefined) merged[field] = override[field];
         else if (!(field in merged)) merged[field] = null;
     }
-    merged.scheduledHours = Number.isFinite(merged.minimumHours) && Number.isFinite(merged.overtimeThisMonth)
-        ? round(merged.minimumHours + merged.overtimeThisMonth)
-        : null;
     merged.isComplete = FIELDS.every((field) => Number.isFinite(merged[field]));
     merged.missingFields = FIELDS.filter((field) => !Number.isFinite(merged[field]));
     merged.hasOverride = Boolean(override && FIELDS.some((field) => override[field] !== null && override[field] !== undefined));
@@ -236,17 +250,18 @@ async function excelAnalysis(requestedMonth, user) {
         || [...periods].reverse().find((period) => period.periodKey <= requestedMonth)
         || periods.at(-1);
     const summaries = (await all(`SELECT period_key AS periodKey, employee_name AS employeeName,
-        source_column AS sourceColumn, minimum_hours AS minimumHours,
-        overtime_this_month AS overtimeThisMonth, overtime_previous_month AS overtimePreviousMonth,
-        overtime_after_month AS overtimeAfterMonth, scheduled_hours AS scheduledHours,
+        source_column AS sourceColumn, scheduled_hours AS scheduledHours,
+        minimum_hours AS minimumHours, overtime_this_month AS overtimeThisMonth,
+        overtime_previous_month AS overtimePreviousMonth, overtime_after_month AS overtimeAfterMonth,
         sheet_total_hours AS sheetTotalHours, missing_fields_json AS missingFieldsJson,
         issues_json AS issuesJson FROM excel_hour_summaries
         WHERE period_key<=? ORDER BY period_key`, [selectedPeriod.periodKey])).map(publicSummary);
     const overrides = (await all(`SELECT period_key AS periodKey, employee_name AS employeeName,
-        minimum_hours AS minimumHours, overtime_this_month AS overtimeThisMonth,
-        overtime_previous_month AS overtimePreviousMonth, overtime_after_month AS overtimeAfterMonth,
-        note, updated_by AS updatedBy, updated_at AS updatedAt
-        FROM excel_hour_overrides WHERE period_key<=? ORDER BY period_key`, [selectedPeriod.periodKey])).map(publicOverride);
+        scheduled_hours AS scheduledHours, minimum_hours AS minimumHours,
+        overtime_this_month AS overtimeThisMonth, overtime_previous_month AS overtimePreviousMonth,
+        overtime_after_month AS overtimeAfterMonth, note, updated_by AS updatedBy,
+        updated_at AS updatedAt FROM excel_hour_overrides
+        WHERE period_key<=? ORDER BY period_key`, [selectedPeriod.periodKey])).map(publicOverride);
 
     const summaryMap = new Map(summaries.map((row) => [`${row.periodKey}|${employeeKey(row.employeeName)}`, row]));
     const overrideMap = new Map(overrides.map((row) => [`${row.periodKey}|${employeeKey(row.employeeName)}`, row]));
@@ -289,9 +304,10 @@ async function excelAnalysis(requestedMonth, user) {
         if (!current.isComplete) {
             for (const periodKey of periodKeysDescending) {
                 if (periodKey === selectedPeriod.periodKey) continue;
-                const candidateRaw = summaryMap.get(`${periodKey}|${key}`) || null;
-                const candidateOverride = overrideMap.get(`${periodKey}|${key}`) || null;
-                const candidate = mergeSummary(candidateRaw, candidateOverride);
+                const candidate = mergeSummary(
+                    summaryMap.get(`${periodKey}|${key}`) || null,
+                    overrideMap.get(`${periodKey}|${key}`) || null
+                );
                 if (candidate.isComplete) {
                     effective = candidate;
                     sourcePeriodKey = periodKey;
@@ -304,7 +320,7 @@ async function excelAnalysis(requestedMonth, user) {
         const sourcePeriod = periods.find((period) => period.periodKey === sourcePeriodKey) || selectedPeriod;
         const employeeIssues = [...(currentRaw?.sourceIssues || [])];
         if (!current.isComplete) {
-            const missing = current.missingFields.join(', ');
+            const missing = current.missingFields.map((field) => FIELD_LABELS[field] || field).join(', ');
             issues.push({
                 type: usedFallback ? 'employee_fallback' : 'employee_missing',
                 periodKey: selectedPeriod.periodKey,
@@ -331,11 +347,11 @@ async function excelAnalysis(requestedMonth, user) {
         employees.push({
             employeeName: name,
             weeklyContractHours: expectedEmployee?.weeklyContractHours || null,
+            scheduledHours: effective.scheduledHours,
             minimumHours: effective.minimumHours,
             overtimeThisMonth: effective.overtimeThisMonth,
             overtimePreviousMonth: effective.overtimePreviousMonth,
             overtimeAfterMonth: effective.overtimeAfterMonth,
-            scheduledHours: effective.scheduledHours,
             requestedPeriodKey: requestedMonth,
             periodKey: selectedPeriod.periodKey,
             sourcePeriodKey,
@@ -396,6 +412,7 @@ app.put('/api/hours/excel-overrides', requireManagement(async (req, res, user) =
     if (!period) return res.status(404).json({ message: 'Deze Excel-maand is niet geïmporteerd.' });
 
     const values = {
+        scheduledHours: numericOrNull(req.body.scheduledHours, 'Ingepland'),
         minimumHours: numericOrNull(req.body.minimumHours, 'Minstens'),
         overtimeThisMonth: numericOrNull(req.body.overtimeThisMonth, 'Overuren deze maand'),
         overtimePreviousMonth: numericOrNull(req.body.overtimePreviousMonth, 'Overuren vorige maand'),
@@ -407,17 +424,19 @@ app.put('/api/hours/excel-overrides', requireManagement(async (req, res, user) =
     }
 
     await run(`INSERT INTO excel_hour_overrides (
-        period_key, employee_name, minimum_hours, overtime_this_month,
+        period_key, employee_name, scheduled_hours, minimum_hours, overtime_this_month,
         overtime_previous_month, overtime_after_month, note, updated_by, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(period_key, employee_name) DO UPDATE SET
+        scheduled_hours=excluded.scheduled_hours,
         minimum_hours=excluded.minimum_hours,
         overtime_this_month=excluded.overtime_this_month,
         overtime_previous_month=excluded.overtime_previous_month,
         overtime_after_month=excluded.overtime_after_month,
         note=excluded.note, updated_by=excluded.updated_by, updated_at=CURRENT_TIMESTAMP`, [
-        periodKey, employeeName, values.minimumHours, values.overtimeThisMonth,
-        values.overtimePreviousMonth, values.overtimeAfterMonth, note, user.displayName || user.username
+        periodKey, employeeName, values.scheduledHours, values.minimumHours,
+        values.overtimeThisMonth, values.overtimePreviousMonth,
+        values.overtimeAfterMonth, note, user.displayName || user.username
     ]);
     res.json({ message: 'Handmatige Excel-urencorrectie opgeslagen.' });
 }, true));
