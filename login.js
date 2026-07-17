@@ -1,5 +1,9 @@
 const loginForm = document.getElementById('login-form');
 const loginStatus = document.getElementById('login-status');
+const loginTitle = document.getElementById('login-title');
+const loginIntro = document.getElementById('login-intro');
+const currentAccount = document.getElementById('current-account');
+const accountLogout = document.getElementById('account-logout');
 const nextPage = new URLSearchParams(window.location.search).get('next');
 const ROLE_LEVEL = { guest: 0, employee: 1, manager: 2, admin: 3 };
 const PAGE_ACCESS = {
@@ -13,6 +17,29 @@ function getSafeNextPage(userRole) {
     if (nextPage && minimumRole && ROLE_LEVEL[userRole] >= ROLE_LEVEL[minimumRole]) return nextPage;
     return 'index.html';
 }
+
+function showAccount(authState) {
+    if (!authState?.authenticated) return;
+    const user = authState.user || {};
+    loginTitle.textContent = 'Mijn account';
+    loginIntro.textContent = 'Je bent ingelogd. Rollen en vestigingskoppelingen kunnen alleen door een admin worden aangepast.';
+    loginForm.hidden = true;
+    currentAccount.hidden = false;
+    document.getElementById('account-display-name').textContent = user.displayName || '-';
+    document.getElementById('account-username').textContent = user.username ? `@${user.username}` : '-';
+    document.getElementById('account-role').textContent = user.role ? user.role[0].toUpperCase() + user.role.slice(1) : '-';
+    document.getElementById('account-location').textContent = user.location || 'Geen vaste vestiging';
+}
+
+document.addEventListener('authready', (event) => showAccount(event.detail), { once: true });
+accountLogout?.addEventListener('click', async () => {
+    accountLogout.disabled = true;
+    try { await fetch('/api/auth/logout', { method: 'POST' }); }
+    finally {
+        localStorage.removeItem('demoRole');
+        window.location.reload();
+    }
+});
 
 loginForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
