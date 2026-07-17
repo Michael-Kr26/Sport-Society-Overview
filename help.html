@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="help.css?v=20260717-guide">
+    <script src="auth-ui.js?v=20260717-guide" defer></script>
+    <title>Sport Society - Handleiding</title>
+</head>
+<body>
+    <header><h1>Sport Society Overview</h1><p>Handleiding en vaste werkwijzen</p></header>
+    <nav><input type="checkbox" id="nav-toggle"><label for="nav-toggle" class="nav-toggle-label"><span></span></label><div class="nav-links"></div></nav>
+
+    <main class="help-page">
+        <section class="help-hero">
+            <p class="help-kicker">Praktische handleiding</p>
+            <h2>Zo gebruik je Sport Society Overview</h2>
+            <p>Gebruik deze pagina als naslagwerk. Iedere module begint met het doel, daarna volgt de normale handeling en ten slotte wat je moet controleren wanneer gegevens afwijken.</p>
+        </section>
+
+        <div class="help-layout">
+            <aside class="help-toc" aria-label="Inhoudsopgave">
+                <strong>Onderwerpen</strong>
+                <a href="#rollen">Rollen en toegang</a>
+                <a href="#import">Excel importeren</a>
+                <a href="#rooster">Rooster</a>
+                <a href="#bezetting">Bezetting</a>
+                <a href="#wijzigingen">Roosterwijzigingen</a>
+                <a href="#urenanalyse">Urenanalyse</a>
+                <a href="#medewerkers">Medewerkers</a>
+                <a href="#accounts">Accounts</a>
+                <a href="#problemen">Problemen oplossen</a>
+            </aside>
+
+            <div class="help-content">
+                <section id="rollen" class="help-section">
+                    <p class="help-kicker">Toegang</p><h2>Rollen en rechten</h2>
+                    <div class="help-grid">
+                        <article><h3>Employee</h3><p>Kan de algemene pagina’s en het rooster bekijken.</p></article>
+                        <article><h3>Manager</h3><p>Ziet de bezetting en urenanalyse. Bezettingsstandaarden zijn beperkt tot de gekoppelde vestiging.</p></article>
+                        <article><h3>Admin</h3><p>Beheert accounts, medewerkers, Excel-correcties, roosterwijzigingen en alle vestigingen.</p></article>
+                    </div>
+                </section>
+
+                <section id="import" class="help-section">
+                    <p class="help-kicker">Brongegevens</p><h2>Het Excelrooster importeren</h2>
+                    <ol>
+                        <li>Sluit <code>Rooster.xlsx</code> volledig in Excel.</li>
+                        <li>Zet het bestand in <code>C:\Dev\Sport-Society-Overview\data\imports\Rooster.xlsx</code>.</li>
+                        <li>Voer vanuit de projectmap uit: <code>npm run import:roster -- ".\data\imports\Rooster.xlsx"</code>.</li>
+                        <li>Controleer in PowerShell de importsamenvatting en de controle voor <strong>Jul 26 · Leroy</strong>.</li>
+                        <li>Start of herstart daarna de applicatie met <code>npm start</code>.</li>
+                    </ol>
+                    <div class="help-callout"><strong>Belangrijk</strong><span>De import leest zowel losse diensten als de vier urenvelden onderaan iedere maandpagina.</span></div>
+                </section>
+
+                <section id="rooster" class="help-section">
+                    <p class="help-kicker">Dagelijkse planning</p><h2>Rooster</h2>
+                    <p>Gebruik filters om op medewerker, vestiging, datum of type te zoeken. De pagina toont het effectieve rooster: geregistreerde roosterwijzigingen worden waar mogelijk over de Excelimport gelegd.</p>
+                    <h3>Controle bij een afwijking</h3>
+                    <p>Controleer eerst de maandpagina en cel in Excel. Importeer daarna opnieuw. Blijft het verschil bestaan, controleer dan de pagina Roosterwijzigingen.</p>
+                </section>
+
+                <section id="bezetting" class="help-section">
+                    <p class="help-kicker">Operationeel</p><h2>Bezettingsanalyse en standaarden</h2>
+                    <p>De analyse kijkt standaard zes weken vooruit. Vaste standaarddiensten zorgen dat ook volledig lege diensten zichtbaar worden. Nul medewerkers is geen bezetting; één medewerker is kwetsbare bezetting.</p>
+                    <p>Managers wijzigen uitsluitend de regels van hun eigen profielvestiging. Algemene avondregels blijven voorbehouden aan admins.</p>
+                </section>
+
+                <section id="wijzigingen" class="help-section">
+                    <p class="help-kicker">Afwijkingen</p><h2>Roosterwijzigingen</h2>
+                    <p>Leg ruilingen, vervangingen en andere wijzigingen vast met datum, locatie en medewerkers. Gebruik de status om openstaande wijzigingen te volgen. Afgeronde wijzigingen worden later automatisch gearchiveerd.</p>
+                </section>
+
+                <section id="urenanalyse" class="help-section">
+                    <p class="help-kicker">Excel als bron van waarheid</p><h2>Urenanalyse</h2>
+                    <div class="help-formulas">
+                        <p><strong>Maandnorm</strong><span>Exact de Excelwaarde ‘Minstens’.</span></p>
+                        <p><strong>Ingepland</strong><span>Minstens + overuren deze maand.</span></p>
+                        <p><strong>Vorige stand</strong><span>Exact ‘Overuren vorige maand’.</span></p>
+                        <p><strong>Urenbank</strong><span>Exact ‘Overuren na deze maand’.</span></p>
+                    </div>
+                    <p>Het aantal weken wordt berekend met het aantal geldige datumregels in kolom A gedeeld door zeven. Een pagina met 35 datumregels telt dus als vijf weken; 28 datumregels als vier weken.</p>
+                    <h3>Ontbrekende waarden</h3>
+                    <p>Een leeg veld wordt niet als nul behandeld. De meest recente complete maand wordt tijdelijk gebruikt. Admins zien het probleem onder Datakwaliteit en kunnen de gekozen maand handmatig corrigeren.</p>
+                </section>
+
+                <section id="medewerkers" class="help-section">
+                    <p class="help-kicker">Admin</p><h2>Medewerkers en contracten</h2>
+                    <p>Beheer contractperiodes met een startdatum, optionele stopdatum en uren per week. Contractperiodes mogen elkaar niet overlappen. De Excelwaarde ‘Minstens’ blijft leidend voor de maandnorm in de urenanalyse.</p>
+                </section>
+
+                <section id="accounts" class="help-section">
+                    <p class="help-kicker">Admin</p><h2>Accounts en vestigingen</h2>
+                    <p>Maak accounts aan met de juiste rol. Een Manager moet aan precies één vestiging worden gekoppeld. Die profielvestiging bepaalt welke bezettingsgegevens en standaarden de Manager kan openen.</p>
+                </section>
+
+                <section id="problemen" class="help-section">
+                    <p class="help-kicker">Diagnose</p><h2>Problemen oplossen</h2>
+                    <div class="help-grid">
+                        <article><h3>Oude versie zichtbaar</h3><p>Stop alle Node-processen, werk de branch bij, start vanuit <code>C:\Dev</code> en gebruik <code>Ctrl + Shift + R</code>.</p></article>
+                        <article><h3>Excel kan niet worden gelezen</h3><p>Sluit Excel, kopieer het bestand buiten OneDrive en importeer vanuit de lokale projectmap.</p></article>
+                        <article><h3>Uren wijken af</h3><p>Controleer eerst de vier samenvattingsvelden op de juiste maandpagina. Gebruik daarna het adminpaneel Datakwaliteit.</p></article>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+</body>
+</html>
