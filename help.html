@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="help.css?v=20260717-guide">
+    <link rel="stylesheet" href="help.css?v=20260717-scheduled-total">
     <script src="auth-ui.js?v=20260717-guide" defer></script>
     <title>Sport Society - Handleiding</title>
 </head>
@@ -52,7 +52,7 @@
                         <li>Controleer in PowerShell de importsamenvatting en de controle voor <strong>Jul 26 · Leroy</strong>.</li>
                         <li>Start of herstart daarna de applicatie met <code>npm start</code>.</li>
                     </ol>
-                    <div class="help-callout"><strong>Belangrijk</strong><span>De import leest zowel losse diensten als de vier urenvelden onderaan iedere maandpagina.</span></div>
+                    <div class="help-callout"><strong>Belangrijk</strong><span>De import leest losse diensten, het eindtotaal van iedere urentabel en de vier maandvelden onderaan de pagina.</span></div>
                 </section>
 
                 <section id="rooster" class="help-section">
@@ -76,19 +76,21 @@
                 <section id="urenanalyse" class="help-section">
                     <p class="help-kicker">Excel als bron van waarheid</p><h2>Urenanalyse</h2>
                     <div class="help-formulas">
+                        <p><strong>Ingepland</strong><span>Exact de eindtotaalcel van de urentabel direct boven ‘Minstens’.</span></p>
                         <p><strong>Maandnorm</strong><span>Exact de Excelwaarde ‘Minstens’.</span></p>
-                        <p><strong>Ingepland</strong><span>Minstens + overuren deze maand.</span></p>
+                        <p><strong>Overuren deze maand</strong><span>Exact het gelijknamige Excelveld.</span></p>
                         <p><strong>Vorige stand</strong><span>Exact ‘Overuren vorige maand’.</span></p>
                         <p><strong>Urenbank</strong><span>Exact ‘Overuren na deze maand’.</span></p>
                     </div>
+                    <p><code>Minstens + Overuren deze maand</code> is alleen een controleberekening. Bij een verschil blijft de eindtotaalcel leidend en krijgt een Admin een controlepunt.</p>
                     <p>Het aantal weken wordt berekend met het aantal geldige datumregels in kolom A gedeeld door zeven. Een pagina met 35 datumregels telt dus als vijf weken; 28 datumregels als vier weken.</p>
                     <h3>Ontbrekende waarden</h3>
-                    <p>Een leeg veld wordt niet als nul behandeld. De meest recente complete maand wordt tijdelijk gebruikt. Admins zien het probleem onder Datakwaliteit en kunnen de gekozen maand handmatig corrigeren.</p>
+                    <p>Een lege eindtotaalcel of een leeg maandveld wordt niet als nul behandeld. De meest recente complete maand wordt tijdelijk gebruikt. Admins zien het probleem onder Datakwaliteit en kunnen ook Ingepland handmatig corrigeren.</p>
                 </section>
 
                 <section id="medewerkers" class="help-section">
                     <p class="help-kicker">Admin</p><h2>Medewerkers en contracten</h2>
-                    <p>Beheer contractperiodes met een startdatum, optionele stopdatum en uren per week. Contractperiodes mogen elkaar niet overlappen. De Excelwaarde ‘Minstens’ blijft leidend voor de maandnorm in de urenanalyse.</p>
+                    <p>Beheer contractperiodes met een startdatum, optionele stopdatum en uren per week. Contractperiodes mogen elkaar niet overlappen. De Excelwaarden blijven leidend voor de urenanalyse.</p>
                 </section>
 
                 <section id="accounts" class="help-section">
@@ -99,9 +101,9 @@
                 <section id="problemen" class="help-section">
                     <p class="help-kicker">Diagnose</p><h2>Problemen oplossen</h2>
                     <div class="help-grid">
-                        <article><h3>Oude versie zichtbaar</h3><p>Stop alle Node-processen, werk de branch bij, start vanuit <code>C:\Dev</code> en gebruik <code>Ctrl + Shift + R</code>.</p></article>
+                        <article><h3>Oude versie zichtbaar</h3><p>Stop alle Nodeprocessen, werk de branch bij, start vanuit <code>C:\Dev</code> en gebruik <code>Ctrl + Shift + R</code>.</p></article>
                         <article><h3>Excel kan niet worden gelezen</h3><p>Sluit Excel, kopieer het bestand buiten OneDrive en importeer vanuit de lokale projectmap.</p></article>
-                        <article><h3>Uren wijken af</h3><p>Controleer eerst de vier samenvattingsvelden op de juiste maandpagina. Gebruik daarna het adminpaneel Datakwaliteit.</p></article>
+                        <article><h3>Uren wijken af</h3><p>Controleer eerst de eindtotaalcel boven ‘Minstens’ en daarna de vier maandvelden. Gebruik vervolgens het adminpaneel Datakwaliteit.</p></article>
                     </div>
                 </section>
             </div>
