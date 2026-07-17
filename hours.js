@@ -16,6 +16,7 @@
     const issuesContainer = byId('excel-issues');
     const overrideForm = byId('excel-override-form');
     const overrideEmployee = byId('override-employee');
+    const overrideScheduled = byId('override-scheduled');
     const overrideMinimum = byId('override-minimum');
     const overrideThis = byId('override-this');
     const overridePrevious = byId('override-previous');
@@ -38,7 +39,7 @@
         .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     const employeeKey = (value) => String(value || '').trim().toLocaleLowerCase('nl-NL');
-    const hasNumber = (value) => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+    const numeric = (value) => typeof value === 'number' && Number.isFinite(value) ? value : 0;
     const currentMonth = () => {
         const date = new Date();
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -47,7 +48,6 @@
         ? contractTypeFilter.value
         : 'all';
     const typeMatches = (type, filter = selectedType()) => filter === 'all' || type === filter;
-    const numeric = (value) => hasNumber(value) ? Number(value) : 0;
 
     function formatMonth(month) {
         const [year, number] = String(month || '').split('-').map(Number);
@@ -57,29 +57,29 @@
     }
 
     function formatHours(value, signed = false) {
-        if (!hasNumber(value)) return '—';
-        const number = Number(value);
+        if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
         const formatted = new Intl.NumberFormat('nl-NL', {
-            minimumFractionDigits: Number.isInteger(number) ? 0 : 1,
+            minimumFractionDigits: Number.isInteger(value) ? 0 : 1,
             maximumFractionDigits: 2
-        }).format(number);
-        return `${signed && number > 0 ? '+' : ''}${formatted} u`;
+        }).format(value);
+        return `${signed && value > 0 ? '+' : ''}${formatted} u`;
     }
 
     function balanceClass(value) {
-        if (!hasNumber(value)) return 'is-unknown';
-        const number = Number(value);
-        if (number < -0.01) return 'is-negative';
-        if (number > 0.01) return 'is-positive';
+        if (typeof value !== 'number' || !Number.isFinite(value)) return 'is-unknown';
+        if (value < -0.01) return 'is-negative';
+        if (value > 0.01) return 'is-positive';
         return 'is-neutral';
     }
 
     function setMessage(text, type = '') {
+        if (!message) return;
         message.textContent = text;
         message.className = `hours-message${type ? ` is-${type}` : ''}`;
     }
 
     function setSectionVisible(section, visible) {
+        if (!section) return;
         section.hidden = !visible;
         section.classList.toggle('hours-filter-hidden', !visible);
         section.setAttribute('aria-hidden', String(!visible));
@@ -134,11 +134,11 @@
         const cards = [];
 
         if (selectedType() !== 'flex') {
-            const minimum = contracts.reduce((sum, employee) => sum + numeric(employee.monthlyNorm), 0);
             const scheduled = contracts.reduce((sum, employee) => sum + numeric(employee.scheduledHours), 0);
+            const minimum = contracts.reduce((sum, employee) => sum + numeric(employee.monthlyNorm), 0);
             const overtime = contracts.reduce((sum, employee) => sum + numeric(employee.monthDelta), 0);
-            cards.push([formatHours(minimum), 'Totaal minstens', '']);
             cards.push([formatHours(scheduled), 'Totaal ingepland', '']);
+            cards.push([formatHours(minimum), 'Totaal minstens', '']);
             cards.push([formatHours(overtime, true), 'Overuren deze maand', balanceClass(overtime)]);
         }
         if (selectedType() !== 'contract') {
@@ -149,7 +149,13 @@
         }
         cards.push([String(analysis?.excelPeriod?.weekCount ?? '—'), 'Weken op pagina', '']);
         cards.push([String(employees.length), 'Medewerkers getoond', '']);
-        if (canEdit) cards.push([String(analysis?.summary?.excelIssueCount || 0), 'Controlepunten', analysis?.summary?.excelIssueCount ? 'is-negative' : 'is-positive']);
+        if (canEdit) {
+            cards.push([
+                String(analysis?.summary?.excelIssueCount || 0),
+                'Controlepunten',
+                analysis?.summary?.excelIssueCount ? 'is-negative' : 'is-positive'
+            ]);
+        }
 
         summaryContainer.innerHTML = cards.map(([value, label, className]) => `
             <article class="hours-summary-card ${className}">
@@ -181,16 +187,18 @@
         contractResults.innerHTML = employees.length ? `
             <table class="hours-table excel-hours-table">
                 <thead><tr>
-                    <th>Medewerker</th><th>Contract</th><th>Minstens</th><th>Ingepland</th>
+                    <th>Medewerker</th><th>Contract</th><th>Ingepland</th><th>Minstens</th>
                     <th>Overuren deze maand</th><th>Overuren vorige maand</th><th>Overuren na deze maand</th><th>Bron</th>
                 </tr></thead>
                 <tbody>${employees.map((employee) => `
                     <tr class="${employee.excel?.usedFallback ? 'has-fallback' : ''}">
                         <td><strong>${escapeHtml(employee.employeeName)}</strong>
                             <span class="hours-location">${escapeHtml((employee.locations || []).join(', ') || 'Geen locatie op deze pagina')}</span></td>
-                        <td>${Number(employee.weeklyContractHours) > 0 ? `${formatHours(employee.weeklyContractHours)} / week` : 'Niet ingesteld'}</td>
-                        <td>${formatHours(employee.monthlyNorm)}</td>
+                        <td>${typeof employee.weeklyContractHours === 'number' && Number.isFinite(employee.weeklyContractHours)
+                            ? `${formatHours(employee.weeklyContractHours)} / week`
+                            : 'Niet ingesteld'}</td>
                         <td><strong>${formatHours(employee.scheduledHours)}</strong></td>
+                        <td>${formatHours(employee.monthlyNorm)}</td>
                         <td><span class="hours-balance ${balanceClass(employee.monthDelta)}">${formatHours(employee.monthDelta, true)}</span></td>
                         <td><span class="hours-balance ${balanceClass(employee.previousOvertime)}">${formatHours(employee.previousOvertime, true)}</span></td>
                         <td><span class="hours-balance ${balanceClass(employee.bankBalance)}">${formatHours(employee.bankBalance, true)}</span></td>
@@ -245,7 +253,7 @@
         const option = [...overrideEmployee.options].find((item) => employeeKey(item.value) === employeeKey(name));
         if (option) overrideEmployee.value = option.value;
         prefillOverridePlaceholders();
-        overrideMinimum.focus();
+        overrideScheduled.focus();
         overrideForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
@@ -270,7 +278,9 @@
             .filter((employee) => employee.contractType === 'contract')
             .sort((a, b) => a.employeeName.localeCompare(b.employeeName, 'nl'));
         const previousValue = overrideEmployee.value;
-        overrideEmployee.innerHTML = employees.map((employee) => `<option value="${escapeHtml(employee.employeeName)}">${escapeHtml(employee.employeeName)}</option>`).join('');
+        overrideEmployee.innerHTML = employees
+            .map((employee) => `<option value="${escapeHtml(employee.employeeName)}">${escapeHtml(employee.employeeName)}</option>`)
+            .join('');
         if (employees.some((employee) => employeeKey(employee.employeeName) === employeeKey(previousValue))) {
             overrideEmployee.value = previousValue;
         }
@@ -283,17 +293,20 @@
         return (analysis?.employees || []).find((employee) => employeeKey(employee.employeeName) === employeeKey(overrideEmployee.value));
     }
 
+    function setInputSource(input, value) {
+        if (!input) return;
+        input.placeholder = typeof value === 'number' && Number.isFinite(value) ? String(value) : 'Ontbreekt';
+        input.value = '';
+    }
+
     function prefillOverridePlaceholders() {
         const employee = selectedOverrideEmployee();
         const excel = employee?.excel || {};
-        overrideMinimum.placeholder = hasNumber(excel.minimumHours) ? String(excel.minimumHours) : 'Ontbreekt';
-        overrideThis.placeholder = hasNumber(excel.overtimeThisMonth) ? String(excel.overtimeThisMonth) : 'Ontbreekt';
-        overridePrevious.placeholder = hasNumber(excel.overtimePreviousMonth) ? String(excel.overtimePreviousMonth) : 'Ontbreekt';
-        overrideAfter.placeholder = hasNumber(excel.overtimeAfterMonth) ? String(excel.overtimeAfterMonth) : 'Ontbreekt';
-        overrideMinimum.value = '';
-        overrideThis.value = '';
-        overridePrevious.value = '';
-        overrideAfter.value = '';
+        setInputSource(overrideScheduled, excel.scheduledHours);
+        setInputSource(overrideMinimum, excel.minimumHours);
+        setInputSource(overrideThis, excel.overtimeThisMonth);
+        setInputSource(overridePrevious, excel.overtimePreviousMonth);
+        setInputSource(overrideAfter, excel.overtimeAfterMonth);
         overrideNote.value = excel.overrideNote || '';
         overrideDelete.disabled = !excel.hasOverride;
     }
@@ -309,6 +322,7 @@
                 body: JSON.stringify({
                     periodKey,
                     employeeName: overrideEmployee.value,
+                    scheduledHours: overrideScheduled.value,
                     minimumHours: overrideMinimum.value,
                     overtimeThisMonth: overrideThis.value,
                     overtimePreviousMonth: overridePrevious.value,
