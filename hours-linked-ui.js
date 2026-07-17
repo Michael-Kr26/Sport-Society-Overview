@@ -3,6 +3,20 @@
     const round = (value) => Math.round((Number(value) || 0) * 100) / 100;
     const employeeKey = (value) => String(value || '').trim().toLocaleLowerCase('nl-NL');
 
+    function activeExcelIssues(excel) {
+        const byEmployee = new Map((excel.employees || []).map((employee) => [employeeKey(employee.employeeName), employee]));
+        return (excel.issues || []).filter((issue) => {
+            if (!issue.employeeName) return true;
+            const employee = byEmployee.get(employeeKey(issue.employeeName));
+            if (!employee?.hasOverride || employee.usedFallback || !employee.isComplete) return true;
+
+            const isRawMissingWarning = issue.type === 'source_validation'
+                && /ontbrekend\s*:/i.test(String(issue.message || ''));
+            const isResolvedMissingStatus = ['employee_missing', 'employee_fallback'].includes(issue.type);
+            return !isRawMissingWarning && !isResolvedMissingStatus;
+        });
+    }
+
     function overlayExcelAnalysis(payload, excel) {
         const byEmployee = new Map((payload.employees || []).map((employee) => [employeeKey(employee.employeeName), employee]));
 
@@ -42,6 +56,7 @@
             employee.excel = excelEmployee;
         }
 
+        const activeIssues = activeExcelIssues(excel);
         const employees = payload.employees || [];
         const contracts = employees.filter((employee) => employee.contractType === 'contract');
         const flex = employees.filter((employee) => employee.contractType === 'flex');
@@ -61,10 +76,10 @@
             contractMinimumHours: round(contracts.reduce((sum, employee) => sum + numeric(employee.monthlyNorm), 0)),
             contractMonthDelta: round(contracts.reduce((sum, employee) => sum + numeric(employee.monthDelta), 0)),
             flexAverageHours,
-            excelIssueCount: Number(excel.issueCount || 0)
+            excelIssueCount: activeIssues.length
         };
         payload.excelPeriod = excel.period || null;
-        payload.excelIssues = excel.issues || [];
+        payload.excelIssues = activeIssues;
         payload.excelAvailablePeriods = excel.availablePeriods || [];
         payload.excelRequestedMonth = excel.requestedMonth || payload.month;
         payload.permissions = {
