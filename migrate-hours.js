@@ -1,7 +1,11 @@
+const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
-const db = new sqlite3.Database(path.join(__dirname, 'data', 'sport-society.db'));
+const dataDirectory = path.join(__dirname, 'data');
+fs.mkdirSync(dataDirectory, { recursive: true });
+
+const db = new sqlite3.Database(path.join(dataDirectory, 'sport-society.db'));
 const close = (error) => db.close((closeError) => {
     if (error || closeError) throw error || closeError;
 });
