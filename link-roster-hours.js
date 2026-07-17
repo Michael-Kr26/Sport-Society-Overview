@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const ExcelJS = require('exceljs');
 const sqlite3 = require('sqlite3').verbose();
 
@@ -147,19 +146,6 @@ function locationFromCells(shiftCell, hoursCell) {
     return null;
 }
 
-function createSourceHash(row) {
-    return crypto.createHash('sha256').update([
-        row.rosterDate,
-        row.employeeName,
-        row.itemType,
-        row.location || '',
-        row.startTime || '',
-        row.endTime || '',
-        row.status,
-        row.note || ''
-    ].join('|')).digest('hex');
-}
-
 const run = (db, sql, params = []) => new Promise((resolve, reject) => {
     db.run(sql, params, function (error) {
         if (error) reject(error);
@@ -235,9 +221,8 @@ async function applyLinks(db, links) {
             const nextDeclaredHours = link.declaredHours ?? row.declaredHours ?? null;
             if (link.declaredHours !== null) linkedHours += 1;
             if (nextLocation && nextLocation !== row.location) correctedLocations += 1;
-            const sourceHash = createSourceHash({ ...row, location: nextLocation });
-            await run(db, `UPDATE roster_items SET declared_hours=?, location=?, source_hash=? WHERE id=?`,
-                [nextDeclaredHours, nextLocation, sourceHash, row.id]);
+            await run(db, `UPDATE roster_items SET declared_hours=?, location=? WHERE id=?`,
+                [nextDeclaredHours, nextLocation, row.id]);
         }
         await run(db, 'COMMIT');
     } catch (error) {
