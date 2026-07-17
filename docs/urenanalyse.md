@@ -2,7 +2,11 @@
 
 ## Bronnen
 
-De eerste versie gebruikt de diensten uit `roster_items`. Een dienst telt mee wanneer het itemtype `shift` is en een geldige begin- en eindtijd heeft. De berekening gebruikt daardoor momenteel ingeplande uren. Een latere klok- of salariskoppeling kan dezelfde API vullen met werkelijk gewerkte uren.
+De roosterimport verwerkt iedere dienst samen met de bijbehorende Excel-kolom `Uren`. Wanneer een geldige Uren-waarde aanwezig is, wordt die waarde gebruikt voor de urenanalyse. Alleen wanneer deze waarde ontbreekt, blijft `eindtijd − begintijd` de terugvalberekening.
+
+De locatie wordt gekoppeld via de locatiekleur van de dienstcel. Wanneer de kleur op de naastliggende Uren-cel staat, wordt die kleur eveneens gebruikt. Daardoor blijven de gedeclareerde uren en de bijbehorende vestiging onderdeel van dezelfde roosterregel.
+
+Na een roosterimport voert `import-roster-linked.js` automatisch eerst `import-roster.js` en daarna `link-roster-hours.js` uit. De linker voegt de kolom `declared_hours` veilig toe aan bestaande databases en toont na afloop apart een controleoverzicht voor Lucas V.
 
 ## Contractmedewerkers
 
@@ -12,7 +16,7 @@ De maandnorm is:
 
 De maandmutatie is:
 
-`roosteruren + urencorrecties − maandnorm + directe bankcorrecties`
+`gekoppelde Excel-uren + urencorrecties − maandnorm + directe bankcorrecties`
 
 De cumulatieve urenbank begint bij de ingestelde startstand en telt iedere maandmutatie vanaf de gekozen startmaand op.
 
