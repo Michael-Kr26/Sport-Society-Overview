@@ -37,6 +37,7 @@ const all = (sql, params = []) => new Promise((resolve, reject) => {
 });
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const round = (value) => Math.round((Number(value) || 0) * 100) / 100;
+const employeeKey = (value) => String(value || '').trim().toLocaleLowerCase('nl-NL');
 
 async function waitForTable(table, attempts = 100) {
     for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -87,6 +88,122 @@ function shiftHours(startTime, endTime) {
     return round(((end <= start ? end + 1440 : end) - start) / 60);
 }
 
+function collectDeclaredGroups(rows) {
+    const groups = new Map();
+    let conflictingDeclaredDays = 0;
+
+    for (const row of rows) {
+        const rosterDate = String(row.rosterDate || '').slice(0, 10);
+        const sourceEmployee = String(row.sourceSlotEmployee || row.employeeName || '').trim();
+        if (!rosterDate || !sourceEmployee) continue;
+        const key = `${rosterDate}|${employeeKey(sourceEmployee)}`;
+        if (!groups.has(key)) {
+            groups.set(key, {
+                rosterDate,
+                rowMonth: rosterDate.slice(0, 7),
+                sourceEmployee,
+                declaredHours: null,
+                shifts: []
+            });
+        }
+        const group = groups.get(key);
+        const declared = row.declaredHours === null || row.declaredHours === undefined
+            ? null
+            : Number(row.declaredHours);
+        if (Number.isFinite(declared)) {
+            if (group.declaredHours !== null && Math.abs(group.declaredHours - declared) > 0.01) {
+                conflictingDeclaredDays += 1;
+            }
+            if (group.declaredHours === null) group.declaredHours = round(declared);
+        }
+        group.shifts.push({
+            employeeName: String(row.employeeName || sourceEmployee).trim(),
+            rawHours: shiftHours(row.startTime, row.endTime)
+        });
+    }
+
+    return { groups: [...groups.values()], conflictingDeclaredDays };
+}
+
+function addEmployeeCorrection(employees, employeeName, month, correction, linkedShifts, rosterDate) {
+    const key = employeeKey(employeeName);
+    if (!key || !MONTH_RE.test(month)) return;
+    if (!employees.has(key)) employees.set(key, { employeeName, months: {} });
+    const employee = employees.get(key);
+    const current = employee.months[month] || {
+        correction: 0,
+        linkedShifts: 0,
+        linkedDays: 0,
+        _dates: new Set()
+    };
+    current.correction = round(current.correction + correction);
+    current.linkedShifts += linkedShifts;
+    if (!current._dates.has(rosterDate)) {
+        current._dates.add(rosterDate);
+        current.linkedDays += 1;
+    }
+    employee.months[month] = current;
+}
+
+function correctionsByEmployee(rows) {
+    const { groups, conflictingDeclaredDays } = collectDeclaredGroups(rows);
+    const employees = new Map();
+    let linkedDays = 0;
+
+    for (const group of groups) {
+        if (group.declaredHours === null || !group.shifts.length) continue;
+        linkedDays += 1;
+        const actualEmployees = new Map();
+        for (const shift of group.shifts) {
+            const key = employeeKey(shift.employeeName);
+            if (!key) continue;
+            const current = actualEmployees.get(key) || {
+                employeeName: shift.employeeName,
+                rawHours: 0,
+                linkedShifts: 0
+            };
+            current.rawHours = round(current.rawHours + shift.rawHours);
+            current.linkedShifts += 1;
+            actualEmployees.set(key, current);
+        }
+
+        const allocations = [...actualEmployees.values()];
+        if (!allocations.length) continue;
+        const rawTotal = round(allocations.reduce((sum, item) => sum + item.rawHours, 0));
+        const totalCorrection = round(group.declaredHours - rawTotal);
+        let allocatedCorrection = 0;
+
+        allocations.forEach((item, index) => {
+            const isLast = index === allocations.length - 1;
+            const share = isLast
+                ? round(totalCorrection - allocatedCorrection)
+                : round(rawTotal > 0
+                    ? totalCorrection * (item.rawHours / rawTotal)
+                    : totalCorrection / allocations.length);
+            allocatedCorrection = round(allocatedCorrection + share);
+            addEmployeeCorrection(
+                employees,
+                item.employeeName,
+                group.rowMonth,
+                share,
+                item.linkedShifts,
+                group.rosterDate
+            );
+        });
+    }
+
+    const result = [...employees.values()].map((employee) => ({
+        ...employee,
+        months: Object.fromEntries(Object.entries(employee.months).map(([month, values]) => [month, {
+            correction: round(values.correction),
+            linkedShifts: values.linkedShifts,
+            linkedDays: values.linkedDays
+        }]))
+    }));
+
+    return { employees: result, linkedDays, conflictingDeclaredDays };
+}
+
 app.get('/api/hours/declared-corrections', async (req, res) => {
     try {
         const user = await authenticatedUser(req);
@@ -95,25 +212,24 @@ app.get('/api/hours/declared-corrections', async (req, res) => {
         const month = MONTH_RE.test(String(req.query.month || '')) ? String(req.query.month) : new Date().toISOString().slice(0, 7);
         if (!await ensureDeclaredHoursColumn()) return res.json({ month, employees: [] });
 
-        const rows = await all(`SELECT employee_name AS employeeName, roster_date AS rosterDate,
+        const rows = await all(`SELECT employee_name AS employeeName,
+            source_slot_employee AS sourceSlotEmployee, roster_date AS rosterDate,
             start_time AS startTime, end_time AS endTime, declared_hours AS declaredHours
             FROM roster_items
-            WHERE item_type='shift' AND declared_hours IS NOT NULL
+            WHERE item_type='shift'
               AND date(roster_date) < date(?, '+1 month')
-            ORDER BY date(roster_date)`, [`${month}-01`]);
-        const employees = new Map();
-        for (const row of rows) {
-            const employeeKey = String(row.employeeName || '').trim().toLocaleLowerCase('nl-NL');
-            const rowMonth = String(row.rosterDate || '').slice(0, 7);
-            if (!employeeKey || !MONTH_RE.test(rowMonth)) continue;
-            if (!employees.has(employeeKey)) employees.set(employeeKey, { employeeName: row.employeeName, months: {} });
-            const employee = employees.get(employeeKey);
-            const current = employee.months[rowMonth] || { correction: 0, linkedShifts: 0 };
-            current.correction = round(current.correction + round(Number(row.declaredHours) - shiftHours(row.startTime, row.endTime)));
-            current.linkedShifts += 1;
-            employee.months[rowMonth] = current;
-        }
-        res.json({ month, source: 'Excel-kolom Uren', employees: [...employees.values()] });
+            ORDER BY date(roster_date), LOWER(COALESCE(source_slot_employee, employee_name)), start_time`,
+        [`${month}-01`]);
+        const result = correctionsByEmployee(rows);
+        res.json({
+            month,
+            source: 'Excel-kolom Uren, één dagtotaal per medewerkerskolom',
+            employees: result.employees,
+            diagnostics: {
+                linkedDays: result.linkedDays,
+                conflictingDeclaredDays: result.conflictingDeclaredDays
+            }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'De gekoppelde roosteruren konden niet worden berekend.' });
