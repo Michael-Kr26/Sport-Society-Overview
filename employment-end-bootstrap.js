@@ -56,6 +56,35 @@ async function waitForEmployee(employeeName, attempts = 120) {
     return false;
 }
 
+async function transaction(work) {
+    await run('BEGIN IMMEDIATE');
+    try {
+        const result = await work();
+        await run('COMMIT');
+        return result;
+    } catch (error) {
+        await run('ROLLBACK').catch(() => {});
+        throw error;
+    }
+}
+
+async function setEmploymentEnd(employeeName, activeUntil, updatedBy) {
+    await transaction(async () => {
+        await run(`UPDATE hour_employee_settings
+            SET active_until=?, updated_by=?, updated_at=CURRENT_TIMESTAMP
+            WHERE employee_name=? COLLATE NOCASE`, [activeUntil, updatedBy, employeeName]);
+
+        if (activeUntil) {
+            await run(`UPDATE hour_contract_periods
+                SET effective_to=?
+                WHERE employee_name=? COLLATE NOCASE
+                  AND date(effective_from)<=date(?)
+                  AND (effective_to IS NULL OR date(effective_to)>date(?))`,
+            [activeUntil, employeeName, activeUntil, activeUntil]);
+        }
+    });
+}
+
 async function ensureEmploymentEnd() {
     if (!await waitForTable('hour_employee_settings')) {
         throw new Error('De medewerkerstabel kon niet worden voorbereid.');
@@ -68,9 +97,11 @@ async function ensureEmploymentEnd() {
     // Aangeleverde personeelswijziging: 17 juli 2026 is Mario's laatste werkdag.
     // Alleen invullen wanneer nog geen datum is ingesteld, zodat latere adminwijzigingen behouden blijven.
     if (await waitForEmployee('Mario')) {
-        await run(`UPDATE hour_employee_settings
-            SET active_until='2026-07-17', updated_by='Aangeleverde laatste werkdag', updated_at=CURRENT_TIMESTAMP
-            WHERE employee_name='Mario' COLLATE NOCASE AND active_until IS NULL`);
+        const mario = await get(`SELECT active_until AS activeUntil FROM hour_employee_settings
+            WHERE employee_name='Mario' COLLATE NOCASE`);
+        if (!mario?.activeUntil) {
+            await setEmploymentEnd('Mario', '2026-07-17', 'Aangeleverde laatste werkdag');
+        }
     }
 }
 const ready = ensureEmploymentEnd();
@@ -139,16 +170,10 @@ app.put('/api/hours/employment-status/:employeeName', requireRole(async (req, re
         return res.status(400).json({ message: 'De laatste werkdag mag niet vóór de startdatum liggen.' });
     }
 
-    await run(`UPDATE hour_employee_settings
-        SET active_until=?, updated_by=?, updated_at=CURRENT_TIMESTAMP
-        WHERE employee_name=? COLLATE NOCASE`, [
-        activeUntil,
-        user.displayName || user.username,
-        employeeName
-    ]);
+    await setEmploymentEnd(employee.employeeName, activeUntil, user.displayName || user.username);
     res.json({
         message: activeUntil
-            ? `${employee.employeeName} blijft zichtbaar tot en met ${activeUntil} en wordt daarna uit toekomstige urenoverzichten gehaald.`
-            : `De laatste werkdag van ${employee.employeeName} is verwijderd.`
+            ? `${employee.employeeName} blijft zichtbaar tot en met ${activeUntil}; een lopend contract is op die datum beëindigd.`
+            : `De laatste werkdag van ${employee.employeeName} is verwijderd. Bestaande contractstops blijven ongewijzigd.`
     });
 }, true));
