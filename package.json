@@ -4,8 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "node --check app.js && node --check staffing-bootstrap.js && node --check hours-bootstrap.js && node --check roster-sync-bootstrap.js && node --check migrate-hours.js && node --check import-roster.js && node --check download-roster.js && node --check auth-ui.js && node --check script.js && node --check login.js && node --check roster.js && node --check staffing.js && node --check staffing-standards.js && node --check cml.js && node --check cf.js && node --check hours.js && node --check employee-settings.js",
-    "start": "node migrate-hours.js && node roster-sync-bootstrap.js",
+    "test": "node --check app.js && node --check staffing-bootstrap.js && node --check hours-bootstrap.js && node --check roster-sync-bootstrap.js && node --check access-bootstrap.js && node --check migrate-hours.js && node --check import-roster.js && node --check download-roster.js && node --check auth-ui.js && node --check script.js && node --check login.js && node --check create.js && node --check roster.js && node --check staffing.js && node --check staffing-standards.js && node --check cml.js && node --check cf.js && node --check hours.js && node --check employee-settings.js",
+    "start": "node migrate-hours.js && node access-bootstrap.js",
     "import:roster": "node import-roster.js",
     "download:roster": "node download-roster.js",
     "sync:roster": "node download-roster.js && node import-roster.js data/imports/live-rooster.xlsx"
