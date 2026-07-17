@@ -72,9 +72,9 @@ function missingFields(values) {
 
 async function activeContractEmployees(month) {
     const { first, last } = monthBounds(month);
-    const rows = await all(`SELECT settings.employee_name AS employeeName,
+    return all(`SELECT settings.employee_name AS employeeName,
         settings.active_from AS activeFrom, settings.active_until AS activeUntil,
-        settings.is_active AS isActive,
+        settings.is_active AS isActive, settings.contract_type AS contractType,
         MAX(CASE WHEN periods.id IS NOT NULL THEN 1 ELSE 0 END) AS hasContract
         FROM hour_employee_settings settings
         LEFT JOIN hour_contract_periods periods
@@ -85,10 +85,10 @@ async function activeContractEmployees(month) {
         WHERE settings.is_active=1
           AND (settings.active_from IS NULL OR date(settings.active_from)<=date(?))
           AND (settings.active_until IS NULL OR date(settings.active_until)>=date(?))
-        GROUP BY settings.employee_name, settings.active_from, settings.active_until, settings.is_active
-        HAVING hasContract=1 OR settings.contract_type='contract'
+        GROUP BY settings.employee_name, settings.active_from, settings.active_until,
+            settings.is_active, settings.contract_type
+        HAVING hasContract=1 OR contractType='contract'
         ORDER BY LOWER(settings.employee_name)`, [last, first, last, first]);
-    return rows;
 }
 
 async function main() {
