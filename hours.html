@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="hours.css?v=20260717-excel-periods">
+    <link rel="stylesheet" href="hours.css?v=20260717-scheduled-total">
     <script src="auth-ui.js?v=20260717-usability" defer></script>
-    <script src="hours-linked-ui.js?v=20260717-excel-periods" defer></script>
-    <script src="hours.js?v=20260717-excel-periods" defer></script>
+    <script src="hours-linked-ui.js?v=20260717-scheduled-total" defer></script>
+    <script src="hours.js?v=20260717-scheduled-total" defer></script>
     <title>Sport Society - Urenanalyse en urenbank</title>
 </head>
 <body data-manager-page>
@@ -26,7 +26,7 @@
                     <a href="employee-settings.html" class="admin-button" data-admin-only hidden>Medewerkers beheren</a>
                 </div>
             </div>
-            <p>Minstens, overuren deze maand, overuren vorige maand en overuren na deze maand worden rechtstreeks van iedere Excel-maandpagina overgenomen. Het aantal weken wordt bepaald op basis van de datumregels in kolom A.</p>
+            <p>Ingepland wordt rechtstreeks uit de eindtotaalcel van de urentabel boven ‘Minstens’ gelezen. Minstens en de drie overurenvelden worden eveneens exact van iedere Excel-maandpagina overgenomen. Het aantal weken wordt bepaald op basis van de datumregels in kolom A.</p>
         </section>
 
         <section class="hours-card hours-toolbar-card">
@@ -60,7 +60,7 @@
                 <div><p class="hours-label">Roostervergelijking</p><h2>Flexmedewerkers</h2></div>
                 <p id="flex-count" class="hours-result-count">Laden...</p>
             </div>
-            <p class="hours-section-note">Flexmedewerkers hebben geen vier vaste Excel-velden. Hun overzicht blijft gebaseerd op de geïmporteerde diensten.</p>
+            <p class="hours-section-note">Flexmedewerkers hebben geen vaste Excel-maandvelden. Hun overzicht blijft gebaseerd op de geïmporteerde diensten.</p>
             <div id="flex-results" class="hours-table-wrap"><p class="empty-state">Flexanalyse laden...</p></div>
         </section>
 
@@ -69,7 +69,7 @@
                 <div><p class="hours-label">Datakwaliteit</p><h2>Excel-problemen en handmatige maandcorrecties</h2></div>
                 <p id="excel-issue-count" class="hours-result-count">Geen controle uitgevoerd</p>
             </div>
-            <p class="hours-section-note">Een ontbrekend veld wordt niet stilzwijgend als nul behandeld. De applicatie gebruikt tijdelijk de meest recente complete maand en toont hieronder wat een admin moet controleren.</p>
+            <p class="hours-section-note">Een ontbrekend veld wordt niet stilzwijgend als nul behandeld. De applicatie gebruikt tijdelijk de meest recente complete maand en toont hieronder wat een Admin moet controleren.</p>
             <div id="excel-issues" class="excel-issues"></div>
 
             <form id="excel-override-form" class="excel-override-form">
@@ -78,6 +78,7 @@
                     <span id="override-period-label" class="period-chip"></span>
                 </div>
                 <label>Medewerker<select id="override-employee" required></select></label>
+                <label>Ingepland<input type="number" id="override-scheduled" step="0.25"></label>
                 <label>Minstens<input type="number" id="override-minimum" step="0.25"></label>
                 <label>Overuren deze maand<input type="number" id="override-this" step="0.25"></label>
                 <label>Overuren vorige maand<input type="number" id="override-previous" step="0.25"></label>
@@ -94,8 +95,9 @@
             <p class="hours-label">Berekeningsmethode</p>
             <h2>Wat betekenen de waarden?</h2>
             <div class="hours-method-grid">
-                <p><strong>Maandnorm</strong><span>Exact de Excelwaarde onder ‘Minstens’.</span></p>
-                <p><strong>Ingepland</strong><span>Minstens + overuren deze maand.</span></p>
+                <p><strong>Ingepland</strong><span>Exact de eindtotaalcel van de urentabel direct boven ‘Minstens’.</span></p>
+                <p><strong>Maandnorm</strong><span>Exact de Excelwaarde bij ‘Minstens’.</span></p>
+                <p><strong>Overuren deze maand</strong><span>Exact het gelijknamige Excelveld; alleen als controle wordt Minstens + overuren vergeleken met Ingepland.</span></p>
                 <p><strong>Vorige stand</strong><span>Exact ‘Overuren vorige maand’.</span></p>
                 <p><strong>Urenbank</strong><span>Exact ‘Overuren na deze maand’.</span></p>
             </div>
