@@ -71,7 +71,7 @@
             ...(payload.permissions || {}),
             canEdit: Boolean(excel.permissions?.canEdit)
         };
-        payload.hoursSource = 'Excel: Minstens en overurenvelden per maandpagina';
+        payload.hoursSource = 'Excel: eindtotaal urentabel, Minstens en overurenvelden per maandpagina';
         return payload;
     }
 
