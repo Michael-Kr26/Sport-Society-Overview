@@ -5,103 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="login.css">
-    <link rel="stylesheet" href="create.css">
+    <link rel="stylesheet" href="create.css?v=20260717-access-mobile">
     <script src="auth-ui.js" defer></script>
-    <script src="create.js" defer></script>
+    <script src="create.js?v=20260717-access-mobile" defer></script>
     <title>Sport Society - Accounts</title>
 </head>
 <body>
-    <header>
-        <h1>Sport Society Overview</h1>
-        <p>Accountbeheer</p>
-    </header>
-
-    <nav>
-        <input type="checkbox" id="nav-toggle">
-        <label for="nav-toggle" class="nav-toggle-label">
-            <span></span>
-        </label>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="cml.html">Roosterwijzigingen</a>
-            <a href="roster.html">Rooster</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="login.html" data-auth-entry>Inloggen</a>
-        </div>
-    </nav>
+    <header><h1>Sport Society Overview</h1><p>Accounts, rollen en vestigingsprofielen</p></header>
+    <nav><input type="checkbox" id="nav-toggle"><label for="nav-toggle" class="nav-toggle-label"><span></span></label><div class="nav-links"></div></nav>
 
     <main class="create-page">
         <section class="login-card">
-            <div class="card-header">
-                <p class="card-label">Accounts</p>
-                <h2 id="create-title">Account aanmaken</h2>
-            </div>
-
-            <p id="create-intro" class="login-intro">
-                Accountbeheer laden...
-            </p>
-
+            <div class="card-header"><p class="card-label">Accounts</p><h2 id="create-title">Account aanmaken</h2></div>
+            <p id="create-intro" class="login-intro">Accountbeheer laden...</p>
             <form id="create-account-form" class="login-form" hidden>
-                <label>
-                    Gebruikersnaam
-                    <input
-                        type="text"
-                        id="create-username"
-                        autocomplete="off"
-                        autocapitalize="none"
-                        spellcheck="false"
-                        minlength="3"
-                        maxlength="32"
-                        required
-                    >
+                <label>Gebruikersnaam<input type="text" id="create-username" autocomplete="off" autocapitalize="none" spellcheck="false" minlength="3" maxlength="32" required></label>
+                <label>Weergavenaam<input type="text" id="create-display-name" autocomplete="off" maxlength="80" required></label>
+                <label>Wachtwoord<input type="password" id="create-password" autocomplete="new-password" minlength="8" required></label>
+                <label>Wachtwoord herhalen<input type="password" id="create-password-confirm" autocomplete="new-password" minlength="8" required></label>
+                <label id="create-role-label">Rol
+                    <select id="create-role" required><option value="employee">Employee</option><option value="manager">Manager</option><option value="admin">Admin</option></select>
                 </label>
-
-                <label>
-                    Weergavenaam
-                    <input type="text" id="create-display-name" autocomplete="off" maxlength="80" required>
+                <label id="create-location-label">Vestiging
+                    <select id="create-location"><option value="">Geen vaste vestiging</option><option>Achterveld</option><option>Barneveld</option><option>Voorthuizen</option><option>Wekerom</option><option>Harskamp</option></select>
+                    <span class="field-help">Voor Manager verplicht; bepaalt welke bezettingsstandaarden zichtbaar zijn.</span>
                 </label>
-
-                <label>
-                    Wachtwoord
-                    <input type="password" id="create-password" autocomplete="new-password" minlength="8" required>
-                </label>
-
-                <label>
-                    Wachtwoord herhalen
-                    <input type="password" id="create-password-confirm" autocomplete="new-password" minlength="8" required>
-                </label>
-
-                <label id="create-role-label">
-                    Rol
-                    <select id="create-role" required>
-                        <option value="employee">Employee</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </label>
-
-                <button type="submit" class="admin-button">
-                    Account aanmaken
-                </button>
+                <button type="submit" class="admin-button">Account aanmaken</button>
             </form>
-
             <p id="create-status" class="login-status" aria-live="polite"></p>
         </section>
 
         <section id="account-list-card" class="login-card account-list-card" hidden>
-            <div class="card-header">
-                <p class="card-label">Bestaande accounts</p>
-                <h2>Gebruikers</h2>
-            </div>
-
-            <div id="account-list" class="account-list">
-                <p class="empty-state">Accounts laden...</p>
-            </div>
+            <div class="card-header"><p class="card-label">Bestaande accounts</p><h2>Gebruikers en toegang</h2></div>
+            <p class="login-intro">Pas rol, vestiging en actieve status aan. Een nieuw wachtwoord is optioneel.</p>
+            <div id="account-list" class="account-list"><p class="empty-state">Accounts laden...</p></div>
         </section>
     </main>
-
-    <footer>
-        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
-    </footer>
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
 </body>
 </html>

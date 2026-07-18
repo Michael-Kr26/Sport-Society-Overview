@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="staffing.css">
     <script src="auth-ui.js" defer></script>
     <script src="staffing.js" defer></script>
+    <script src="staffing-coverage.js?v=20260717-six-weeks" defer></script>
     <title>Sport Society - Bezettingsanalyse</title>
 </head>
-<body>
+<body data-manager-page>
     <header>
         <h1>Sport Society Overview</h1>
         <p>Rooster- en bezettingsanalyse per vestiging</p>
@@ -26,13 +27,12 @@
             <div>
                 <div class="staffing-heading-row">
                     <p class="staffing-label">Capaciteitscontrole</p>
-                    <span class="staffing-version-badge">Werkende eerste versie</span>
+                    <span class="staffing-version-badge" data-admin-only hidden>Werkende eerste versie</span>
                 </div>
-                <h2>Enkele, dubbele en kwetsbare bezetting</h2>
+                <h2>Geen, enkele en voldoende bezetting</h2>
                 <p>
-                    De analyse gebruikt dezelfde rooster-API als het rooster. Daardoor blijft de
-                    functie werken wanneer de Excel-import later wordt vervangen door een live
-                    roosterintegratie.
+                    De analyse kijkt standaard vanaf vandaag zes weken vooruit. Vaste standaarddiensten
+                    worden ook getoond wanneer er in het rooster helemaal niemand is ingepland.
                 </p>
             </div>
         </section>
@@ -83,7 +83,7 @@
             <div id="staffing-results" class="staffing-results"><p class="empty-state">Analyse laden...</p></div>
         </section>
 
-        <section class="staffing-card integration-note">
+        <section class="staffing-card integration-note" data-admin-content hidden>
             <div>
                 <p class="staffing-label">Integratiegereed</p>
                 <h2>Bronnen kunnen later worden vervangen</h2>

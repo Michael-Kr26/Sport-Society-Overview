@@ -1,0 +1,153 @@
+# Urenanalyse en Excel-maandstanden
+
+## Primaire bron
+
+Voor medewerkers met vaste uren gebruikt de urenanalyse vijf waarden van iedere Excel-maandpagina als bron van waarheid:
+
+- het eindtotaal van de urentabel direct boven `Minstens`;
+- `Minstens`;
+- `Overuren deze maand`;
+- `Overuren vorige maand`;
+- `Overuren na deze maand`.
+
+De weergegeven waarden zijn:
+
+| Applicatie | Excelbron |
+|---|---|
+| Ingepland | Exact de eindtotaalcel van de urentabel boven `Minstens` |
+| Maandnorm | Exact `Minstens` |
+| Overuren deze maand | Exact `Overuren deze maand` |
+| Vorige stand | Exact `Overuren vorige maand` |
+| Urenbank | Exact `Overuren na deze maand` |
+
+`Minstens + Overuren deze maand` wordt uitsluitend als datakwaliteitscontrole berekend. Deze uitkomst overschrijft de eindtotaalcel niet.
+
+De contracturen per week blijven als administratieve contractinformatie zichtbaar, maar worden niet gebruikt om de Excel-maandnorm of de ingeplande uren opnieuw te berekenen.
+
+## Periode en weekaantal
+
+Een maand in de applicatie verwijst naar de volledige gelijknamige Excelpagina. Alle datums die op die pagina staan tellen mee, ook wanneer de eerste of laatste dagen formeel in een aangrenzende kalendermaand vallen.
+
+Het aantal weken wordt bepaald met de geldige datumregels in kolom A:
+
+`weekaantal = aantal datumregels / 7`
+
+Daarmee geldt bijvoorbeeld:
+
+- 28 datumregels = 4 weken;
+- 35 datumregels = 5 weken.
+
+Een datumregel is geldig wanneer kolom A een datum bevat en kolom B een Nederlandse weekdag bevat. Een niet-volledig veelvoud van zeven wordt als structuurprobleem aan admins gemeld.
+
+## Laatste werkdag en zichtbaarheid
+
+`hour_employee_settings.active_until` bevat de inclusieve laatste werkdag van een medewerker.
+
+Voor een gekozen maandpagina geldt:
+
+- de medewerker is zichtbaar wanneer de laatste werkdag op of na de eerste dag van die maand ligt;
+- de medewerker verdwijnt wanneer de laatste werkdag vóór de eerste dag van die maand ligt;
+- historische Excelstanden en contractgegevens blijven in de database bewaard;
+- Excel-controlepunten van een uitdienstmedewerker worden in latere maandpagina’s eveneens niet getoond.
+
+Voorbeeld: een laatste werkdag van `2026-07-17` betekent zichtbaar op `Jul 26` en niet zichtbaar vanaf `Aug 26`.
+
+Bij het opslaan van een laatste werkdag wordt een lopende contractperiode die over die datum heen loopt automatisch op dezelfde datum beëindigd. Het verwijderen van een laatste werkdag heropent een eerder beëindigde contractperiode niet automatisch.
+
+## Importketen
+
+`npm run import:roster` voert achtereenvolgens uit:
+
+1. `import-roster.js` voor diensten, afwezigheden en locaties;
+2. `normalize-roster-headers.js` om numerieke tussenkoppen niet als medewerkersnaam te behandelen;
+3. `link-roster-hours.js` voor de koppeling van diensten, Uren-cellen en locatiekleuren;
+4. `import-hour-summaries.js` voor het eindtotaal, de vier maandvelden en het weekaantal;
+5. `normalize-zero-hour-summaries.js` om iedere expliciete nulvorm als geldige waarde `0` vast te leggen;
+6. `migrate-employee-names.js` voor de samenvoeging van `Lucas V` naar `Lucas Veenendaal`.
+
+De tabellen `excel_hour_periods` en `excel_hour_summaries` worden bij iedere import opnieuw opgebouwd. Handmatige admincorrecties staan afzonderlijk in `excel_hour_overrides` en blijven daardoor behouden bij een nieuwe import.
+
+## Volledige verversopdracht
+
+Gebruik op Windows de opdracht:
+
+```powershell
+npm run refresh:roster -- ".\data\imports\Rooster.xlsx" "2026-10"
+```
+
+Deze opdracht:
+
+1. weigert te starten wanneer Excel nog geopend is;
+2. maakt eerst een back-up in `data/backups`;
+3. opent het rooster onzichtbaar met de lokaal geïnstalleerde Excel-applicatie;
+4. werkt externe koppelingen en gegevensverbindingen bij;
+5. voert een volledige formuleherberekening uit;
+6. slaat het bestand op en sluit Excel;
+7. voert de volledige roosterimport uit;
+8. rapporteert per actieve contractmedewerker of de gekozen maand exact, via terugval of helemaal niet uitleesbaar is.
+
+De tweede parameter is optioneel. Zonder maand controleert het rapport de meest recente geïmporteerde Excelpagina.
+
+Een groen bronlabel betekent dat alle vijf waarden van de gekozen maandpagina komen. Een geel bronlabel betekent dat minimaal één veld op die pagina ontbreekt en dat tijdelijk de meest recente complete eerdere maand wordt gebruikt.
+
+## Nulwaarden
+
+Iedere expliciete nul wordt als geldige waarde gelezen. Dit omvat onder meer:
+
+- numeriek `0` en `-0`;
+- tekst `0`, `0,0` en `0.00`;
+- `0 u` en `0 uur`;
+- een formule waarvan de opgeslagen uitkomst numeriek nul is.
+
+Een werkelijk lege cel blijft ontbrekend. De broncontrole vermeldt dan exact welk van de vijf velden ontbreekt.
+
+## Ontbrekende of afwijkende waarden
+
+De applicatie zoekt bij een onvolledige medewerkerregel naar de meest recente eerdere maand waarin alle vijf waarden leesbaar zijn. Die maand wordt tijdelijk gebruikt en duidelijk als terugvalbron gemarkeerd.
+
+Admins zien op de urenpagina onder `Datakwaliteit`:
+
+- welke maandpagina ontbreekt;
+- welke medewerker één of meer waarden mist;
+- of het eindtotaal boven `Minstens` ontbreekt;
+- uit welke eerdere maand tijdelijk gegevens worden gebruikt;
+- of het eindtotaal afwijkt van `Minstens + Overuren deze maand`;
+- of een Excelmedewerker niet als actieve contractmedewerker staat ingesteld.
+
+Een admin kan per medewerker en maand één of meer waarden handmatig overschrijven, inclusief `Ingepland`, met een toelichting. Lege correctievelden blijven uit Excel komen. De correctie kan later worden verwijderd zodat de applicatie weer volledig de geïmporteerde Excelwaarde gebruikt.
+
+## Validatievoorbeeld Jul 26
+
+Voor Leroy levert de aangeleverde pagina `Jul 26`:
+
+| Veld | Waarde |
+|---|---:|
+| Datumregels | 35 |
+| Weken | 5 |
+| Ingepland uit eindtotaal urentabel | 184,5 |
+| Minstens | 175 |
+| Overuren deze maand | 9,5 |
+| Overuren vorige maand | -23 |
+| Overuren na deze maand | -13,5 |
+
+De afzonderlijke controleberekening is:
+
+`175 + 9,5 = 184,5`
+
+Wanneer deze controle afwijkt van het ingelezen eindtotaal, blijft het eindtotaal leidend en verschijnt een controlepunt voor admins.
+
+## Flexmedewerkers
+
+Flexmedewerkers hebben niet noodzakelijk de vaste maandwaarden. Hun vergelijking blijft gebaseerd op de geïmporteerde diensten, de vorige maand en het flexgemiddelde.
+
+## Medewerkers en contractperiodes
+
+De adminpagina `employee-settings.html` blijft bedoeld voor:
+
+- activeren en deactiveren van medewerkers;
+- een inclusieve laatste werkdag vastleggen;
+- contractperiodes met start- en stopdatum;
+- contracturen per week;
+- historische contractinformatie.
+
+Contractperiodes mogen elkaar niet overlappen. De Excelwaarden blijven echter leidend voor een geïmporteerde maandpagina.

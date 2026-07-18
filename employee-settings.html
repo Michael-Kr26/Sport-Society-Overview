@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="employee-settings.css?v=20260717-existing-employee">
+    <script src="auth-ui.js?v=20260717-usability" defer></script>
+    <script src="employee-settings.js?v=20260717-existing-employee" defer></script>
+    <script src="employment-end-ui.js?v=20260717-existing-employee" defer></script>
+    <title>Sport Society - Medewerkerinstellingen</title>
+</head>
+<body data-admin-page>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Medewerkers, contractperiodes, laatste werkdagen en urenbankinstellingen</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="employee-admin-page" data-admin-content hidden>
+        <section class="employee-card employee-intro">
+            <p class="employee-label">Adminbeheer</p>
+            <h2>Medewerkerinstellingen</h2>
+            <p>
+                Beheer wanneer een medewerker actief wordt, de inclusieve laatste werkdag, de beginstand van de urenbank
+                en afzonderlijke contractperiodes. Na de laatste werkdag verdwijnt een medewerker uit toekomstige
+                urenoverzichten, terwijl historische maanden behouden blijven.
+            </p>
+        </section>
+
+        <section class="employee-card">
+            <div class="employee-section-header">
+                <div>
+                    <p class="employee-label">Nieuwe medewerker</p>
+                    <h2>Medewerker toevoegen</h2>
+                </div>
+            </div>
+
+            <form id="add-employee-form" class="employee-add-form">
+                <label>Naam<input type="text" id="new-employee-name" maxlength="120" required></label>
+                <label>Actief vanaf<input type="month" id="new-employee-month" required></label>
+                <label>Startstand urenbank<input type="number" id="new-employee-bank" min="-1000" max="1000" step="0.25" value="0"></label>
+                <label>Startmaand urenbank<input type="month" id="new-employee-bank-month" required></label>
+                <label>Start als
+                    <select id="new-employee-type">
+                        <option value="flex">Flexcontract</option>
+                        <option value="contract">Vaste uren</option>
+                    </select>
+                </label>
+                <label data-initial-contract-field hidden>Uren per week<input type="number" id="new-employee-hours" min="0.25" max="60" step="0.25"></label>
+                <label data-initial-contract-field hidden>Contract start<input type="date" id="new-contract-start"></label>
+                <label data-initial-contract-field hidden>Contract stop<input type="date" id="new-contract-stop"></label>
+                <button type="submit" class="admin-button">Medewerker toevoegen</button>
+            </form>
+            <p id="employee-message" class="employee-message" aria-live="polite"></p>
+        </section>
+
+        <section class="employee-card">
+            <div class="employee-section-header">
+                <div>
+                    <p class="employee-label">Overzicht</p>
+                    <h2>Medewerkers beheren</h2>
+                </div>
+                <p id="employee-count" class="employee-count">Laden...</p>
+            </div>
+
+            <form id="employee-filter-form" class="employee-filter-form">
+                <label>Zoeken<input type="search" id="employee-search" placeholder="Naam medewerker"></label>
+                <label>Status
+                    <select id="employee-status-filter">
+                        <option value="active">Actief en toekomstig</option>
+                        <option value="inactive">Verwijderd</option>
+                        <option value="all">Alle medewerkers</option>
+                    </select>
+                </label>
+                <label>Contract
+                    <select id="employee-contract-filter">
+                        <option value="all">Alle contractvormen</option>
+                        <option value="contract">Met contractperiodes</option>
+                        <option value="flex">Zonder contractperiode</option>
+                    </select>
+                </label>
+            </form>
+
+            <div id="employee-list" class="employee-list">
+                <p class="empty-state">Medewerkers laden...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+</body>
+</html>

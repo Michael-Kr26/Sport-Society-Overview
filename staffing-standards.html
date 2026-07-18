@@ -6,13 +6,13 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="staffing-standards.css">
     <script src="auth-ui.js" defer></script>
-    <script src="staffing-standards.js" defer></script>
+    <script src="staffing-standards.js?v=20260717-manager-edit" defer></script>
     <title>Sport Society - Bezettingsstandaarden</title>
 </head>
-<body>
+<body data-manager-page>
     <header>
         <h1>Sport Society Overview</h1>
-        <p>Bezettingsregels bekijken en beheren</p>
+        <p>Bezettingsregels per vestiging bekijken en beheren</p>
     </header>
 
     <nav>
@@ -30,9 +30,8 @@
                 </div>
                 <h2>Bezettingsstandaarden</h2>
                 <p>
-                    Deze instellingen worden direct gebruikt door de bezettingsanalyse. De roosterbron
-                    blijft via <code>/api/roster</code> lopen, zodat dezelfde regels ook op een latere live
-                    roosterintegratie worden toegepast.
+                    Managers beheren de vestigingsregels van hun eigen profielvestiging. Een Admin beheert
+                    daarnaast alle locaties en de algemene avond- en drukteregels.
                 </p>
                 <p id="standards-meta" class="standards-meta"></p>
             </div>
@@ -54,6 +53,7 @@
                     </label>
                 </div>
 
+                <p class="section-copy">Alleen een Admin kan deze algemene norm wijzigen.</p>
                 <div class="evening-grid">
                     <label>
                         Starttijd
@@ -75,31 +75,74 @@
                 </fieldset>
             </section>
 
-            <section class="standards-card">
+            <section class="standards-card location-picker-card">
                 <div class="section-heading">
                     <div>
-                        <p class="standards-label">Vestigingsregels</p>
-                        <h2>Groepslessen per locatie</h2>
+                        <p class="standards-label">Vestigingsbeheer</p>
+                        <h2>Kies een locatie</h2>
                     </div>
                 </div>
                 <p class="section-copy">
-                    Kies per vestiging of dubbele bezetting tijdens een reguliere groepsles geen regel,
-                    een advies of een harde norm is. Reformer Pilates blijft uitgesloten.
+                    Wijzigingen in de huidige locatie blijven bewaard wanneer je naar een andere vestiging schakelt
+                    en worden gezamenlijk opgeslagen met de knop onderaan.
                 </p>
-                <div id="location-standards" class="location-grid"></div>
+                <div id="location-tabs" class="location-tabs" role="tablist" aria-label="Vestiging kiezen"></div>
+            </section>
+
+            <section class="standards-card" id="location-editor-card">
+                <div class="section-heading">
+                    <div>
+                        <p class="standards-label">Vestigingsregels</p>
+                        <h2 id="active-location-title">Locatie laden...</h2>
+                    </div>
+                    <span id="active-location-summary" class="location-summary-pill"></span>
+                </div>
+
+                <div class="section-copy">
+                    <strong>Vaste standaarddiensten</strong>
+                    <p id="active-standard-shifts">Dienstvensters laden...</p>
+                    <p>Deze tijden zijn vast ingebouwd en vormen de basis voor de zeswekenanalyse van geen en enkele bezetting.</p>
+                </div>
+
+                <div class="location-editor-grid">
+                    <label class="switch-field location-room-field">
+                        <input type="checkbox" id="location-separate-room">
+                        <span>Groepslesruimte ligt apart van de fitnessvloer</span>
+                    </label>
+
+                    <label>
+                        Regel tijdens reguliere groepslessen
+                        <select id="location-lesson-mode">
+                            <option value="none">Geen extra norm</option>
+                            <option value="advice">Dubbele bezetting adviseren</option>
+                            <option value="hard">Dubbele bezetting verplicht</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Minimum medewerkers tijdens les
+                        <input type="number" id="location-lesson-minimum" min="1" max="10" required>
+                    </label>
+                </div>
+
+                <fieldset class="month-fieldset">
+                    <legend>Maanden waarin de lesregel niet geldt</legend>
+                    <p>Laat alle maanden uitgevinkt wanneer de regel het hele jaar actief moet blijven.</p>
+                    <div id="location-excluded-months" class="month-grid"></div>
+                </fieldset>
             </section>
 
             <section class="standards-card">
                 <div class="section-heading">
                     <div>
-                        <p class="standards-label">Uitzonderingen</p>
-                        <h2>Enkele bezetting toegestaan</h2>
+                        <p class="standards-label">Locatie-uitzonderingen</p>
+                        <h2 id="exception-location-title">Enkele bezetting toegestaan</h2>
                     </div>
-                    <button type="button" id="add-window" class="standards-secondary-button">Uitzondering toevoegen</button>
+                    <button type="button" id="add-window" class="standards-secondary-button">Tijdsvenster toevoegen</button>
                 </div>
                 <p class="section-copy">
-                    Binnen deze tijdsvensters wordt een lesregel niet gebruikt om dubbele bezetting af te
-                    dwingen of te adviseren. De algemene avondnorm blijft wel van kracht wanneer tijden overlappen.
+                    Binnen deze tijdsvensters geldt één medewerker als voldoende voor de vaste standaarddienst.
+                    De algemene harde avondnorm blijft wel van kracht.
                 </p>
                 <div id="exception-list" class="exception-list"></div>
             </section>
@@ -107,10 +150,11 @@
             <section class="standards-card">
                 <div class="section-heading">
                     <div>
-                        <p class="standards-label">Druktesignalen</p>
+                        <p class="standards-label">Algemene druktesignalen</p>
                         <h2>Volle lessen en wachtlijsten</h2>
                     </div>
                 </div>
+                <p class="section-copy">Alleen een Admin kan deze algemene signalering wijzigen.</p>
                 <div class="demand-grid">
                     <label class="switch-field">
                         <input type="checkbox" id="full-lesson-vulnerable">

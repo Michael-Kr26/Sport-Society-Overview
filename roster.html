@@ -21,20 +21,13 @@
             <span></span>
         </label>
 
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="roster.html">Rooster</a>
-            <a href="staffing.html">Bezetting</a>
-            <a href="cml.html">Roosterwijzigingen</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="login.html" data-auth-entry>Inloggen</a>
-        </div>
+        <div class="nav-links"></div>
     </nav>
 
     <main class="roster-page">
         <section class="roster-card roster-intro">
             <div>
-                <div class="roster-heading-row">
+                <div class="roster-heading-row" data-admin-only hidden>
                     <p class="roster-label">Rooster preview</p>
                     <span class="roster-version-badge">Demoversie</span>
                 </div>
@@ -46,7 +39,7 @@
             </div>
         </section>
 
-        <section class="roster-integration-card" aria-label="Integratiestatus rooster">
+        <section class="roster-integration-card" aria-label="Integratiestatus rooster" data-admin-only hidden>
             <div class="roster-integration-copy">
                 <p class="roster-label">Integratiestatus</p>
                 <h2>Live roosterintegratie volgt</h2>
