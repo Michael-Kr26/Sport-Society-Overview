@@ -1,9 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const ExcelJS = require('exceljs');
 const sqlite3 = require('sqlite3').verbose();
 
 const workbookPath = process.argv[2] || path.join(__dirname, 'data', 'imports', 'Rooster.xlsx');
+const calculatedSnapshotPath = process.argv[3] ? path.resolve(process.argv[3]) : null;
 const dataDir = path.join(__dirname, 'data');
 const dbPath = path.join(dataDir, 'sport-society.db');
 
@@ -16,13 +18,6 @@ const METRICS = {
 };
 const METRIC_FIELDS = Object.values(METRICS);
 const REQUIRED_FIELDS = ['scheduledHours', ...METRIC_FIELDS];
-const FIELD_LABELS = {
-    scheduledHours: 'Ingepland',
-    minimumHours: 'Minstens',
-    overtimeThisMonth: 'Overuren deze maand',
-    overtimePreviousMonth: 'Overuren vorige maand',
-    overtimeAfterMonth: 'Overuren na deze maand'
-};
 const MONTH_ALIASES = [
     [1, ['januari', 'jan']],
     [2, ['februari', 'feb']],
@@ -147,6 +142,28 @@ function findDateRows(worksheet) {
     return rows;
 }
 
+function finalizeSummary(summary) {
+    const completeValues = Object.fromEntries(REQUIRED_FIELDS.map((field) => [field, summary[field]]));
+    const missingFields = REQUIRED_FIELDS.filter((field) => !Number.isFinite(completeValues[field]));
+    const issues = [];
+    const checkTotal = Number.isFinite(summary.minimumHours) && Number.isFinite(summary.overtimeThisMonth)
+        ? Math.round((summary.minimumHours + summary.overtimeThisMonth) * 100) / 100
+        : null;
+
+    if (Number.isFinite(summary.scheduledHours) && Number.isFinite(checkTotal) &&
+        Math.abs(summary.scheduledHours - checkTotal) > 0.01) {
+        issues.push(`Ingepland ${summary.scheduledHours} wijkt af van Minstens + overuren (${checkTotal})`);
+    }
+
+    return {
+        ...summary,
+        sheetTotalHours: summary.scheduledHours,
+        isComplete: missingFields.length === 0,
+        missingFields,
+        issues
+    };
+}
+
 function parseEmployeeSummary(worksheet, block, dateRows) {
     const values = Object.fromEntries(METRIC_FIELDS.map((field) => [field, null]));
     const rows = {};
@@ -166,27 +183,13 @@ function parseEmployeeSummary(worksheet, block, dateRows) {
     const scheduledHours = minimumRow && minimumRow > 1
         ? numberValue(worksheet.getRow(minimumRow - 1).getCell(block.hoursColumn), { blankFormulaIsZero: true })
         : null;
-    const checkTotal = Number.isFinite(values.minimumHours) && Number.isFinite(values.overtimeThisMonth)
-        ? Math.round((values.minimumHours + values.overtimeThisMonth) * 100) / 100
-        : null;
-    const completeValues = { scheduledHours, ...values };
-    const missingFields = REQUIRED_FIELDS.filter((field) => !Number.isFinite(completeValues[field]));
-    const issues = [];
 
-    if (Number.isFinite(scheduledHours) && Number.isFinite(checkTotal) && Math.abs(scheduledHours - checkTotal) > 0.01) {
-        issues.push(`Ingepland ${scheduledHours} wijkt af van Minstens + overuren (${checkTotal})`);
-    }
-
-    return {
+    return finalizeSummary({
         employeeName: block.employeeName,
         sourceColumn: worksheet.getColumn(block.hoursColumn).letter,
         ...values,
-        scheduledHours,
-        sheetTotalHours: scheduledHours,
-        isComplete: missingFields.length === 0,
-        missingFields,
-        issues
-    };
+        scheduledHours
+    });
 }
 
 function parseWorkbook(workbook) {
@@ -222,7 +225,82 @@ function parseWorkbook(workbook) {
         });
     });
 
-    return { periods, skippedDuplicates };
+    return { periods, skippedDuplicates, snapshotStats: null };
+}
+
+function sha256File(filePath) {
+    return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+}
+
+function numericSnapshotValue(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.round(number * 100) / 100 : null;
+}
+
+function loadCalculatedSnapshot(filePath) {
+    if (!filePath) return null;
+    if (!fs.existsSync(filePath)) throw new Error(`Berekende Excel-snapshot niet gevonden: ${filePath}`);
+
+    const raw = fs.readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '');
+    const snapshot = JSON.parse(raw);
+    if (snapshot.schemaVersion !== 1 || !Array.isArray(snapshot.periods)) {
+        throw new Error('Berekende Excel-snapshot heeft een onbekend formaat.');
+    }
+
+    const workbookHash = sha256File(workbookPath);
+    if (normalizedText(snapshot.workbookSha256) !== normalizedText(workbookHash)) {
+        throw new Error('Berekende Excel-snapshot hoort niet bij de huidige versie van het roosterbestand.');
+    }
+    return snapshot;
+}
+
+function applyCalculatedSnapshot(parsed, snapshot) {
+    if (!snapshot) return parsed;
+
+    let applied = 0;
+    let added = 0;
+    const periodMap = new Map(parsed.periods.map((period) => [period.periodKey, period]));
+
+    for (const snapshotPeriod of snapshot.periods) {
+        const periodKey = cleanText(snapshotPeriod.periodKey);
+        const period = periodMap.get(periodKey);
+        if (!period || !Array.isArray(snapshotPeriod.summaries)) continue;
+
+        const summaryMap = new Map(period.summaries.map((summary) => [normalizedText(summary.employeeName), summary]));
+        for (const snapshotSummary of snapshotPeriod.summaries) {
+            const employeeName = canonicalEmployeeName(snapshotSummary.employeeName);
+            if (!employeeName) continue;
+            const key = normalizedText(employeeName);
+            let summary = summaryMap.get(key);
+
+            if (!summary) {
+                summary = finalizeSummary({ employeeName, sourceColumn: cleanText(snapshotSummary.sourceColumn) || null });
+                period.summaries.push(summary);
+                summaryMap.set(key, summary);
+                added += 1;
+            }
+
+            const merged = { ...summary };
+            for (const field of REQUIRED_FIELDS) {
+                const value = numericSnapshotValue(snapshotSummary[field]);
+                if (Number.isFinite(value)) merged[field] = value;
+            }
+            if (cleanText(snapshotSummary.sourceColumn)) merged.sourceColumn = cleanText(snapshotSummary.sourceColumn);
+
+            const finalized = finalizeSummary(merged);
+            Object.assign(summary, finalized);
+            applied += 1;
+        }
+    }
+
+    parsed.snapshotStats = {
+        sourceFile: snapshot.sourceFile || path.basename(workbookPath),
+        createdAt: snapshot.createdAt || null,
+        applied,
+        added
+    };
+    return parsed;
 }
 
 const run = (db, sql, params = []) => new Promise((resolve, reject) => {
@@ -333,6 +411,9 @@ function printSummary(parsed) {
     const incomplete = employeeRows.length - complete;
     console.log(`\nExcel-urenoverzichten opgeslagen: ${parsed.periods.length} maandpagina's, ${complete} complete en ${incomplete} onvolledige medewerkerregels.`);
     if (parsed.skippedDuplicates.length) console.warn(`Dubbele maandpagina's overgeslagen: ${parsed.skippedDuplicates.join(', ')}`);
+    if (parsed.snapshotStats) {
+        console.log(`Excel-snapshot toegepast: ${parsed.snapshotStats.applied} medewerkerregel(s), ${parsed.snapshotStats.added} ontbrekende blok(ken) toegevoegd.`);
+    }
 
     const current = parsed.periods.find((period) => period.periodKey === '2026-07');
     const leroy = current?.summaries.find((summary) => normalizedText(summary.employeeName) === 'leroy');
@@ -358,7 +439,8 @@ async function main() {
     const workbook = new ExcelJS.Workbook();
     console.log(`Excel-urenpagina's lezen: ${workbookPath}`);
     await workbook.xlsx.readFile(workbookPath);
-    const parsed = parseWorkbook(workbook);
+    const snapshot = loadCalculatedSnapshot(calculatedSnapshotPath);
+    const parsed = applyCalculatedSnapshot(parseWorkbook(workbook), snapshot);
     await saveParsedWorkbook(parsed);
     printSummary(parsed);
 }
