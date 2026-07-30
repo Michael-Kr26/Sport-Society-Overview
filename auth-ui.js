@@ -17,11 +17,13 @@
         'index.html': 'guest',
         'roster.html': 'guest',
         'help.html': 'guest',
+        'changelog.html': 'guest',
         'login.html': 'guest',
         'staffing.html': 'manager',
         'staffing-standards.html': 'manager',
         'cml.html': 'manager',
         'hours.html': 'manager',
+        'visitors.html': 'manager',
         'employee-settings.html': 'admin',
         'cf.html': 'admin',
         'dashboard.html': 'admin',
@@ -39,7 +41,7 @@
         if (document.querySelector(`link[href^="${href}"]`)) return;
         const stylesheet = document.createElement('link');
         stylesheet.rel = 'stylesheet';
-        stylesheet.href = `${href}?v=20260717-navigation-guide`;
+        stylesheet.href = `${href}?v=20260730-v15-navigation`;
         document.head.appendChild(stylesheet);
     }
 
@@ -162,17 +164,19 @@
                 ${navigationGroup('general', 'Algemeen', '⌂',
                     navigationItem('index.html', '⌂', 'Home') +
                     navigationItem('roster.html', '▦', 'Rooster') +
+                    navigationItem('changelog.html', '≡', 'Changelog') +
                     navigationItem('help.html', '?', 'Handleiding'))}
                 ${navigationGroup('operational', 'Operationeel', '◫',
                     navigationItem('staffing.html', '◫', 'Bezettingsanalyse', 'manager') +
                     navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden', 'manager') +
                     navigationItem('cml.html', '↔', 'Roosterwijzigingen', 'manager'), 'manager')}
                 ${navigationGroup('management', 'Management', '◷',
-                    navigationItem('hours.html', '◷', 'Urenanalyse &amp; urenbank', 'manager'), 'manager')}
+                    navigationItem('hours.html', '◷', 'Urenanalyse &amp; urenbank', 'manager') +
+                    navigationItem('visitors.html', '▥', 'Bezoekersfrequentie', 'manager'), 'manager')}
                 ${navigationGroup('admin', 'Admin', '◆',
                     navigationItem('employee-settings.html', '♙', 'Medewerkers', 'admin') +
                     navigationItem('cf.html', '＋', 'Wijziging registreren', 'admin') +
-                    navigationItem('dashboard.html', '◇', 'Preview &amp; integratiestatus', 'admin') +
+                    navigationItem('dashboard.html', '◇', 'Import &amp; datakwaliteit', 'admin') +
                     navigationItem('create.html', '◎', 'Accounts', 'admin'), 'admin')}
                 <div class="nav-spacer" aria-hidden="true"></div>
                 ${navigationGroup('account', 'Account', '●',
