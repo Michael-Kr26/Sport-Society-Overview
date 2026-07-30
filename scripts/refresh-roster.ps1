@@ -10,17 +10,6 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
-function Release-ComObject {
-    param([object]$ComObject)
-    if ($null -ne $ComObject) {
-        try {
-            [void][System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($ComObject)
-        } catch {
-            # Opruimen mag het hoofdproces niet laten mislukken.
-        }
-    }
-}
-
 if ($Month -and $Month -notmatch '^\d{4}-(0[1-9]|1[0-2])$') {
     throw "Maand moet het formaat JJJJ-MM hebben, bijvoorbeeld 2026-10."
 }
@@ -42,48 +31,13 @@ $backupPath = Join-Path $backupDirectory ("Rooster-before-refresh-{0}{1}" -f $ti
 Copy-Item $resolvedWorkbook $backupPath -Force
 Write-Host "Back-up gemaakt: $backupPath"
 
-$excel = $null
-$workbook = $null
-try {
-    Write-Host "Excel volledig herberekenen: $resolvedWorkbook"
-    $excel = New-Object -ComObject Excel.Application
-    $excel.Visible = $false
-    $excel.DisplayAlerts = $false
-    $excel.AskToUpdateLinks = $false
-    $excel.EnableEvents = $false
-
-    # 3 = externe koppelingen bij openen bijwerken; false = niet alleen-lezen.
-    $workbook = $excel.Workbooks.Open($resolvedWorkbook, 3, $false)
-
-    # -4105 = automatische berekening.
-    $excel.Calculation = -4105
-    $workbook.RefreshAll()
-
-    try {
-        $excel.CalculateUntilAsyncQueriesDone()
-    } catch {
-        Write-Host "Geen asynchrone gegevensverbindingen om af te wachten."
-    }
-
-    $excel.CalculateFullRebuild()
-    $workbook.Save()
-    Write-Host "Excel is volledig herberekend en opgeslagen."
-}
-finally {
-    if ($null -ne $workbook) {
-        try { $workbook.Close($false) } catch {}
-    }
-    if ($null -ne $excel) {
-        try { $excel.Quit() } catch {}
-    }
-    Release-ComObject $workbook
-    Release-ComObject $excel
-    [GC]::Collect()
-    [GC]::WaitForPendingFinalizers()
-}
+$snapshotPath = Join-Path $projectRoot 'data\imports\.roster-calculated-hour-summaries.json'
+& (Join-Path $PSScriptRoot 'export-calculated-hour-summaries.ps1') `
+    -WorkbookPath $resolvedWorkbook `
+    -OutputPath $snapshotPath
 
 Write-Host "`nRooster en Excel-maandvelden opnieuw importeren..."
-& node (Join-Path $projectRoot 'import-roster-linked.js') $resolvedWorkbook
+& node (Join-Path $projectRoot 'import-roster-linked.js') $resolvedWorkbook $snapshotPath
 if ($LASTEXITCODE -ne 0) {
     throw "De roosterimport is mislukt met exitcode $LASTEXITCODE."
 }
