@@ -1,5 +1,5 @@
 {
-  "version": "1.5.0-alpha.1",
+  "version": "1.5.0-alpha.2",
   "channel": "development",
   "releasedAt": null,
   "branch": "agent/v1-5-operational-release",
@@ -8,7 +8,7 @@
   "highlights": [
     "Rolgebonden startdashboard",
     "Centraal import- en datakwaliteitscentrum",
-    "HealthPlanner-dashboard v1",
+    "HealthPlanner-import en dashboard v1",
     "Historische bezoekersanalyse",
     "Regressietests, back-ups en releasebeheer"
   ]
