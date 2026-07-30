@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="visitors.css?v=20260730-v15-visitors1">
+    <script src="auth-ui.js?v=20260730-v15-visitors1" defer></script>
+    <script src="visitors.js?v=20260730-v15-visitors1" defer></script>
+    <title>Sport Society - Bezoekersfrequentie</title>
+</head>
+<body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Historische bezoekersfrequentie en seizoensanalyse</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="visitors-page" hidden data-visitors-content>
+        <section class="visitors-hero">
+            <div>
+                <p class="visitors-kicker">Managementinformatie</p>
+                <h2>Bezoekersfrequentie</h2>
+                <p>
+                    Vergelijk maandvolumes, bezoekfrequentie en seizoenspatronen per vestiging. De module geeft
+                    uitsluitend uitlegbare analyses en neemt geen automatische roosterbeslissingen.
+                </p>
+            </div>
+            <aside class="visitors-source-card">
+                <span id="visitors-role">Rol laden</span>
+                <strong id="visitors-source">Bron laden</strong>
+                <small id="visitors-range">Periode laden</small>
+            </aside>
+        </section>
+
+        <section class="visitors-filter-card">
+            <form id="visitors-filter-form" class="visitors-filter-form">
+                <label>Vanaf maand<input type="month" id="visitors-from"></label>
+                <label>Tot en met maand<input type="month" id="visitors-to"></label>
+                <label id="visitors-location-label">Vestiging
+                    <select id="visitors-location">
+                        <option value="">Alle vestigingen</option>
+                        <option>Achterveld</option>
+                        <option>Barneveld</option>
+                        <option>Harskamp</option>
+                        <option>Voorthuizen</option>
+                        <option>Wekerom</option>
+                        <option>Sport Society totaal</option>
+                    </select>
+                </label>
+                <button type="submit" class="admin-button">Analyse bijwerken</button>
+            </form>
+            <p id="visitors-message" class="visitors-message" aria-live="polite"></p>
+        </section>
+
+        <section class="visitors-kpi-grid" id="visitors-kpis">
+            <article class="visitors-kpi"><span>Laden</span><strong>…</strong><p>Gegevens worden opgehaald.</p></article>
+        </section>
+
+        <section class="visitors-grid">
+            <article class="visitors-card visitors-chart-card">
+                <div class="visitors-card-header">
+                    <div><p class="visitors-kicker">Trend</p><h2>Maandontwikkeling</h2></div>
+                    <span class="visitors-unit" id="visitors-chart-unit">Bezoeken</span>
+                </div>
+                <div class="visitors-chart-wrap">
+                    <canvas id="visitors-chart" width="960" height="360" aria-label="Grafiek bezoekersfrequentie"></canvas>
+                </div>
+            </article>
+
+            <aside class="visitors-card">
+                <div class="visitors-card-header">
+                    <div><p class="visitors-kicker">Seizoen</p><h2>Drukste maanden</h2></div>
+                </div>
+                <div id="visitors-peaks" class="visitors-peak-list">
+                    <p class="visitors-empty">Analyse laden...</p>
+                </div>
+            </aside>
+        </section>
+
+        <section class="visitors-card">
+            <div class="visitors-card-header">
+                <div>
+                    <p class="visitors-kicker">Bronregels</p>
+                    <h2>Historische maandgegevens</h2>
+                </div>
+            </div>
+            <div class="visitors-table-wrap">
+                <table class="visitors-table">
+                    <thead><tr><th>Maand</th><th>Vestiging</th><th>Bezoeken</th><th>Actieve leden</th><th>Frequentie</th><th>Bron</th></tr></thead>
+                    <tbody id="visitors-table-body"><tr><td colspan="6">Gegevens laden...</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+</body>
+</html>
