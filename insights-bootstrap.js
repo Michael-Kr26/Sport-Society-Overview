@@ -15,7 +15,8 @@ require('./employment-end-bootstrap');
 require.cache[expressPath].exports = express;
 if (!app) throw new Error('Express-app kon niet worden gekoppeld aan de insights-module.');
 
-const DB_PATH = path.join(__dirname, 'data', 'sport-society.db');
+const ROOT_DIR = __dirname;
+const DB_PATH = path.join(ROOT_DIR, 'data', 'sport-society.db');
 const COOKIE = 'sso_session';
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const LOCATIONS = ['Achterveld', 'Barneveld', 'Voorthuizen', 'Wekerom', 'Harskamp', 'Sport Society totaal'];
@@ -122,6 +123,26 @@ function requireManagement(handler, adminOnly = false) {
         }
     };
 }
+
+function moveLastLayerBeforeStatic() {
+    const router = app.router || app._router;
+    if (!router?.stack?.length) return;
+    const layer = router.stack.pop();
+    const staticIndex = router.stack.findIndex((item) => item.name === 'serveStatic');
+    router.stack.splice(staticIndex >= 0 ? staticIndex : 0, 0, layer);
+}
+
+app.get('/visitors.html', async (req, res, next) => {
+    try {
+        const user = await authenticatedUser(req);
+        if (!user) return res.redirect('/login.html?next=visitors.html');
+        if (!['manager', 'admin'].includes(user.role)) return res.redirect('/index.html');
+        res.sendFile(path.join(ROOT_DIR, 'visitors.html'));
+    } catch (error) {
+        next(error);
+    }
+});
+moveLastLayerBeforeStatic();
 
 function publicVisitorRow(row) {
     return {
