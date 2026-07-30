@@ -13,13 +13,24 @@ Alle relevante wijzigingen aan Sport Society Overview worden vanaf V1.5 hier vas
 - manager/admin-API met vestigingsbegrenzing;
 - HealthPlanner-dashboard met verkoop, leads, leden, bezoek, coaching en ledenbehoud;
 - importtemplate en volledig metriekregister;
-- directe HealthPlanner-ingang vanaf het rolgebonden startdashboard.
+- directe HealthPlanner-ingang vanaf het rolgebonden startdashboard;
+- directe uitlezing van door Excel berekende maandwaarden via een gecontroleerde snapshot;
+- SHA-256-controle waardoor een oude Excel-snapshot niet op een gewijzigd rooster kan worden toegepast;
+- afzonderlijke controleopdracht voor de rechtstreeks door Excel berekende urenwaarden;
+- automatische PowerShell-syntaxiscontrole in GitHub Actions.
+
+### Gewijzigd
+
+- de volledige roosterverversing gebruikt voor formulecellen niet langer uitsluitend de cache in het `.xlsx`-bestand;
+- `Ingepland`, `Minstens` en de drie overurenvelden worden bij de betrouwbare Windows-verversing rechtstreeks uit de lokale Excel-applicatie gelezen;
+- de Excel-snapshot kan ontbrekende of onvolledig gedetecteerde medewerkerblokken aanvullen voordat de database wordt opgebouwd.
 
 ### Bewuste grenzen
 
 - de PDF wordt gebruikt om de bronstructuur te definiëren, niet als stille productie-import;
 - percentages, duurwaarden en momentopnamen worden niet als gewone aantallen opgeteld;
-- salaris, payroll, medische diagnoses en individuele zorggegevens blijven uitgesloten.
+- salaris, payroll, medische diagnoses en individuele zorggegevens blijven uitgesloten;
+- de directe Excel-uitlezing vereist Windows met een lokaal geïnstalleerde Excel-versie.
 
 ## 1.5.0-alpha.1 — in ontwikkeling
 
