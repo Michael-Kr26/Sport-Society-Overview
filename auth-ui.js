@@ -24,6 +24,7 @@
         'cml.html': 'manager',
         'hours.html': 'manager',
         'visitors.html': 'manager',
+        'healthplanner.html': 'manager',
         'employee-settings.html': 'admin',
         'cf.html': 'admin',
         'dashboard.html': 'admin',
@@ -41,7 +42,7 @@
         if (document.querySelector(`link[href^="${href}"]`)) return;
         const stylesheet = document.createElement('link');
         stylesheet.rel = 'stylesheet';
-        stylesheet.href = `${href}?v=20260730-v15-navigation`;
+        stylesheet.href = `${href}?v=20260730-v15-alpha2-navigation`;
         document.head.appendChild(stylesheet);
     }
 
@@ -172,7 +173,8 @@
                     navigationItem('cml.html', '↔', 'Roosterwijzigingen', 'manager'), 'manager')}
                 ${navigationGroup('management', 'Management', '◷',
                     navigationItem('hours.html', '◷', 'Urenanalyse &amp; urenbank', 'manager') +
-                    navigationItem('visitors.html', '▥', 'Bezoekersfrequentie', 'manager'), 'manager')}
+                    navigationItem('visitors.html', '▥', 'Bezoekersfrequentie', 'manager') +
+                    navigationItem('healthplanner.html', '▤', 'HealthPlanner', 'manager'), 'manager')}
                 ${navigationGroup('admin', 'Admin', '◆',
                     navigationItem('employee-settings.html', '♙', 'Medewerkers', 'admin') +
                     navigationItem('cf.html', '＋', 'Wijziging registreren', 'admin') +
