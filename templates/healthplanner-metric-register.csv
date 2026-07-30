@@ -1,0 +1,43 @@
+metricKey;label;domein;eenheid;aggregatie
+membershipsSold;Aantal verkochte lidmaatschappen;Verkoop;count;sum
+membershipsSoldActive;Aantal verkochte lidmaatschappen (actieve verkoop);Verkoop;count;sum
+membershipsSoldPassive;Aantal verkochte lidmaatschappen (passieve verkoop);Verkoop;count;sum
+cancelledMemberships;Geannuleerde lidmaatschappen;Verkoop;count;sum
+salesAppointmentsCreated;Totaal aantal gemaakte verkoopafspraken;Verkoop;count;sum
+firstSalesAppointmentsCreated;Gemaakte 1ste verkoopafspraken;Verkoop;count;sum
+extraSalesAppointmentsCreated;Gemaakte extra verkoopafspraken;Verkoop;count;sum
+salesAppointmentsScheduled;Totaal aantal geplande verkoopafspraken;Verkoop;count;sum
+salesAppointmentsCompleted;Afgeronde verkoopafspraken;Verkoop;count;sum
+salesAppointmentsRemaining;Nog geplande verkoopafspraken;Verkoop;count;snapshot
+attendanceRate;Uiteindelijke opkomstpercentage;Verkoop;percentage;ratio
+firstAttendanceRate;Opkomstpercentage 1ste verkoopgesprek;Verkoop;percentage;ratio
+extraAttendanceRate;Opkomstpercentage extra verkoopgesprek;Verkoop;percentage;ratio
+closingRate;Afsluitingspercentage;Verkoop;percentage;ratio
+directClosingRate;Directe afsluitpercentage;Verkoop;percentage;ratio
+extraClosingRate;Afsluitingspercentage bij extra verkoopgesprekken;Verkoop;percentage;ratio
+successRatio;Succesratio;Verkoop;percentage;ratio
+callMoments;Totaal aantal belmomenten;Leads en belanalyse;count;sum
+callReachabilityRate;Bereikbaarheid belmomenten;Leads en belanalyse;percentage;ratio
+callEffectivenessRate;Bel effectiviteit;Leads en belanalyse;percentage;ratio
+potentialCustomers;Totaal aantal potentiële klanten;Leads en belanalyse;count;sum
+leadResponseSeconds;Reactiesnelheid leads oppakken;Leads en belanalyse;duration_seconds;average
+leadWaitSeconds;Wachttijd leads;Leads en belanalyse;duration_seconds;average
+memberGrowth;Ledengroei;Ledenbehoud;signed_count;sum
+visitFrequency;Algemene bezoekersfrequentie;Bezoek;ratio;average
+appointmentsCompleted;Aantal afgeronde afspraken;Afspraken en coaching;count;sum
+appointmentsCreated;Aantal gemaakte afspraken;Afspraken en coaching;count;sum
+appointmentsScheduled;Aantal geplande afspraken;Afspraken en coaching;count;sum
+appointmentsReplanned;Doorgeplande afspraken;Afspraken en coaching;count;sum
+appointmentsNotReplanned;Niet doorgeplande afspraken;Afspraken en coaching;count;sum
+appointmentsReplannedRate;Percentage doorgeplande afspraken;Afspraken en coaching;percentage;ratio
+membersWithoutFutureAppointment;Aantal leden zonder een afspraak in de toekomst;Afspraken en coaching;count;snapshot
+membersWithFutureAppointment;Aantal leden met een afspraak in de toekomst;Afspraken en coaching;count;snapshot
+activeMembers;Actieve leden;Leden;count;snapshot
+nonRecentVisitors;Niet recente bezoekers;Bezoek;count;snapshot
+dormantMembers;Slapende leden;Ledenbehoud;count;snapshot
+membersWithoutGoal;Aantal leden zonder een doelstelling;Afspraken en coaching;count;snapshot
+membersWithGoal;Aantal leden met een doelstelling;Afspraken en coaching;count;snapshot
+membersWithCoach;Leden met coach;Afspraken en coaching;count;snapshot
+membersWithoutPersonalCoach;Leden zonder personal coach;Afspraken en coaching;count;snapshot
+membersRetainedAfterExit;Aantal leden die lid zijn gebleven na een exit-gesprek;Ledenbehoud;count;sum
+cancellations;Aantal opzeggingen;Ledenbehoud;count;sum
