@@ -2,6 +2,25 @@
 
 Alle relevante wijzigingen aan Sport Society Overview worden vanaf V1.5 hier vastgelegd.
 
+## 1.5.0-alpha.2 — in ontwikkeling
+
+### Toegevoegd
+
+- canoniek register voor de KPI's uit de dagelijkse HealthPlanner-managementrapportage;
+- gevalideerde CSV/XLSX-import met preview vóór definitieve opslag;
+- expliciete verwerking van `Gisteren` en `Maand tot rapportdatum` als verschillende periodevensters;
+- revisielog voor gewijzigde HealthPlanner-bronwaarden;
+- manager/admin-API met vestigingsbegrenzing;
+- HealthPlanner-dashboard met verkoop, leads, leden, bezoek, coaching en ledenbehoud;
+- importtemplate en volledig metriekregister;
+- directe HealthPlanner-ingang vanaf het rolgebonden startdashboard.
+
+### Bewuste grenzen
+
+- de PDF wordt gebruikt om de bronstructuur te definiëren, niet als stille productie-import;
+- percentages, duurwaarden en momentopnamen worden niet als gewone aantallen opgeteld;
+- salaris, payroll, medische diagnoses en individuele zorggegevens blijven uitgesloten.
+
 ## 1.5.0-alpha.1 — in ontwikkeling
 
 ### Toegevoegd
