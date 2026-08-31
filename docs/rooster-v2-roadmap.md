@@ -42,6 +42,8 @@ R0 is gereed wanneer:
 - [x] databaseback-up en -verificatie dezelfde testbare library gebruiken;
 - [x] een restorefunctie uitsluitend expliciet naar een gekozen doelpad herstelt;
 - [x] een automatische test backup → restore → integrity_check → sentinelcontrole uitvoert op een tijdelijke database;
-- [ ] GitHub Actions is groen op de R0-commit.
+- [x] GitHub Actions is groen op de R0-implementatiecommit.
+
+**Status: R0 afgerond.**
 
 De fixturetests zijn bewust een **legacy reference contract**. Vanaf R1 moet nieuwe code tegen deze contracts worden vergeleken totdat een wijziging bewust als nieuw functioneel gedrag is goedgekeurd.
