@@ -4,7 +4,10 @@
   "description": "Operationeel administratie- en analyseplatform voor Sport Society",
   "main": "app.js",
   "scripts": {
-    "test": "node --check app.js && node --check staffing-bootstrap.js && node --check hours-bootstrap.js && node --check roster-sync-bootstrap.js && node --check access-bootstrap.js && node --check manager-standards-bootstrap.js && node --check hours-link-bootstrap.js && node --check employment-end-bootstrap.js && node --check insights-bootstrap.js && node --check healthplanner-bootstrap.js && node --check healthplanner-metrics.js && node --check migrate-hours.js && node --check migrate-employee-names.js && node --check import-roster.js && node --check import-roster-linked.js && node --check normalize-roster-headers.js && node --check link-roster-hours.js && node --check import-hour-summaries.js && node --check normalize-zero-hour-summaries.js && node --check report-hour-sources.js && node --check scripts/report-hour-snapshot.js && node --check import-visitor-frequency.js && node --check import-healthplanner.js && node --check scripts/backup-database.js && node --check scripts/verify-database-backup.js && node --check download-roster.js && node --check auth-ui.js && node --check script.js && node --check changelog.js && node --check dashboard-status.js && node --check visitors.js && node --check healthplanner.js && node --check healthplanner-dashboard-link.js && node --check login.js && node --check create.js && node --check roster.js && node --check staffing.js && node --check staffing-coverage.js && node --check staffing-standards.js && node --check cml.js && node --check cf.js && node --check hours.js && node --check hours-linked-ui.js && node --check employee-settings.js && node --check employment-end-ui.js",
+    "test": "npm run test:syntax && npm run test:contracts && npm run test:restore",
+    "test:syntax": "node scripts/check-javascript.js",
+    "test:contracts": "node --test tests/legacy-contracts.test.js",
+    "test:restore": "node --test tests/database-restore.test.js",
     "start": "node migrate-employee-names.js && node migrate-hours.js && node healthplanner-bootstrap.js",
     "import:roster": "node import-roster-linked.js",
     "refresh:roster": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/refresh-roster.ps1",
@@ -15,6 +18,7 @@
     "import:healthplanner": "node import-healthplanner.js --commit",
     "backup:db": "node scripts/backup-database.js",
     "verify:backup": "node scripts/verify-database-backup.js",
+    "restore:db": "node scripts/restore-database.js",
     "download:roster": "node download-roster.js",
     "sync:roster": "node download-roster.js && node import-roster-linked.js data/imports/live-rooster.xlsx"
   },

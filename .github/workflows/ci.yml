@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  syntax-checks:
+  quality-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,7 +28,7 @@ jobs:
       - name: Dependencies installeren
         run: npm ci
 
-      - name: JavaScript controleren
+      - name: JavaScript, contracts en restore controleren
         run: npm test
 
       - name: PowerShell-scripts controleren
