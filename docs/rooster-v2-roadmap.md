@@ -125,3 +125,30 @@ Technische acceptatie:
 - [x] GitHub Actions groen op de R2-implementatie.
 
 **Status: R2 afgerond.**
+
+## R3 — roosterdomainservice
+
+R3 maakt de R2-tabellen daadwerkelijk bruikbaar als roostermotor.
+
+- [x] `AuthorizationService`: organisatiebreed gepubliceerd lezen, Manager eigen edit-scope, Admin publiceren;
+- [x] `DraftService`: on-demand drafts, published → draft clone en optimistic locking;
+- [x] `PatternService`: local-time generatie, stable shift UID en automatische propagatie;
+- [x] handmatige pattern-weekexceptions voorkomen dat incidentele edits door sync worden teruggedraaid;
+- [x] structurele patternwijziging synchroniseert bestaande toekomstige drafts automatisch;
+- [x] reeds gepubliceerde toekomstige weken krijgen een nieuwe draft en worden klaargezet voor republish;
+- [x] `ValidationService`: overlap en ontbrekend dienstverband hard; open shift/beschikbaarheid/locatie warnings;
+- [x] beschikbaarheidsexception wint van structureel availability-pattern;
+- [x] contractverschillen blokkeren niet en worden urenbankprojectie;
+- [x] `HoursService`: organisatiebrede geplande minuten versus effective-dated contractminuten;
+- [x] `QueryService`: actuele draft, nieuwste published, medewerkerrooster en open diensten;
+- [x] `PublicationService`: atomaire batch, diff, audit/CML-hook en verplichte reden na eerdere publicatie;
+- [x] published historie blijft immutable;
+- [x] staffing wordt in R3 niet gefingeerd; definitieve coverage-engine blijft R8;
+- [x] R3-migratie en domeintests opgenomen in `npm test`;
+- [x] GitHub Actions groen op de R3-implementatie.
+
+De goedgekeurde nieuwe frontend van het wijzigingsformulier blijft behouden. De huidige overgangsroute schrijft voorlopig nog naar legacy overrides + bestaande CML; de backend wordt pas bewust naar R3 canonical shifts omgezet wanneer de legacy adapter/planner/publicatieflow daarop zijn aangesloten.
+
+R3 bevat de **domeinkern** van publiceren. R6 blijft nodig voor de volledige operationele publicatieflow: API/UI-orkestratie, horizoncontrole, changed-since-last-publication, CML-projectie/notificaties en éénklik urgente/structurele republish.
+
+**Status: R3 afgerond.**
