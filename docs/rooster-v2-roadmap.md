@@ -47,3 +47,28 @@ R0 is gereed wanneer:
 **Status: R0 afgerond.**
 
 De fixturetests zijn bewust een **legacy reference contract**. Vanaf R1 moet nieuwe code tegen deze contracts worden vergeleken totdat een wijziging bewust als nieuw functioneel gedrag is goedgekeurd.
+
+## R1 — masterdata normaliseren
+
+R1 wordt in twee delen uitgevoerd zodat de nieuwe relationele structuur niet hoeft te wachten op het handmatig verzamelen van medewerkersgegevens.
+
+### R1A — structuur en vaste organisatiegegevens
+
+- [x] locatiecodes vastgelegd: AVE, BVE, VHU, WEK, HAR;
+- [x] nieuwe `locations`-mastertabel;
+- [x] relationeel skelet voor employees, employments en contract terms;
+- [x] stabiele `EMP-0001` employee-code sequence;
+- [x] scheiding primaire/inzetbare vestigingen voorbereid;
+- [x] `user_employee_links` voorbereid;
+- [x] `user_location_scopes` voor vestigingsbeheer voorbereid;
+- [x] historische aliases Lucas Veenendaal → Lucas V en Lucas Leeuwis → Lucas L;
+- [x] Manager/Admin access-seeds vastgelegd zonder bestaande rollen stil te wijzigen;
+- [x] planningsbaseline 2026-09-01 vastgelegd;
+- [x] onbekende historische startdata mogen `NULL` blijven;
+- [x] masterdatamigratie en rapportage zijn idempotent/testbaar.
+
+### R1B — medewerkers vullen en koppelen
+
+R1B volgt zodra de actuele medewerkersmasterdata beschikbaar is. Historische contractstartdata zijn **niet vereist**. Voor bestaande medewerkers mag de eerste betrouwbare status beginnen op `2026-09-01`; oudere gegevens kunnen later handmatig worden aangevuld.
+
+**Status: R1A gereed voor CI; R1B nog open.**
