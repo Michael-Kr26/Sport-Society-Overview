@@ -2,7 +2,7 @@
 
 ## Status
 
-- R1A: **gereed voor CI-validatie**
+- R1A: **afgerond — CI groen**
 - R1B: wacht op de actuele medewerkersmasterdata
 
 R1A verandert nog geen bestaande rooster-, staffing- of urenbusinesslogica. De nieuwe relationele masterdata staat naast de legacy-tabellen totdat R1B de medewerkers veilig kan koppelen.
@@ -71,6 +71,10 @@ De migratie wijzigt bestaande rollen **niet automatisch**. Een exact gevonden ac
 - `masterdata_access_seeds`
 
 `employee_code` gebruikt het stabiele formaat `EMP-0001`, `EMP-0002`, enzovoort.
+
+## Fresh-install gedrag
+
+De masterdatamigratie verzekert idempotent ook de bestaande `users`-basistabel wanneer een volledig lege database wordt gebruikt. Daardoor kunnen de nieuwe relationele foreign keys vanaf de eerste installatie intact blijven. De bestaande authlaag blijft eigenaar van accountgedrag en sessies.
 
 ## R1B
 
