@@ -4,7 +4,7 @@
   "description": "Operationeel administratie- en analyseplatform voor Sport Society",
   "main": "app.js",
   "scripts": {
-    "test": "npm run test:syntax && npm run test:contracts && npm run test:masterdata && npm run test:rosterdata && npm run test:rosterdomain && npm run test:legacyadapter && npm run test:rosterplanner && npm run test:restore",
+    "test": "npm run test:syntax && npm run test:contracts && npm run test:masterdata && npm run test:rosterdata && npm run test:rosterdomain && npm run test:legacyadapter && npm run test:rosterplanner && npm run test:rosterpages && npm run test:restore",
     "test:syntax": "node scripts/check-javascript.js",
     "test:contracts": "node --test tests/legacy-contracts.test.js",
     "test:masterdata": "node --test tests/masterdata.test.js tests/masterdata-r1b.test.js",
@@ -12,6 +12,7 @@
     "test:rosterdomain": "node --test tests/roster-domain.test.js",
     "test:legacyadapter": "node --test tests/legacy-roster-adapter.test.js",
     "test:rosterplanner": "node --test tests/roster-planner.test.js tests/r5-transition-protection.test.js",
+    "test:rosterpages": "node --test tests/roster-page-split.test.js",
     "test:restore": "node --test tests/database-restore.test.js",
     "start": "node migrate-roster-domain.js --quiet && node migrate-employee-names.js --quiet && node migrate-hours.js && node start-server.js",
     "migrate:masterdata": "node migrate-masterdata.js",
