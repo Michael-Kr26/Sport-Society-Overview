@@ -15,7 +15,8 @@
     const ROLE_LEVEL = { guest: 0, employee: 1, manager: 2, admin: 3 };
     const PAGE_ACCESS = {
         'index.html': 'guest',
-        'roster.html': 'guest',
+        'roster.html': 'employee',
+        'planner.html': 'manager',
         'help.html': 'guest',
         'changelog.html': 'guest',
         'login.html': 'guest',
@@ -164,10 +165,11 @@
                 </div>
                 ${navigationGroup('general', 'Algemeen', '⌂',
                     navigationItem('index.html', '⌂', 'Home') +
-                    navigationItem('roster.html', '▦', 'Rooster') +
+                    navigationItem('roster.html', '▦', 'Rooster', 'employee') +
                     navigationItem('changelog.html', '≡', 'Changelog') +
                     navigationItem('help.html', '?', 'Handleiding'))}
                 ${navigationGroup('operational', 'Operationeel', '◫',
+                    navigationItem('planner.html', '▦', 'Planner', 'manager') +
                     navigationItem('staffing.html', '◫', 'Bezettingsanalyse', 'manager') +
                     navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden', 'manager') +
                     navigationItem('cml.html', '↔', 'Roosterwijzigingen', 'manager'), 'manager')}
