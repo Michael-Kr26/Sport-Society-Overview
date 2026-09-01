@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="planner.css?v=20260901-r5-planner-split">
+    <script src="auth-ui.js" defer></script>
+    <script src="planner.js?v=20260901-r5-planner-split" defer></script>
+    <title>Sport Society - Planner</title>
+</head>
+<body>
+    <header>
+        <h1>Sport Society Overview</h1>
+        <p>Roosterplanner</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="roster-page">
+        <section class="roster-card roster-intro">
+            <div>
+                <p class="roster-label">Rooster V2</p>
+                <div class="roster-title-row">
+                    <h2>Weekplanner</h2>
+                    <span id="roster-state-badge" class="roster-state-badge is-loading">Laden</span>
+                </div>
+                <p>Plan per vestiging en week. Gepubliceerde diensten blijven de officiële waarheid; wijzigingen worden in een conceptversie voorbereid.</p>
+            </div>
+            <div class="roster-intro-actions">
+                <a class="roster-secondary-button" href="roster.html">Rooster bekijken</a>
+                <a class="roster-secondary-button" href="cf.html" data-min-role="admin">Wijziging registreren</a>
+            </div>
+        </section>
+
+        <section class="roster-card roster-toolbar-card">
+            <div class="roster-toolbar">
+                <div class="week-navigation" aria-label="Weeknavigatie">
+                    <button type="button" id="previous-week" class="roster-icon-button" aria-label="Vorige week">‹</button>
+                    <button type="button" id="current-week" class="roster-secondary-button">Deze week</button>
+                    <button type="button" id="next-week" class="roster-icon-button" aria-label="Volgende week">›</button>
+                </div>
+
+                <div class="week-heading">
+                    <span id="week-number" class="week-number">Week -</span>
+                    <strong id="week-range">-</strong>
+                </div>
+
+                <label class="roster-toolbar-field">
+                    Vestiging
+                    <select id="planner-location">
+                        <option value="AVE">Achterveld</option>
+                        <option value="BVE">Barneveld</option>
+                        <option value="VHU">Voorthuizen</option>
+                        <option value="WEK">Wekerom</option>
+                        <option value="HAR">Harskamp</option>
+                    </select>
+                </label>
+
+                <div id="version-switch" class="version-switch" aria-label="Roosterversie">
+                    <button type="button" data-view="draft">Concept</button>
+                    <button type="button" data-view="published">Gepubliceerd</button>
+                </div>
+            </div>
+
+            <div class="roster-toolbar-actions">
+                <div id="planner-context-copy" class="planner-context-copy">Rooster laden...</div>
+                <div class="planner-actions">
+                    <button type="button" id="create-draft" class="roster-secondary-button" hidden>Concept maken</button>
+                    <button type="button" id="add-shift" class="admin-button" hidden>+ Dienst toevoegen</button>
+                </div>
+            </div>
+        </section>
+
+        <p id="planner-error" class="planner-message is-error" hidden></p>
+        <p id="planner-success" class="planner-message is-success" hidden></p>
+
+        <section id="roster-summary" class="roster-summary" aria-live="polite">
+            <article class="roster-summary-card"><span class="summary-value">-</span><span class="summary-label">Diensten</span></article>
+            <article class="roster-summary-card"><span class="summary-value">-</span><span class="summary-label">Geplande uren</span></article>
+            <article class="roster-summary-card"><span class="summary-value">-</span><span class="summary-label">Open diensten</span></article>
+            <article class="roster-summary-card"><span class="summary-value">-</span><span class="summary-label">Aandachtspunten</span></article>
+        </section>
+
+        <section class="roster-card planner-card">
+            <div class="roster-results-header">
+                <div><p class="roster-label">Vestigingsrooster</p><h2 id="planner-heading">Weekoverzicht</h2></div>
+                <p id="planner-version-meta" class="roster-result-count">-</p>
+            </div>
+            <div id="mobile-day-tabs" class="mobile-day-tabs" aria-label="Dag kiezen"></div>
+            <div id="week-grid" class="week-grid" aria-live="polite"><p class="empty-state">Rooster laden...</p></div>
+        </section>
+
+        <div class="planner-detail-grid">
+            <section class="roster-card planner-validation-card">
+                <div class="roster-results-header compact">
+                    <div><p class="roster-label">Controle</p><h2>Conflicten & signalen</h2></div>
+                    <span id="validation-state" class="validation-state">-</span>
+                </div>
+                <div id="validation-results" class="validation-results"><p class="empty-state">Geen concept geselecteerd.</p></div>
+            </section>
+            <section class="roster-card planner-hours-card">
+                <div class="roster-results-header compact"><div><p class="roster-label">Urenbankprojectie</p><h2>Geplande uren</h2></div></div>
+                <div id="hours-results" class="hours-results"><p class="empty-state">Geen concept geselecteerd.</p></div>
+            </section>
+        </div>
+    </main>
+
+    <div id="shift-drawer-backdrop" class="shift-drawer-backdrop" hidden></div>
+    <aside id="shift-drawer" class="shift-drawer" aria-hidden="true" aria-labelledby="shift-drawer-title">
+        <div class="shift-drawer-head">
+            <div><p class="roster-label">Dienst</p><h2 id="shift-drawer-title">Dienst toevoegen</h2></div>
+            <button type="button" id="close-shift-drawer" class="roster-icon-button" aria-label="Sluiten">×</button>
+        </div>
+        <form id="shift-form" class="shift-form">
+            <input type="hidden" id="shift-uid">
+            <label>Medewerker<select id="shift-employee"><option value="">Open dienst</option></select><span id="employee-eligibility-note" class="field-note"></span></label>
+            <div class="shift-form-grid">
+                <label>Datum<input type="date" id="shift-date" required></label>
+                <label>Type<select id="shift-type" required><option value="floor">Vloer</option><option value="administration">Administratie</option><option value="internship">Stage</option></select></label>
+                <label>Begintijd<input type="time" id="shift-start" required></label>
+                <label>Eindtijd<input type="time" id="shift-end" required></label>
+            </div>
+            <label>Notitie<textarea id="shift-note" rows="4" placeholder="Optioneel, bijvoorbeeld afspraak met medewerker of toelichting bij open dienst."></textarea></label>
+            <p id="shift-form-message" class="planner-message is-error" hidden></p>
+            <div class="shift-form-actions">
+                <button type="button" id="delete-shift" class="danger-button" hidden>Dienst verwijderen</button>
+                <div class="shift-form-actions-right">
+                    <button type="button" id="cancel-shift" class="roster-secondary-button">Annuleren</button>
+                    <button type="submit" class="admin-button">Opslaan</button>
+                </div>
+            </div>
+        </form>
+    </aside>
+
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+</body>
+</html>
