@@ -84,3 +84,44 @@ R1 wordt in twee delen uitgevoerd zodat de nieuwe relationele structuur niet hoe
 Historische contractstartdata zijn **niet vereist**. Bestaande medewerkers hebben `starts_on = NULL` zolang die oude startdatum onbekend is; `known_from = 2026-09-01` legt alleen vast vanaf wanneer de gegevens voor Rooster V2 betrouwbaar zijn.
 
 **Status: R1 afgerond.**
+
+## R2 — nieuwe rooster-datalaag
+
+Vaste keuzes uit de R2-vragenlijst:
+
+- [x] diensttypes beperkt tot vloer / administratie / stage;
+- [x] geen aparte pauzelogica;
+- [x] open diensten ondersteunen vrije notitie;
+- [x] recurring patterns ondersteunen ieder positief weekinterval;
+- [x] patternhistorie blijft effective-dated;
+- [x] beschikbaarheid wordt als vaste categorie opgeslagen;
+- [x] ontbrekende beschikbaarheid = onbekend;
+- [x] incidentele beschikbaarheidsuitzonderingen zijn toegestaan na overleg;
+- [x] beschikbaarheid en locatie-eligibility worden waarschuwingen, geen hard blocks;
+- [x] vakantie/ziekte/verlof blijven apart van beschikbaarheid;
+- [x] harde roosterhorizon 6 weken, streef 12 weken, generator 24 weken;
+- [x] genereren gebeurt on demand;
+- [x] patternwijzigingen propagateren automatisch naar toekomstige weken;
+- [x] gepubliceerde historie blijft immutable via nieuwe versies/republish;
+- [x] maximaal één actieve draft per locatie-week;
+- [x] wijzigingsreden na publicatie wordt service-regel en CML-hook is voorbereid;
+- [x] alleen Admin publiceert;
+- [x] batch-publicatie ondersteunt meerdere locaties en meerdere weken;
+- [x] dubbele dienst wordt later hard conflict;
+- [x] contractafwijkingen gaan richting urenbank en blokkeren niet;
+- [x] open diensten en staffingtekorten blokkeren publicatie niet;
+- [x] ISO-week maandag t/m zondag.
+
+Technische acceptatie:
+
+- [x] relationele tabellen voor periods/versions/shifts/patterns;
+- [x] beschikbaarheidspatterns en exceptions;
+- [x] publication + publication-version koppeling;
+- [x] publication changes + audit/CML-hook;
+- [x] optimistic locking op draft revision;
+- [x] database-triggers maken published versions/shifts immutable;
+- [x] persistente queue voor automatische patternpropagatie;
+- [x] R2-tests toegevoegd;
+- [ ] GitHub Actions groen op de R2-implementatie.
+
+**Status: R2 geïmplementeerd en wacht op CI-validatie.**
