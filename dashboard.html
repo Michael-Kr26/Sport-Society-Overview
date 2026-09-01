@@ -4,14 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="dashboard.css">
-    <script src="auth-ui.js" defer></script>
-    <title>Sport Society - Preview en integratiestatus</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260730-v15-quality1">
+    <link rel="stylesheet" href="dashboard-quality.css?v=20260730-v15-quality1">
+    <script src="auth-ui.js?v=20260730-v15-quality1" defer></script>
+    <script src="dashboard-status.js?v=20260730-v15-quality1" defer></script>
+    <title>Sport Society - Import en datakwaliteit</title>
 </head>
 <body data-admin-page>
     <header>
         <h1>Sport Society Overview</h1>
-        <p>Preview, projectstatus en integratieplanning</p>
+        <p>Importstatus, bronkwaliteit en releasecontrole</p>
     </header>
 
     <nav>
@@ -24,88 +26,99 @@
         <section class="project-card project-hero">
             <div class="project-hero-copy">
                 <div class="project-heading-row">
-                    <p class="project-label">Sport Society Overview</p>
-                    <span class="project-version-badge">Werkende demo</span>
+                    <p class="project-label">Datakwaliteitscentrum</p>
+                    <span class="project-version-badge" id="quality-version">Versie laden</span>
                 </div>
-                <h2>Operationeel overzicht in ontwikkeling</h2>
+                <h2>Bronnen eerst, conclusies daarna</h2>
                 <p>
-                    De werkende versie brengt roostercontrole, bezettingsanalyse, urenanalyse,
-                    roosterwijzigingen, accounttoegang en rolverdeling samen in één applicatie.
+                    Dit scherm controleert de actuele rooster-, uren-, medewerkers- en accountbronnen. Een ontbrekende
+                    of teruggevallen bron wordt zichtbaar gemeld en nooit stilzwijgend als betrouwbaar gepresenteerd.
                 </p>
                 <div class="project-actions">
-                    <a href="staffing.html" class="admin-button">Bekijk bezettingsanalyse</a>
-                    <a href="hours.html" class="project-secondary-link">Bekijk urenanalyse</a>
-                    <a href="roster.html" class="project-secondary-link">Bekijk rooster</a>
+                    <a href="hours.html" class="admin-button">Open urenanalyse</a>
+                    <a href="roster.html" class="project-secondary-link">Open rooster</a>
+                    <a href="employee-settings.html" class="project-secondary-link">Open medewerkers</a>
                 </div>
             </div>
             <aside class="project-hero-status">
-                <span class="project-status-pill is-active">Presentatieversie</span>
-                <h3>Roosterregels en personeelsuren worden automatisch geanalyseerd</h3>
-                <p>
-                    De applicatie controleert bezettingsnormen en berekent per medewerker ingeplande
-                    uren, maandnormen, maandmutaties en de cumulatieve urenbank.
-                </p>
+                <span class="project-status-pill is-planned" id="quality-overall-status">Controleren</span>
+                <h3 id="quality-overall-title">Bronnen worden gecontroleerd</h3>
+                <p id="quality-overall-copy">De samenvatting verschijnt zodra alle beheerbronnen zijn opgehaald.</p>
             </aside>
         </section>
 
-        <section class="project-card project-status-card" aria-label="Huidige systeemstatus">
-            <div><p class="project-label">Huidige status</p><h2>Wat werkt er nu?</h2></div>
-            <div class="project-status-list">
-                <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Roostercontrole</strong><p>Excel-import, filters, sortering en eerstvolgende dienst.</p></article>
-                <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Bezettingsanalyse</strong><p>Harde normen, groepslessen, uitzonderingen en signaleringen.</p></article>
-                <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Urenanalyse</strong><p>Contractnormen, flexvergelijking, correcties en cumulatieve urenbank.</p></article>
-                <article class="project-status-item"><span class="project-status-pill is-active">Actief</span><strong>Change Management</strong><p>Registreren, bewerken, statussen, archiveren en filteren.</p></article>
-            </div>
+        <section class="quality-kpi-grid" id="quality-kpis" aria-label="Datakwaliteit kerncijfers">
+            <article class="quality-kpi"><span>Laden</span><strong>…</strong><p>Broncontrole wordt uitgevoerd.</p></article>
         </section>
 
-        <section class="project-modules" aria-label="Onderdelen van Sport Society Overview">
+        <section class="quality-layout">
+            <article class="project-card quality-panel">
+                <div class="project-status-header">
+                    <div><p class="project-label">Actie vereist</p><h2>Openstaande controles</h2></div>
+                    <span class="quality-count" id="quality-issue-count">0</span>
+                </div>
+                <div class="quality-issue-list" id="quality-issues" aria-live="polite">
+                    <p class="quality-empty">Controles laden...</p>
+                </div>
+            </article>
+
+            <aside class="project-card quality-panel">
+                <div class="project-status-header">
+                    <div><p class="project-label">Bronnen</p><h2>Laatste verwerking</h2></div>
+                </div>
+                <dl class="quality-source-list" id="quality-sources">
+                    <div><dt>Excel-uren</dt><dd>Laden...</dd></div>
+                    <div><dt>Rooster</dt><dd>Laden...</dd></div>
+                    <div><dt>Release</dt><dd>Laden...</dd></div>
+                </dl>
+            </aside>
+        </section>
+
+        <section class="project-card quality-panel">
+            <div class="project-status-header">
+                <div>
+                    <p class="project-label">Importprocedure</p>
+                    <h2>Veilige roosterverversing</h2>
+                </div>
+            </div>
+            <p class="quality-help">
+                Sluit Excel volledig. De verversopdracht maakt eerst een back-up, laat Excel alle formules herberekenen,
+                importeert de bronnen opnieuw en rapporteert daarna alle resterende terugvalbronnen.
+            </p>
+            <pre class="quality-command"><code>npm run refresh:roster -- ".\data\imports\Rooster.xlsx" "2026-10"</code></pre>
+            <p class="quality-help">Vervang de maand door de maand die je op de urenpagina controleert.</p>
+        </section>
+
+        <section class="project-modules" aria-label="Actieve modules">
             <article class="project-module">
-                <div class="project-module-header"><p class="project-label">Rooster</p><span class="project-module-status is-active">Werkend</span></div>
-                <h3>Roostercontrole</h3>
-                <p>Een overzichtelijke weergave van diensten, locaties, afwezigheden en overgenomen diensten.</p>
-                <ul><li>Filteren op medewerker, type, locatie en status</li><li>Shifts gegroepeerd per locatie</li><li>Eerstvolgende dienst automatisch gemarkeerd</li><li>Dezelfde API als de bezettingsanalyse</li></ul>
+                <div class="project-module-header"><p class="project-label">Rooster</p><span class="project-module-status is-active">Actief</span></div>
+                <h3>Effectieve roosterbron</h3>
+                <p>Basisimport en geregistreerde wijzigingen worden als één effectieve weergave aangeboden.</p>
+                <ul><li>Diensten en afwezigheid</li><li>Locaties en broncellen</li><li>Wijzigingen bovenop de import</li></ul>
                 <a href="roster.html" class="project-module-link">Open rooster →</a>
             </article>
 
             <article class="project-module">
-                <div class="project-module-header"><p class="project-label">Capaciteit</p><span class="project-module-status is-active">Werkend</span></div>
-                <h3>Bezettingsanalyse</h3>
-                <p>Controleert per locatie en tijdsblok of de ingeplande capaciteit voldoende, kwetsbaar of onderbezet is.</p>
-                <ul><li>Ma–do 18:00–21:30 minimaal dubbele bezetting</li><li>Voorthuizen: aparte lesruimte en dinsdagochtend-uitzondering</li><li>Barneveld: dubbele bezetting als sterk advies tijdens lessen</li><li>Reformer Pilates volledig uitgesloten</li></ul>
-                <a href="staffing.html" class="project-module-link">Open bezettingsanalyse →</a>
-            </article>
-
-            <article class="project-module">
-                <div class="project-module-header"><p class="project-label">Personeelsuren</p><span class="project-module-status is-active">Werkend</span></div>
-                <h3>Urenanalyse en urenbank</h3>
-                <p>Vergelijkt flexuren en bewaakt voor contractmedewerkers de maandnorm en cumulatieve urenbank.</p>
-                <ul><li>Maandnorm op basis van contracturen × 4,33</li><li>Contracthistorie met ingangsdatums</li><li>Flexvergelijking met gemiddelde en maandtrend</li><li>Handmatige uren- en bankcorrecties</li></ul>
+                <div class="project-module-header"><p class="project-label">Personeelsuren</p><span class="project-module-status is-active">Actief</span></div>
+                <h3>Excel-maandstanden</h3>
+                <p>Vijf expliciete Excelwaarden blijven de bron voor contractmedewerkers.</p>
+                <ul><li>Ingepland en Minstens</li><li>Maandmutatie en urenbank</li><li>Terugval en handmatige correctie zichtbaar</li></ul>
                 <a href="hours.html" class="project-module-link">Open urenanalyse →</a>
             </article>
 
             <article class="project-module">
-                <div class="project-module-header"><p class="project-label">Change Management</p><span class="project-module-status is-active">Werkend</span></div>
-                <h3>Roosterwijzigingen</h3>
-                <p>Een centraal logboek voor wijzigingen, ziekte, vervanging, extra diensten en andere roosterafspraken.</p>
-                <ul><li>Wijzigingen registreren en aanpassen</li><li>Statusbeheer en archivering</li><li>Filteren en paginering</li><li>Mobiele card-weergave</li></ul>
-                <a href="cml.html" class="project-module-link">Open roosterwijzigingen →</a>
+                <div class="project-module-header"><p class="project-label">V1.5</p><span class="project-module-status is-planned">In ontwikkeling</span></div>
+                <h3>HealthPlanner-dashboard</h3>
+                <p>De velddefinities en het importcontract worden vóór de interface vastgezet.</p>
+                <ul><li>Leden en leads</li><li>Coaching en retentie</li><li>Periode- en vestigingsvergelijking</li></ul>
             </article>
 
             <article class="project-module">
-                <div class="project-module-header"><p class="project-label">Managementinformatie</p><span class="project-module-status is-planned">Volgende fase</span></div>
-                <h3>KPI-dashboard</h3>
-                <p>Health Planner-, rooster-, uren- en bezettingsdata worden later gecombineerd tot historische managementinformatie.</p>
-                <ul><li>Week-, maand- en jaarvergelijkingen</li><li>Health Planner KPI's per vestiging</li><li>Gecombineerde personeels- en capaciteitsinzichten</li><li>Trends, adviezen en signaleringen</li></ul>
+                <div class="project-module-header"><p class="project-label">V1.5</p><span class="project-module-status is-planned">In ontwikkeling</span></div>
+                <h3>Bezoekersfrequentie</h3>
+                <p>Historische maanddata wordt gebruikt voor seizoensanalyse en uitlegbare baselines.</p>
+                <ul><li>Geen salarisdata</li><li>Geen automatische roosterbeslissing</li><li>Wel trends en capaciteitsindicatoren</li></ul>
             </article>
-        </section>
-
-        <section class="project-card project-roadmap">
-            <div><p class="project-label">Integratiestatus</p><h2>Volgende ontwikkelfase</h2></div>
-            <div class="project-roadmap-list">
-                <article class="project-roadmap-step"><span class="project-roadmap-number">1</span><div><strong>Live roosterintegratie</strong><p>De bestaande <code>/api/roster</code>-bron automatisch laten synchroniseren.</p></div></article>
-                <article class="project-roadmap-step"><span class="project-roadmap-number">2</span><div><strong>Live lesroosterintegratie</strong><p>Historische weektemplates vervangen door actuele DEWI-lesdata.</p></div></article>
-                <article class="project-roadmap-step"><span class="project-roadmap-number">3</span><div><strong>Health Planner KPI-data</strong><p>Dagelijkse rapportages opslaan en vergelijken per periode en vestiging.</p></div></article>
-            </div>
         </section>
     </main>
 

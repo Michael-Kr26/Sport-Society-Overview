@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="cf.css?v=20260901-unified-change-flow">
     <script src="auth-ui.js" defer></script>
-    <script src="cf.js" defer></script>
-    <title>Sport Society - ChangeForm</title>
+    <script src="cf.js?v=20260901-unified-change-flow" defer></script>
+    <title>Sport Society - Roosterwijziging</title>
 </head>
 <body data-admin-page>
     <header>
         <h1>Sport Society Overview</h1>
-        <p>Wijzigingsformulier voor werkrooster</p>
+        <p>Roosterwijziging direct verwerken</p>
     </header>
 
     <nav>
@@ -20,114 +21,191 @@
         <div class="nav-links"></div>
     </nav>
 
-    <main data-admin-content hidden>
-        <section class="dashboard-card">
-            <div class="card-header">
+    <main class="change-workflow-page" data-admin-content hidden>
+        <section class="change-workflow-intro">
+            <div>
                 <p class="card-label">Change Management</p>
                 <h2>Nieuwe roosterwijziging</h2>
+                <p>Selecteer de dienst en leg alleen vast wat verandert. De wijziging wordt in één handeling in het rooster én in het CML geregistreerd.</p>
             </div>
-
-            <form id="change-form" class="admin-form">
-                <label>
-                    Datum van wijziging
-                    <input type="date" id="change-date" required>
-                </label>
-
-                <label>
-                    Datum doorgegeven
-                    <input type="date" id="change-reported-date" required>
-                </label>
-
-                <label>
-                    Locatie na wijziging
-                    <select id="change-location" required>
-                        <option value="">Kies locatie</option>
-                        <option>Achterveld</option>
-                        <option>Barneveld</option>
-                        <option>Voorthuizen</option>
-                        <option>Wekerom</option>
-                        <option>Harskamp</option>
-                    </select>
-                </label>
-
-                <label>
-                    Medewerker 1
-                    <input type="text" id="change-employee" placeholder="Huidige of nieuwe medewerker" required autocomplete="off">
-                </label>
-
-                <label>
-                    Medewerker 2
-                    <input type="text" id="change-employee2" placeholder="Nieuwe medewerker bij vervanging of wissel" autocomplete="off">
-                </label>
-
-                <label>
-                    Type wijziging
-                    <select id="change-type" required>
-                        <option>Dienstwissel</option>
-                        <option>Ziekmelding</option>
-                        <option>Vakantieaanvraag</option>
-                        <option>Ouderschapsverlof</option>
-                        <option>Vervanging</option>
-                        <option>Vrij wegens overuren</option>
-                        <option>Extra dienst</option>
-                        <option>Openstaande dienst</option>
-                        <option>Tijdswijziging</option>
-                        <option>Locatiewijziging</option>
-                        <option>Dienst vervallen</option>
-                        <option>Dienst toegevoegd</option>
-                        <option>Overige wijziging</option>
-                    </select>
-                </label>
-
-                <label style="display:flex; grid-template-columns:auto 1fr; align-items:center; gap:10px;">
-                    <input type="checkbox" id="change-sync-roster" checked style="width:auto;">
-                    Ook direct verwerken in het rooster
-                </label>
-
-                <div id="change-source-fields" class="admin-form" style="margin-top:0;">
-                    <label>
-                        Bestaande dienst die aangepast wordt
-                        <select id="change-source-shift">
-                            <option value="">Vul eerst datum en medewerker 1 in</option>
-                        </select>
-                    </label>
-                    <p id="change-source-message" class="empty-state" aria-live="polite"></p>
-                </div>
-
-                <div id="change-time-fields" class="admin-form" style="margin-top:0;" hidden>
-                    <label>
-                        Nieuwe begintijd
-                        <input type="time" id="change-start-time">
-                    </label>
-                    <label>
-                        Nieuwe eindtijd
-                        <input type="time" id="change-end-time">
-                    </label>
-                </div>
-
-                <label>
-                    Beschrijving / reden
-                    <textarea id="change-reason" rows="4" placeholder="Omschrijf kort wat er is gewijzigd"></textarea>
-                </label>
-
-                <label>
-                    Status
-                    <select id="change-status" required>
-                        <option>Open</option>
-                        <option>In behandeling</option>
-                        <option>Afgerond</option>
-                    </select>
-                </label>
-
-                <p class="empty-state">
-                    Een gekoppelde roosterwijziging blijft als override actief na een nieuwe Excel-import.
-                    Het oorspronkelijke Excel-bestand wordt niet aangepast.
-                </p>
-
-                <button type="submit" class="admin-button">Wijziging doorvoeren</button>
-                <p id="form-message" class="empty-state" aria-live="polite"></p>
-            </form>
+            <span class="change-flow-badge">1 invoer → Rooster + CML</span>
         </section>
+
+        <div class="change-workflow-grid">
+            <section class="dashboard-card change-form-card">
+                <form id="change-form">
+                    <section class="change-section">
+                        <div class="change-section-heading">
+                            <h3>1. Waar gaat de wijziging over?</h3>
+                            <span>Datum, vestiging en type</span>
+                        </div>
+
+                        <div class="change-form-grid is-three">
+                            <label class="change-field">
+                                Datum
+                                <input type="date" id="change-date" required>
+                            </label>
+
+                            <label class="change-field">
+                                Vestiging
+                                <select id="change-location" required>
+                                    <option value="">Kies vestiging</option>
+                                    <option>Achterveld</option>
+                                    <option>Barneveld</option>
+                                    <option>Voorthuizen</option>
+                                    <option>Wekerom</option>
+                                    <option>Harskamp</option>
+                                </select>
+                            </label>
+
+                            <label class="change-field">
+                                Wijziging
+                                <select id="change-type" required>
+                                    <optgroup label="Bestaande dienst aanpassen">
+                                        <option value="Vervanging">Vervanging</option>
+                                        <option value="Dienstwissel">Dienstwissel</option>
+                                        <option value="Tijdswijziging">Tijd wijzigen</option>
+                                        <option value="Locatiewijziging">Locatie wijzigen</option>
+                                        <option value="Dienst vervallen">Dienst vervalt</option>
+                                    </optgroup>
+                                    <optgroup label="Afwezigheid">
+                                        <option value="Ziekmelding">Ziekmelding</option>
+                                        <option value="Vakantieaanvraag">Vakantie / verlof</option>
+                                        <option value="Ouderschapsverlof">Ouderschapsverlof</option>
+                                        <option value="Vrij wegens overuren">Vrij wegens overuren</option>
+                                    </optgroup>
+                                    <optgroup label="Nieuwe dienst">
+                                        <option value="Extra dienst">Extra dienst</option>
+                                        <option value="Dienst toegevoegd">Dienst toevoegen</option>
+                                        <option value="Openstaande dienst">Open dienst toevoegen</option>
+                                    </optgroup>
+                                    <optgroup label="Alleen logboek">
+                                        <option value="Overige wijziging">Alleen CML-notitie</option>
+                                    </optgroup>
+                                </select>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section id="change-source-section" class="change-section">
+                        <div class="change-section-heading">
+                            <h3>2. Selecteer de huidige dienst</h3>
+                            <span>Wordt uit het actuele rooster geladen</span>
+                        </div>
+
+                        <label class="change-full-field">
+                            Bestaande dienst
+                            <select id="change-source-shift">
+                                <option value="">Kies eerst datum en vestiging</option>
+                            </select>
+                        </label>
+                        <p id="change-source-message" class="change-inline-status" aria-live="polite"></p>
+                    </section>
+
+                    <section id="change-new-section" class="change-section">
+                        <div class="change-section-heading">
+                            <h3>3. Nieuwe situatie</h3>
+                            <span>Alleen relevante velden worden getoond</span>
+                        </div>
+
+                        <div class="change-form-grid">
+                            <label id="change-current-employee-wrap" class="change-field">
+                                Huidige medewerker
+                                <input type="text" id="change-employee" readonly placeholder="Wordt uit dienst gehaald">
+                            </label>
+
+                            <label id="change-new-employee-wrap" class="change-field" hidden>
+                                Nieuwe medewerker
+                                <input type="text" id="change-employee2" list="change-employees" autocomplete="off" placeholder="Wie neemt de dienst over?">
+                            </label>
+
+                            <label id="change-added-employee-wrap" class="change-field" hidden>
+                                Medewerker
+                                <input type="text" id="change-added-employee" list="change-employees" autocomplete="off" placeholder="Wie werkt deze dienst?">
+                            </label>
+
+                            <label id="change-new-location-wrap" class="change-field" hidden>
+                                Nieuwe vestiging
+                                <select id="change-new-location">
+                                    <option value="">Kies vestiging</option>
+                                    <option>Achterveld</option>
+                                    <option>Barneveld</option>
+                                    <option>Voorthuizen</option>
+                                    <option>Wekerom</option>
+                                    <option>Harskamp</option>
+                                </select>
+                            </label>
+
+                            <label id="change-start-wrap" class="change-field" hidden>
+                                Begintijd
+                                <input type="time" id="change-start-time">
+                            </label>
+
+                            <label id="change-end-wrap" class="change-field" hidden>
+                                Eindtijd
+                                <input type="time" id="change-end-time">
+                            </label>
+                        </div>
+
+                        <datalist id="change-employees"></datalist>
+
+                        <label class="change-full-field">
+                            Reden / toelichting
+                            <textarea id="change-reason" rows="4" required placeholder="Bijvoorbeeld: afgestemd met medewerker, vervanging bevestigd."></textarea>
+                        </label>
+                    </section>
+
+                    <div class="change-actions">
+                        <button type="submit" class="admin-button">Wijziging doorvoeren</button>
+                        <p class="change-submit-note">Na opslaan staat de wijziging direct in het CML en, waar van toepassing, in het actuele rooster.</p>
+                    </div>
+
+                    <div id="change-success" class="change-success" hidden aria-live="polite">
+                        <p id="form-message"></p>
+                        <div class="change-success-links">
+                            <a id="change-open-roster" class="change-secondary-link" href="roster.html">Bekijk rooster</a>
+                            <a id="change-open-cml" class="change-secondary-link" href="cml.html">Bekijk CML</a>
+                        </div>
+                    </div>
+                    <p id="change-error" class="change-inline-status is-error" aria-live="polite"></p>
+                </form>
+            </section>
+
+            <aside class="dashboard-card change-preview-card">
+                <div class="card-header">
+                    <p class="card-label">Direct resultaat</p>
+                    <h2>Na opslaan</h2>
+                </div>
+
+                <div class="change-result-list">
+                    <div class="change-result-item">
+                        <span class="change-result-icon">✓</span>
+                        <div>
+                            <p class="change-result-title">CML</p>
+                            <p class="change-result-copy">De wijziging wordt als afgeronde roosterwijziging vastgelegd met reden en invoerder.</p>
+                        </div>
+                    </div>
+                    <div id="change-roster-result" class="change-result-item">
+                        <span class="change-result-icon">✓</span>
+                        <div>
+                            <p class="change-result-title">Rooster</p>
+                            <p id="change-roster-result-copy" class="change-result-copy">De geselecteerde dienst wordt direct aangepast.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="change-preview-divider"></div>
+
+                <p class="card-label">Voorbeeld na wijziging</p>
+                <dl class="change-preview-summary">
+                    <div class="change-preview-row"><dt>Datum</dt><dd id="preview-date">-</dd></div>
+                    <div class="change-preview-row"><dt>Vestiging</dt><dd id="preview-location">-</dd></div>
+                    <div class="change-preview-row"><dt>Dienst</dt><dd id="preview-time">-</dd></div>
+                    <div class="change-preview-row"><dt>Medewerker</dt><dd id="preview-employee">-</dd></div>
+                    <div class="change-preview-row"><dt>Wijziging</dt><dd id="preview-type">-</dd></div>
+                </dl>
+            </aside>
+        </div>
     </main>
 
     <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>

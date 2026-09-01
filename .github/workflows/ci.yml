@@ -1,0 +1,41 @@
+name: V1.5 quality checks
+
+on:
+  push:
+    branches:
+      - main
+      - agent/urenanalyse-urenbank
+      - agent/v1-5-operational-release
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js instellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Dependencies installeren
+        run: npm ci
+
+      - name: JavaScript, contracts en restore controleren
+        run: npm test
+
+      - name: PowerShell-scripts controleren
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-ChildItem -Path . -Recurse -Filter '*.ps1' | ForEach-Object {
+              [void][scriptblock]::Create((Get-Content -Raw $_.FullName))
+              Write-Host "Geldig PowerShell-script: $($_.FullName)"
+          }

@@ -4,133 +4,100 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="roster.css">
+    <link rel="stylesheet" href="roster-overview.css?v=20260901-roster-overview">
     <script src="auth-ui.js" defer></script>
-    <script src="roster.js" defer></script>
+    <script src="roster-overview.js?v=20260901-roster-overview" defer></script>
     <title>Sport Society - Rooster</title>
 </head>
 <body>
     <header>
         <h1>Sport Society Overview</h1>
-        <p>Roostercontrole en operationeel overzicht</p>
+        <p>Gepubliceerd rooster</p>
     </header>
 
     <nav>
         <input type="checkbox" id="nav-toggle">
-        <label for="nav-toggle" class="nav-toggle-label">
-            <span></span>
-        </label>
-
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
         <div class="nav-links"></div>
     </nav>
 
-    <main class="roster-page">
+    <main class="roster-overview-page">
         <section class="roster-card roster-intro">
             <div>
-                <div class="roster-heading-row" data-admin-only hidden>
-                    <p class="roster-label">Rooster preview</p>
-                    <span class="roster-version-badge">Demoversie</span>
-                </div>
-                <h2>Rooster controleren</h2>
-                <p>
-                    Zoek op medewerker om diensten, locaties, afwezigheden en overgenomen
-                    diensten overzichtelijk te controleren.
-                </p>
+                <p class="roster-label">Officieel rooster</p>
+                <h2>Roosteroverzicht</h2>
+                <p>Bekijk het gepubliceerde rooster van alle vestigingen. Conceptwijzigingen staan alleen in de Planner en verschijnen hier pas na publicatie.</p>
             </div>
-        </section>
-
-        <section class="roster-integration-card" aria-label="Integratiestatus rooster" data-admin-only hidden>
-            <div class="roster-integration-copy">
-                <p class="roster-label">Integratiestatus</p>
-                <h2>Live roosterintegratie volgt</h2>
-                <p>
-                    Deze demonstratie gebruikt roosterdata die vanuit een Excel-bestand is
-                    geïmporteerd. De live koppeling en automatische synchronisatie met de
-                    definitieve roosterbron worden in een volgende ontwikkelfase gerealiseerd.
-                </p>
-            </div>
-
-            <div class="roster-integration-statuses">
-                <span class="roster-integration-status is-ready">
-                    <span class="roster-status-dot" aria-hidden="true"></span>
-                    Excel-import actief
-                </span>
-                <span class="roster-integration-status is-planned">
-                    <span class="roster-status-dot" aria-hidden="true"></span>
-                    Live synchronisatie gepland
-                </span>
-            </div>
+            <a id="open-planner" class="roster-secondary-button" href="planner.html" data-min-role="manager">Open Planner</a>
         </section>
 
         <section class="roster-card">
-            <form id="roster-filter-form" class="roster-filter-bar">
-                <label>
+            <div class="roster-toolbar">
+                <div class="week-navigation" aria-label="Weeknavigatie">
+                    <button type="button" id="previous-week" class="roster-icon-button" aria-label="Vorige week">‹</button>
+                    <button type="button" id="current-week" class="roster-secondary-button">Deze week</button>
+                    <button type="button" id="next-week" class="roster-icon-button" aria-label="Volgende week">›</button>
+                </div>
+
+                <div class="week-heading">
+                    <span id="week-number" class="week-number">Week -</span>
+                    <strong id="week-range">-</strong>
+                </div>
+
+                <label class="roster-filter-field">
                     Medewerker
                     <input type="search" id="employee-filter" placeholder="Bijvoorbeeld Michael" autocomplete="off">
                 </label>
 
-                <label>
+                <label class="roster-filter-field">
+                    Vestiging
+                    <select id="location-filter">
+                        <option value="">Alle vestigingen</option>
+                        <option value="AVE">Achterveld</option>
+                        <option value="BVE">Barneveld</option>
+                        <option value="VHU">Voorthuizen</option>
+                        <option value="WEK">Wekerom</option>
+                        <option value="HAR">Harskamp</option>
+                    </select>
+                </label>
+
+                <label class="roster-filter-field">
                     Type
                     <select id="type-filter">
-                        <option value="">Alles</option>
-                        <option value="shift">Diensten</option>
-                        <option value="absence">Afwezigheid</option>
-                        <option value="special">Bijzonder</option>
+                        <option value="">Alle types</option>
+                        <option value="floor">Vloer</option>
+                        <option value="administration">Administratie</option>
+                        <option value="internship">Stage</option>
                     </select>
                 </label>
 
-                <label>
-                    Locatie
-                    <select id="location-filter">
-                        <option value="">Alle locaties</option>
-                        <option>Barneveld</option>
-                        <option>Achterveld</option>
-                        <option>Voorthuizen</option>
-                        <option>Wekerom</option>
-                        <option>Harskamp</option>
-                    </select>
-                </label>
-
-                <label>
-                    Status
-                    <select id="status-filter">
-                        <option value="">Alle statussen</option>
-                        <option>Werkdienst</option>
-                        <option>Betaald verlof / vakantie</option>
-                        <option>Ziek</option>
-                        <option>Feestdag</option>
-                        <option>Tijd voor tijd</option>
-                    </select>
-                </label>
-
-                <button type="submit" class="admin-button">Zoeken</button>
                 <button type="button" id="reset-roster-filters" class="roster-secondary-button">Reset</button>
-            </form>
+            </div>
         </section>
 
+        <p id="roster-error" class="roster-message" hidden></p>
+
         <section id="roster-summary" class="roster-summary" aria-live="polite">
-            <article class="roster-summary-card">
-                <span class="summary-value">-</span>
-                <span class="summary-label">Items</span>
-            </article>
+            <article class="roster-summary-card"><span class="summary-value">-</span><span class="summary-label">Diensten</span></article>
+            <article class="roster-summary-card"><span class="summary-value">-</span><span class="summary-label">Medewerkers</span></article>
+            <article class="roster-summary-card"><span class="summary-value">-</span><span class="summary-label">Geplande uren</span></article>
+            <article class="roster-summary-card"><span class="summary-value">-</span><span class="summary-label">Vestigingen</span></article>
         </section>
 
         <section class="roster-card">
             <div class="roster-results-header">
                 <div>
-                    <p class="roster-label">Resultaten</p>
-                    <h2>Roosteritems</h2>
+                    <p class="roster-label">Gepubliceerd</p>
+                    <h2>Diensten per dag</h2>
                 </div>
                 <p id="roster-result-count" class="roster-result-count">Laden...</p>
             </div>
-            <div id="roster-results" class="roster-results">
-                <p class="empty-state">Rooster laden...</p>
+            <div id="roster-results" class="roster-results" aria-live="polite">
+                <p class="empty-state">Gepubliceerd rooster laden...</p>
             </div>
         </section>
     </main>
 
-    <footer>
-        <p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p>
-    </footer>
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
 </body>
 </html>

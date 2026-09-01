@@ -1,0 +1,112 @@
+{
+  "baseRows": [
+    {
+      "rosterDate": "2026-09-01",
+      "employeeName": "Michael",
+      "sourceSlotEmployee": "Michael",
+      "itemType": "shift",
+      "location": "Achterveld",
+      "startTime": "07:00",
+      "endTime": "12:00",
+      "status": "Werkdienst",
+      "sourceHash": "hash-michael-morning"
+    },
+    {
+      "rosterDate": "2026-09-01",
+      "employeeName": "Leroy",
+      "sourceSlotEmployee": "Leroy",
+      "itemType": "shift",
+      "location": "Achterveld",
+      "startTime": "16:00",
+      "endTime": "21:30",
+      "status": "Werkdienst",
+      "sourceHash": "hash-leroy-evening"
+    },
+    {
+      "rosterDate": "2026-09-02",
+      "employeeName": "Leon",
+      "sourceSlotEmployee": "Leon",
+      "itemType": "shift",
+      "location": "Barneveld",
+      "startTime": "07:00",
+      "endTime": "12:00",
+      "status": "Werkdienst",
+      "sourceHash": "hash-leon-morning"
+    }
+  ],
+  "overrides": [
+    {
+      "id": 1,
+      "sourceHash": "hash-michael-morning",
+      "action": "replace",
+      "rosterDate": "2026-09-01",
+      "employeeName": "Dysianne",
+      "sourceSlotEmployee": "Michael",
+      "itemType": "shift",
+      "location": "Achterveld",
+      "startTime": "07:00",
+      "endTime": "12:00",
+      "status": "Werkdienst",
+      "note": "Overgenomen dienst van Michael",
+      "isDeleted": 0
+    },
+    {
+      "id": 2,
+      "sourceHash": "hash-leroy-evening",
+      "action": "remove",
+      "rosterDate": "2026-09-01",
+      "employeeName": "Leroy",
+      "sourceSlotEmployee": "Leroy",
+      "itemType": "shift",
+      "location": "Achterveld",
+      "startTime": "16:00",
+      "endTime": "21:30",
+      "status": "Vervallen",
+      "isDeleted": 1
+    },
+    {
+      "id": 3,
+      "sourceHash": null,
+      "action": "add",
+      "rosterDate": "2026-09-03",
+      "employeeName": "OPEN",
+      "sourceSlotEmployee": "OPEN",
+      "itemType": "shift",
+      "location": "Voorthuizen",
+      "startTime": "18:00",
+      "endTime": "21:30",
+      "status": "Openstaande dienst",
+      "note": "Nog in te vullen",
+      "isDeleted": 0
+    }
+  ],
+  "expected": [
+    {
+      "rosterDate": "2026-09-01",
+      "employeeName": "Dysianne",
+      "location": "Achterveld",
+      "startTime": "07:00",
+      "endTime": "12:00",
+      "status": "Werkdienst",
+      "isOverride": true
+    },
+    {
+      "rosterDate": "2026-09-02",
+      "employeeName": "Leon",
+      "location": "Barneveld",
+      "startTime": "07:00",
+      "endTime": "12:00",
+      "status": "Werkdienst",
+      "isOverride": false
+    },
+    {
+      "rosterDate": "2026-09-03",
+      "employeeName": "OPEN",
+      "location": "Voorthuizen",
+      "startTime": "18:00",
+      "endTime": "21:30",
+      "status": "Openstaande dienst",
+      "isOverride": true
+    }
+  ]
+}

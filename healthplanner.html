@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="healthplanner.css?v=20260730-alpha2">
+    <script src="auth-ui.js?v=20260730-alpha2" defer></script>
+    <script src="healthplanner.js?v=20260730-alpha2" defer></script>
+    <title>Sport Society - HealthPlanner</title>
+</head>
+<body>
+    <header>
+        <h1>HealthPlanner-dashboard</h1>
+        <p>Verkoop, leads, coaching, bezoek en ledenbehoud per vestiging</p>
+    </header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="healthplanner-page">
+        <section class="hp-hero">
+            <div>
+                <p class="hp-kicker">Managementinzichten</p>
+                <h2>Dagelijkse rapportage historisch vergelijken</h2>
+                <p>De bron bevat per vestiging waarden voor <strong>Gisteren</strong> en <strong>Maand tot rapportdatum</strong>. Momentopnamen worden niet stilzwijgend bij elkaar opgeteld.</p>
+            </div>
+            <aside class="hp-source-card">
+                <span id="hp-source-status" class="hp-status">Bron laden</span>
+                <strong id="hp-source-date">Nog geen rapportdatum</strong>
+                <p id="hp-source-meta">Importinformatie wordt opgehaald.</p>
+            </aside>
+        </section>
+
+        <section class="hp-panel hp-filter-panel" aria-labelledby="hp-filter-title">
+            <div class="hp-panel-heading">
+                <div>
+                    <p class="hp-kicker">Selectie</p>
+                    <h2 id="hp-filter-title">Periode en vestiging</h2>
+                </div>
+                <button type="button" id="hp-refresh" class="admin-button">Verversen</button>
+            </div>
+            <form id="hp-filters" class="hp-filters">
+                <label>Vanaf
+                    <input type="date" id="hp-from" name="from">
+                </label>
+                <label>Tot en met
+                    <input type="date" id="hp-to" name="to">
+                </label>
+                <label>Vestiging
+                    <select id="hp-location" name="location">
+                        <option value="">Alle toegestane vestigingen</option>
+                    </select>
+                </label>
+                <label>Domein
+                    <select id="hp-domain" name="domain">
+                        <option value="">Alle domeinen</option>
+                    </select>
+                </label>
+            </form>
+        </section>
+
+        <section class="hp-kpi-grid" id="hp-kpis" aria-label="HealthPlanner-kerncijfers">
+            <article class="hp-kpi"><span>Status</span><strong>…</strong><p>Gegevens worden geladen.</p></article>
+        </section>
+
+        <section class="hp-layout">
+            <article class="hp-panel">
+                <div class="hp-panel-heading">
+                    <div>
+                        <p class="hp-kicker">Laatste rapportage</p>
+                        <h2>Gisteren versus maand</h2>
+                    </div>
+                    <span class="hp-count" id="hp-row-count">0 regels</span>
+                </div>
+                <div id="hp-latest" class="hp-latest" aria-live="polite">
+                    <p class="hp-state">Gegevens laden...</p>
+                </div>
+            </article>
+
+            <aside class="hp-panel">
+                <div class="hp-panel-heading">
+                    <div>
+                        <p class="hp-kicker">Bronkwaliteit</p>
+                        <h2>Import en definities</h2>
+                    </div>
+                </div>
+                <dl class="hp-source-list" id="hp-source-list">
+                    <div><dt>Import</dt><dd>Nog niet geladen</dd></div>
+                </dl>
+                <p class="hp-note">Percentages, duurwaarden en momentopnamen houden hun eigen eenheid. Een expliciete nul blijft 0; een lege bronwaarde wordt niet als nul ingevuld.</p>
+            </aside>
+        </section>
+
+        <section class="hp-panel">
+            <div class="hp-panel-heading">
+                <div>
+                    <p class="hp-kicker">Historie</p>
+                    <h2>Alle ingelezen metingen</h2>
+                </div>
+            </div>
+            <div class="hp-table-wrap">
+                <table class="hp-table">
+                    <thead>
+                        <tr>
+                            <th>Rapportdatum</th>
+                            <th>Vestiging</th>
+                            <th>Venster</th>
+                            <th>Domein</th>
+                            <th>KPI</th>
+                            <th>Waarde</th>
+                            <th>Bron</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hp-history">
+                        <tr><td colspan="7">Gegevens laden...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+</body>
+</html>

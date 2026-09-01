@@ -1,0 +1,10 @@
+{
+  "cases": [
+    { "name": "geen medewerker onder harde norm", "employeeCount": 0, "hardMinimum": 1, "advisedMinimum": 2, "expected": "under" },
+    { "name": "enkele bezetting kwetsbaar", "employeeCount": 1, "hardMinimum": 1, "advisedMinimum": 2, "expected": "vulnerable" },
+    { "name": "twee medewerkers voldoende", "employeeCount": 2, "hardMinimum": 1, "advisedMinimum": 2, "expected": "sufficient" },
+    { "name": "avondminimum twee maakt enkele bezetting onderbezet", "employeeCount": 1, "hardMinimum": 2, "advisedMinimum": 2, "expected": "under" },
+    { "name": "volle les markeert voldoende bezetting kwetsbaar", "employeeCount": 2, "hardMinimum": 1, "advisedMinimum": 2, "fullOrWaitlist": true, "expected": "vulnerable" },
+    { "name": "uitzonderingsvenster onderdrukt leskwetsbaarheid", "employeeCount": 1, "hardMinimum": 1, "advisedMinimum": 1, "fullOrWaitlist": true, "suppressLessonVulnerability": true, "expected": "sufficient" }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "shifts": [
+    { "employeeName": "Michael", "startTime": "07:00", "endTime": "12:00", "expectedHours": 5 },
+    { "employeeName": "Michael", "startTime": "18:30", "endTime": "21:00", "expectedHours": 2.5 },
+    { "employeeName": "Leon", "startTime": "22:00", "endTime": "02:00", "expectedHours": 4 },
+    { "employeeName": "Dysianne", "startTime": "08:30", "endTime": "12:00", "breakMinutes": 30, "expectedHours": 3 }
+  ],
+  "totals": {
+    "Michael": 7.5,
+    "Leon": 4,
+    "Dysianne": 3
+  },
+  "employmentVisibility": [
+    { "month": "2026-07", "status": { "isActive": true, "activeFrom": "2026-01-01", "activeUntil": "2026-07-17" }, "expected": true },
+    { "month": "2026-08", "status": { "isActive": true, "activeFrom": "2026-01-01", "activeUntil": "2026-07-17" }, "expected": false },
+    { "month": "2026-09", "status": { "isActive": true, "activeFrom": "2026-09-15", "activeUntil": null }, "expected": true },
+    { "month": "2026-08", "status": { "isActive": true, "activeFrom": "2026-09-15", "activeUntil": null }, "expected": false }
+  ]
+}

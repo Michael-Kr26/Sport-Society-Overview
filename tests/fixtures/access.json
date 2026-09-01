@@ -1,0 +1,17 @@
+{
+  "pageCases": [
+    { "role": "guest", "minimumRole": "guest", "expected": true },
+    { "role": "guest", "minimumRole": "manager", "expected": false },
+    { "role": "employee", "minimumRole": "guest", "expected": true },
+    { "role": "employee", "minimumRole": "manager", "expected": false },
+    { "role": "manager", "minimumRole": "manager", "expected": true },
+    { "role": "manager", "minimumRole": "admin", "expected": false },
+    { "role": "admin", "minimumRole": "manager", "expected": true },
+    { "role": "admin", "minimumRole": "admin", "expected": true }
+  ],
+  "managerLocationCases": [
+    { "profileLocation": "Achterveld", "requestedLocation": "Achterveld", "expected": true },
+    { "profileLocation": "Achterveld", "requestedLocation": "Barneveld", "expected": false },
+    { "profileLocation": null, "requestedLocation": "Achterveld", "expected": false }
+  ]
+}
