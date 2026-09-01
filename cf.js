@@ -184,6 +184,7 @@ async function loadEmployees() {
     try {
         const response = await fetch('/api/change-form/employees');
         const employees = await response.json().catch(() => []);
+        if (response.status === 401 || response.status === 403) return;
         if (!response.ok || !Array.isArray(employees)) return;
         employeeDatalist.innerHTML = employees
             .map((employee) => `<option value="${escapeHtml(employee.displayName || employee)}"></option>`)
@@ -292,7 +293,7 @@ form?.addEventListener('submit', async (event) => {
     submitButton.textContent = cmlOnly ? 'CML-notitie opslaan...' : 'Rooster en CML bijwerken...';
 
     try {
-        const response = await fetch('/api/changes-with-roster', {
+        const response = await fetch('/api/change-workflow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newChange)
