@@ -7,8 +7,10 @@ const { migrateR1Masterdata } = require('./lib/masterdata-r1b');
 const { migrateRosterData } = require('./lib/roster-data');
 const { migrateRosterDomain } = require('./lib/roster-domain');
 
-const databasePath = process.argv[2]
-    ? path.resolve(process.argv[2])
+const quiet = process.argv.includes('--quiet');
+const databaseArgument = process.argv.slice(2).find((argument) => argument !== '--quiet');
+const databasePath = databaseArgument
+    ? path.resolve(databaseArgument)
     : path.join(__dirname, 'data', 'sport-society.db');
 
 fs.mkdirSync(path.dirname(databasePath), { recursive: true });
@@ -24,9 +26,11 @@ function close() {
         await migrateR1Masterdata(db);
         await migrateRosterData(db);
         const report = await migrateRosterDomain(db);
-        console.log('R3 roosterdomain voorbereid.');
-        console.log(`Pattern-exceptions aanwezig: ${report.patternExceptions}.`);
-        console.log('R3 gebruikt de R2-datalaag; beschikbaarheid mag nog leeg blijven.');
+        if (!quiet) {
+            console.log('R3 roosterdomain voorbereid.');
+            console.log(`Pattern-exceptions aanwezig: ${report.patternExceptions}.`);
+            console.log('R3 gebruikt de R2-datalaag; beschikbaarheid mag nog leeg blijven.');
+        }
     } finally {
         await close();
     }
