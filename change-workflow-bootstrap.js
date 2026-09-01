@@ -3,6 +3,7 @@
 const path = require('path');
 const crypto = require('crypto');
 const sqlite3 = require('sqlite3').verbose();
+const { importLegacyRosterToCanonical } = require('./lib/legacy-roster-adapter');
 
 const expressPath = require.resolve('express');
 const originalExpress = require('express');
@@ -371,7 +372,7 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
             overrideId = overrideResult.lastID;
 
             if (sourceItem?.sourceOverrideId) {
-                await run(`UPDATE roster_overrides SET is_deleted=1, updated_at=CURRENT_TIMESTAMP WHERE id=?`, [sourceItem.sourceOverrideId]);
+                await run('UPDATE roster_overrides SET is_deleted=1, updated_at=CURRENT_TIMESTAMP WHERE id=?', [sourceItem.sourceOverrideId]);
             }
         }
 
@@ -391,22 +392,62 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
         transactionStarted = false;
 
         const focusWeekStart = getIsoWeekStart(change.date);
-        const rosterParams = new URLSearchParams({ focusDate: change.date, location: change.location });
+        let canonicalSync = { attempted: false, status: 'not_applicable', relevantActions: [] };
+        if (override) {
+            canonicalSync.attempted = true;
+            try {
+                const report = await importLegacyRosterToCanonical(db, { actorUserId: req.changeUser.id });
+                const locationNames = [...new Set([change.location, sourceItem?.location, override.location].filter(Boolean))];
+                const locationRows = locationNames.length
+                    ? await all(`SELECT id, name FROM locations WHERE name IN (${locationNames.map(() => '?').join(',')})`, locationNames)
+                    : [];
+                const locationIds = new Set(locationRows.map((row) => row.id));
+                const relevantPeriods = report.periods.filter((period) => (
+                    period.weekStart === focusWeekStart && locationIds.has(period.locationId)
+                ));
+                canonicalSync = {
+                    attempted: true,
+                    status: relevantPeriods.some((period) => period.action === 'protected_draft') ? 'attention' : 'synced',
+                    parityStatus: report.parityStatus,
+                    importUid: report.importUid,
+                    relevantActions: relevantPeriods.map((period) => period.action)
+                };
+            } catch (canonicalError) {
+                console.error('Canonical rooster-sync na wijziging mislukt:', canonicalError);
+                canonicalSync = {
+                    attempted: true,
+                    status: 'failed',
+                    message: canonicalError.message
+                };
+            }
+        }
+
+        const rosterParams = new URLSearchParams({ focusDate: change.date, location: override?.location || change.location });
         if (override?.employeeName && override.employeeName !== 'OPEN') rosterParams.set('name', override.employeeName);
 
+        let message;
+        if (!override) {
+            message = 'CML-notitie is opgeslagen. Het rooster is niet aangepast.';
+        } else if (canonicalSync.status === 'failed') {
+            message = 'Wijziging is geregistreerd in het CML en operationele rooster. De V2-weekplanner kon niet automatisch worden bijgewerkt; controleer de planner.';
+        } else if (canonicalSync.status === 'attention') {
+            message = 'Wijziging is geregistreerd in het CML en operationele rooster. De V2-week bevat handmatige conceptwijzigingen en is daarom niet automatisch overschreven.';
+        } else {
+            message = 'Wijziging is direct verwerkt in het rooster, de V2-weekplanner en het CML.';
+        }
+
         return res.status(201).json({
-            message: override
-                ? 'Wijziging is direct verwerkt in het rooster en geregistreerd in het CML.'
-                : 'CML-notitie is opgeslagen. Het rooster is niet aangepast.',
+            message,
             id: result.lastID,
             rosterUpdated: Boolean(override),
             rosterOverrideId: overrideId,
+            canonicalSync,
             correlationId,
             rosterUrl: `roster.html?${rosterParams.toString()}`,
             cmlUrl: `cml.html?focusWeekStart=${encodeURIComponent(focusWeekStart)}&changeId=${result.lastID}`
         });
     } catch (error) {
-        if (transactionStarted) await exec('ROLLBACK;').catch(() => {});
+        if (transactionStarted) await exec('ROLLBACK').catch(() => {});
         console.error(error);
         return res.status(error.status || 500).json({
             message: error.status ? error.message : 'Wijziging kon niet worden verwerkt.'
