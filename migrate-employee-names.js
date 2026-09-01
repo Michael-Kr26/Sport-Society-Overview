@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
+const quiet = process.argv.includes('--quiet');
 const dataDirectory = path.join(__dirname, 'data');
 fs.mkdirSync(dataDirectory, { recursive: true });
 const db = new sqlite3.Database(path.join(dataDirectory, 'sport-society.db'));
@@ -247,17 +248,19 @@ async function main() {
         await seedContracts();
         await run('COMMIT');
 
-        const lucas = await get(
-            `SELECT employee_name AS employeeName, contract_type AS contractType,
-                    weekly_contract_hours AS weeklyContractHours,
-                    active_from AS activeFrom
-             FROM hour_employee_settings
-             WHERE employee_name=? COLLATE NOCASE`,
-            [NEW_NAME]
-        );
-        console.log(`Naamsmigratie voltooid: ${OLD_NAME} → ${NEW_NAME}.`);
-        console.log(`Bijgewerkte rooster-/profielverwijzingen: ${changedReferences}.`);
-        if (lucas) console.table([lucas]);
+        if (!quiet) {
+            const lucas = await get(
+                `SELECT employee_name AS employeeName, contract_type AS contractType,
+                        weekly_contract_hours AS weeklyContractHours,
+                        active_from AS activeFrom
+                 FROM hour_employee_settings
+                 WHERE employee_name=? COLLATE NOCASE`,
+                [NEW_NAME]
+            );
+            console.log(`Naamsmigratie voltooid: ${OLD_NAME} → ${NEW_NAME}.`);
+            console.log(`Bijgewerkte rooster-/profielverwijzingen: ${changedReferences}.`);
+            if (lucas) console.table([lucas]);
+        }
     } catch (error) {
         await run('ROLLBACK').catch(() => {});
         throw error;
