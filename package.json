@@ -11,7 +11,7 @@
     "test:rosterdata": "node --test tests/roster-data.test.js",
     "test:rosterdomain": "node --test tests/roster-domain.test.js",
     "test:legacyadapter": "node --test tests/legacy-roster-adapter.test.js",
-    "test:rosterplanner": "node --test tests/roster-planner.test.js",
+    "test:rosterplanner": "node --test tests/roster-planner.test.js tests/r5-transition-protection.test.js",
     "test:restore": "node --test tests/database-restore.test.js",
     "start": "node migrate-roster-v2.js && node migrate-roster-domain.js && node migrate-employee-names.js && node migrate-hours.js && node roster-planner-bootstrap.js",
     "migrate:masterdata": "node migrate-masterdata.js",
