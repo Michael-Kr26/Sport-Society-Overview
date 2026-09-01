@@ -19,3 +19,4 @@ run('link-roster-hours.js');
 run('import-hour-summaries.js', { includeSnapshot: true });
 run('normalize-zero-hour-summaries.js');
 run('migrate-employee-names.js', { includeWorkbook: false });
+run('import-roster-canonical.js', { includeWorkbook: false });
