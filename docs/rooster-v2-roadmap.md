@@ -152,3 +152,33 @@ De goedgekeurde nieuwe frontend van het wijzigingsformulier blijft behouden. De 
 R3 bevat de **domeinkern** van publiceren. R6 blijft nodig voor de volledige operationele publicatieflow: API/UI-orkestratie, horizoncontrole, changed-since-last-publication, CML-projectie/notificaties en éénklik urgente/structurele republish.
 
 **Status: R3 afgerond.**
+
+## R4 — legacy importadapter
+
+R4 maakt van de bestaande Excel-/legacybron gecontroleerde canonical drafts zonder Excel publicatierechten te geven.
+
+- [x] adapter leest het effectieve legacy-rooster uit `roster_items + roster_overrides`;
+- [x] alleen data vanaf de betrouwbare baseline `2026-09-01` wordt naar V2 gemapt;
+- [x] employee- en locatiekoppeling gebruikt uitsluitend R1-masterdata/aliases en verzint niets;
+- [x] legacy diensten worden per locatie/week naar canonical shifts met UTC-tijden vertaald;
+- [x] legacy shifts krijgen stabiele `LEGACY:*` UID en bronherleidbaarheid;
+- [x] legacy diensttype wordt veilig als `floor` gemapt omdat Excel administratie/stage niet betrouwbaar onderscheidt;
+- [x] ziekte/vakantie/TVT/overige niet-shifts worden apart gestaged met bronpayload;
+- [x] unresolved medewerkers/locaties/tijden worden persistent gerapporteerd;
+- [x] dezelfde import is idempotent en maakt geen onnodige extra versies;
+- [x] een volledig import-managed draft kan automatisch worden gereconcilieerd;
+- [x] een draft met handmatige/pattern-data wordt `protected_draft` en niet overschreven;
+- [x] wijzigingen/verwijderingen uit Excel worden in een veilige import-draft weerspiegeld;
+- [x] als published al gelijk is aan Excel wordt geen overbodige draft gemaakt;
+- [x] als published afwijkt wordt uitsluitend een nieuwe draft met `based_on_version_id` gemaakt;
+- [x] published versies/shifts worden door de adapter nooit gemuteerd;
+- [x] iedere import schrijft een persistent parityrapport per batch en per locatie/week;
+- [x] `npm run report:roster-parity` toont het laatste parityrapport;
+- [x] de bestaande `import:roster`-keten voert de canonical adapter als laatste stap uit;
+- [x] R4-tests zijn opgenomen in `npm test`.
+
+Een paritystatus `attention` is bewust geen stille correctie en ook geen publicatieblokkade vanuit Excel: de import is technisch gelukt, maar unresolved items of beschermde drafts moeten door een beheerder worden bekeken.
+
+De goedgekeurde change-form frontend blijft in R4 intact. Omdat de adapter ook `roster_overrides` leest, zijn via het formulier gemaakte operationele wijzigingen wel zichtbaar in de canonical overgangslaag. De daadwerkelijke formulierwrite wordt pas in de planner/publicatieflow volledig naar canonical drafts omgezet.
+
+**Status: R4 afgerond zodra de definitieve R4-commit groen is in GitHub Actions.**
