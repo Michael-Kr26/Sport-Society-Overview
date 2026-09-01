@@ -3,7 +3,7 @@
 ## Status
 
 - R1A: **afgerond — CI groen**
-- R1B: **geïmplementeerd — wacht op CI-validatie**
+- R1B: **afgerond — CI groen**
 
 De nieuwe relationele masterdata staat naast de legacy-tabellen. Bestaande rooster-, staffing- en urenbusinesslogica blijft voorlopig ongewijzigd.
 
@@ -123,3 +123,5 @@ De migratie is idempotent en behandelt `2026-09-01` als bronbaseline, niet als e
 Beschikbaarheid is **geen onderdeel van R1B**. Er worden geen werkdagen, dagdelen of tijdvakken gegokt of afgeleid uit contracturen, vestiging of huidig rooster.
 
 De structurele en incidentele beschikbaarheid wordt in R2 als apart datamodel toegevoegd en kan daarna worden gevuld zodra de volledige terugkoppeling van medewerkers beschikbaar is.
+
+**R1 is hiermee technisch afgerond.**
