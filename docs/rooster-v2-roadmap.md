@@ -79,8 +79,8 @@ R1 wordt in twee delen uitgevoerd zodat de nieuwe relationele structuur niet hoe
 - [x] accountrol-afwijkingen worden gerapporteerd maar niet stil aangepast;
 - [x] opnieuw migreren overschrijft latere handmatige correcties niet;
 - [x] beschikbaarheid blijft expliciet leeg totdat medewerkers die hebben teruggekoppeld;
-- [ ] GitHub Actions groen op de R1B-implementatie.
+- [x] GitHub Actions groen op de R1B-implementatie.
 
 Historische contractstartdata zijn **niet vereist**. Bestaande medewerkers hebben `starts_on = NULL` zolang die oude startdatum onbekend is; `known_from = 2026-09-01` legt alleen vast vanaf wanneer de gegevens voor Rooster V2 betrouwbaar zijn.
 
-**Status: R1A afgerond; R1B geïmplementeerd en wacht op CI-validatie.**
+**Status: R1 afgerond.**
