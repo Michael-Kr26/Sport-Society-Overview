@@ -122,6 +122,6 @@ Technische acceptatie:
 - [x] database-triggers maken published versions/shifts immutable;
 - [x] persistente queue voor automatische patternpropagatie;
 - [x] R2-tests toegevoegd;
-- [ ] GitHub Actions groen op de R2-implementatie.
+- [x] GitHub Actions groen op de R2-implementatie.
 
-**Status: R2 geïmplementeerd en wacht op CI-validatie.**
+**Status: R2 afgerond.**
