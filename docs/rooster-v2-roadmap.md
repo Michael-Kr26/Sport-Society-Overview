@@ -65,10 +65,11 @@ R1 wordt in twee delen uitgevoerd zodat de nieuwe relationele structuur niet hoe
 - [x] Manager/Admin access-seeds vastgelegd zonder bestaande rollen stil te wijzigen;
 - [x] planningsbaseline 2026-09-01 vastgelegd;
 - [x] onbekende historische startdata mogen `NULL` blijven;
-- [x] masterdatamigratie en rapportage zijn idempotent/testbaar.
+- [x] masterdatamigratie en rapportage zijn idempotent/testbaar;
+- [x] GitHub Actions is groen op de R1A-implementatie.
 
 ### R1B — medewerkers vullen en koppelen
 
 R1B volgt zodra de actuele medewerkersmasterdata beschikbaar is. Historische contractstartdata zijn **niet vereist**. Voor bestaande medewerkers mag de eerste betrouwbare status beginnen op `2026-09-01`; oudere gegevens kunnen later handmatig worden aangevuld.
 
-**Status: R1A gereed voor CI; R1B nog open.**
+**Status: R1A afgerond; R1B nog open.**
