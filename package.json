@@ -10,7 +10,7 @@
     "test:masterdata": "node --test tests/masterdata.test.js tests/masterdata-r1b.test.js",
     "test:rosterdata": "node --test tests/roster-data.test.js",
     "test:restore": "node --test tests/database-restore.test.js",
-    "start": "node migrate-roster-v2.js && node migrate-employee-names.js && node migrate-hours.js && node healthplanner-bootstrap.js",
+    "start": "node migrate-roster-v2.js && node migrate-employee-names.js && node migrate-hours.js && node change-workflow-bootstrap.js",
     "migrate:masterdata": "node migrate-masterdata.js",
     "migrate:rosterdata": "node migrate-roster-v2.js",
     "report:masterdata": "node scripts/report-masterdata.js",
