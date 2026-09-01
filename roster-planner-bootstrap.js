@@ -26,6 +26,15 @@ const db = new sqlite3.Database(DB_PATH);
 db.configure('busyTimeout', 5000);
 const plannerReady = createRosterPlanner(db);
 
+function run(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function onRun(error) {
+            if (error) reject(error);
+            else resolve({ lastID: this.lastID, changes: this.changes });
+        });
+    });
+}
+
 function get(sql, params = []) {
     return new Promise((resolve, reject) => {
         db.get(sql, params, (error, row) => error ? reject(error) : resolve(row || null));
@@ -60,6 +69,24 @@ async function getAuthenticatedUser(req) {
          LIMIT 1`,
         [hashSessionToken(token)]
     );
+}
+
+async function markGeneratorException({ versionId, shiftUid, userId, type, note }) {
+    if (!versionId || !shiftUid) return;
+    await run(`INSERT INTO roster_pattern_exceptions
+        (version_id, shift_uid, pattern_id, exception_type, note, created_by_user_id)
+        VALUES (?, ?, NULL, ?, ?, ?)
+        ON CONFLICT(version_id, shift_uid) DO UPDATE SET
+            exception_type=excluded.exception_type,
+            note=excluded.note,
+            created_by_user_id=excluded.created_by_user_id,
+            updated_at=CURRENT_TIMESTAMP`, [
+        versionId,
+        shiftUid,
+        type,
+        note || 'Handmatige uitzondering via weekplanner',
+        userId
+    ]);
 }
 
 function route(handler) {
@@ -119,10 +146,11 @@ app.post('/api/roster-planner/shifts', route(async (req, res, user, planner) => 
 }));
 
 app.patch('/api/roster-planner/shifts/:shiftUid', route(async (req, res, user, planner) => {
+    const shiftUid = decodeURIComponent(req.params.shiftUid);
     const context = await planner.updateShift({
         userId: user.id,
         versionId: req.body.versionId,
-        shiftUid: decodeURIComponent(req.params.shiftUid),
+        shiftUid,
         expectedRevision: req.body.expectedRevision,
         employeeId: req.body.employeeId,
         date: req.body.date,
@@ -131,16 +159,33 @@ app.patch('/api/roster-planner/shifts/:shiftUid', route(async (req, res, user, p
         shiftType: req.body.shiftType,
         note: req.body.note
     });
+    await markGeneratorException({
+        versionId: req.body.versionId,
+        shiftUid,
+        userId: user.id,
+        type: 'override',
+        note: 'Handmatig gewijzigd via weekplanner; niet door legacy/pattern generator overschrijven.'
+    });
     res.json(context);
 }));
 
 app.delete('/api/roster-planner/shifts/:shiftUid', route(async (req, res, user, planner) => {
+    const shiftUid = decodeURIComponent(req.params.shiftUid);
+    const versionId = req.body.versionId;
     const context = await planner.removeShift({
         userId: user.id,
-        versionId: req.body.versionId,
-        shiftUid: decodeURIComponent(req.params.shiftUid),
+        versionId,
+        shiftUid,
         expectedRevision: req.body.expectedRevision,
         reason: String(req.body.reason || '').trim().slice(0, 500) || null
+    });
+    await markGeneratorException({
+        versionId,
+        shiftUid,
+        userId: user.id,
+        type: 'suppress',
+        note: String(req.body.reason || '').trim().slice(0, 500)
+            || 'Handmatig verwijderd via weekplanner; niet door legacy/pattern generator terugplaatsen.'
     });
     res.json(context);
 }));
