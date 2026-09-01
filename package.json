@@ -7,7 +7,7 @@
     "test": "npm run test:syntax && npm run test:contracts && npm run test:masterdata && npm run test:restore",
     "test:syntax": "node scripts/check-javascript.js",
     "test:contracts": "node --test tests/legacy-contracts.test.js",
-    "test:masterdata": "node --test tests/masterdata.test.js",
+    "test:masterdata": "node --test tests/masterdata.test.js tests/masterdata-r1b.test.js",
     "test:restore": "node --test tests/database-restore.test.js",
     "start": "node migrate-masterdata.js && node migrate-employee-names.js && node migrate-hours.js && node healthplanner-bootstrap.js",
     "migrate:masterdata": "node migrate-masterdata.js",
