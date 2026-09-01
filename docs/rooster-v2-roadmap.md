@@ -10,12 +10,12 @@
 |---|---|---|
 | R0 | Contract- en testbasis | roosterfixtures, role/access-tests, uren- en staffingfixtures, restoretest |
 | R1 | Masterdata normaliseren | locations, employees, employments, contract terms, user↔employee, user location scopes |
-| R2 | Nieuwe rooster-datalaag | periods/versions, shifts/patterns, publications/audit, indexes, optimistic locking |
+| R2 | Nieuwe rooster-datalaag | periods/versions, shifts/patterns, availability, publications/audit, indexes, optimistic locking |
 | R3 | Roosterdomainservice | Pattern, Draft, Validation, Publication, Query, Hours en Authorization services |
 | R4 | Legacy importadapter | Excel → canonical draft, parityrapport, nooit direct publiceren |
 | R5 | Nieuwe weekplanner | locatie/week, shift CRUD, open shifts, conflicts, mobile-first, uren |
 | R6 | Publicatiemotor | validate, diff, publish, history, changed-since-last-publication, urgent publish |
-| R7 | Rechten | Employee eigen rooster, Manager vestigingsscope, Admin organisatiebreed, Guest default deny |
+| R7 | Rechten | Employee volledig gepubliceerd rooster, Manager edit-scope per vestiging, Admin organisatiebreed, Guest default deny |
 | R8 | Staffing + uren | coverage rules uit DB, backend staffing engine, planned hours uit published shifts, Excel shadow parity |
 | R9 | Export | ExcelJS, week-/maandexport, Graph upload, exportlog/checksum, noodrestore |
 | R10 | Cutover | rooster.sportsocietyoverview.net, database officiële roosterbron, feature flags, monitoring |
@@ -70,6 +70,17 @@ R1 wordt in twee delen uitgevoerd zodat de nieuwe relationele structuur niet hoe
 
 ### R1B — medewerkers vullen en koppelen
 
-R1B volgt zodra de actuele medewerkersmasterdata beschikbaar is. Historische contractstartdata zijn **niet vereist**. Voor bestaande medewerkers mag de eerste betrouwbare status beginnen op `2026-09-01`; oudere gegevens kunnen later handmatig worden aangevuld.
+- [x] 22 actuele medewerkers als canonieke septemberbaseline vastgelegd;
+- [x] contract/flex en huidige contractomvang vanaf `2026-09-01` vastgelegd;
+- [x] primaire vestiging per medewerker vastgelegd;
+- [x] 34 inzetbaarheidskoppelingen vastgelegd;
+- [x] Lucas Leeuwis wordt canoniek `Lucas L`;
+- [x] exact herkenbare user-accounts kunnen aan employees worden gekoppeld;
+- [x] accountrol-afwijkingen worden gerapporteerd maar niet stil aangepast;
+- [x] opnieuw migreren overschrijft latere handmatige correcties niet;
+- [x] beschikbaarheid blijft expliciet leeg totdat medewerkers die hebben teruggekoppeld;
+- [ ] GitHub Actions groen op de R1B-implementatie.
 
-**Status: R1A afgerond; R1B nog open.**
+Historische contractstartdata zijn **niet vereist**. Bestaande medewerkers hebben `starts_on = NULL` zolang die oude startdatum onbekend is; `known_from = 2026-09-01` legt alleen vast vanaf wanneer de gegevens voor Rooster V2 betrouwbaar zijn.
+
+**Status: R1A afgerond; R1B geïmplementeerd en wacht op CI-validatie.**
