@@ -443,7 +443,7 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
             rosterOverrideId: overrideId,
             canonicalSync,
             correlationId,
-            rosterUrl: `roster.html?${rosterParams.toString()}`,
+            rosterUrl: `planner.html?${rosterParams.toString()}`,
             cmlUrl: `cml.html?focusWeekStart=${encodeURIComponent(focusWeekStart)}&changeId=${result.lastID}`
         });
     } catch (error) {
