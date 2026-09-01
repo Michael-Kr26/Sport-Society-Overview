@@ -2,6 +2,8 @@
 
 ## Status
 
+**R2 afgerond — CI groen.**
+
 R2 bouwt de relationele roosterfundering bovenop R1. De bestaande V1.5-roosterbusinesslogica blijft voorlopig actief; R2 introduceert nog geen nieuwe planner of publicatieservice.
 
 ## Vaste functionele keuzes
@@ -135,4 +137,4 @@ R2 is gereed wanneer:
 - [x] automatische patternpropagatie een persistente queue heeft;
 - [x] batch-publicaties meerdere locaties en weken kunnen koppelen;
 - [x] CML-zichtbaarheid een expliciete data-hook heeft;
-- [ ] GitHub Actions groen op de R2-implementatie.
+- [x] GitHub Actions groen op de R2-implementatie.
