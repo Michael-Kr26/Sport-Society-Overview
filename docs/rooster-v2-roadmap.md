@@ -181,4 +181,4 @@ Een paritystatus `attention` is bewust geen stille correctie en ook geen publica
 
 De goedgekeurde change-form frontend blijft in R4 intact. Omdat de adapter ook `roster_overrides` leest, zijn via het formulier gemaakte operationele wijzigingen wel zichtbaar in de canonical overgangslaag. De daadwerkelijke formulierwrite wordt pas in de planner/publicatieflow volledig naar canonical drafts omgezet.
 
-**Status: R4 afgerond zodra de definitieve R4-commit groen is in GitHub Actions.**
+**Status: R4 afgerond.**
