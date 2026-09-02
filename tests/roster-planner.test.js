@@ -6,6 +6,7 @@ const sqlite3 = require('sqlite3').verbose();
 const { migrateR1Masterdata } = require('../lib/masterdata-r1b');
 const { migrateRosterData } = require('../lib/roster-data');
 const { createRosterDomain, migrateRosterDomain } = require('../lib/roster-domain');
+const { migrateRosterAccess } = require('../lib/roster-access');
 const { createRosterPlanner } = require('../lib/roster-planner');
 
 function database() {
@@ -176,32 +177,30 @@ test('R5 optimistic locking weigert een mutatie met verouderde revision', async 
     }
 });
 
-test('R5 Manager kan alleen eigen vestiging bewerken maar ziet locaties organisatiebreed', async () => {
+test('R7 Manager ziet gepubliceerd rooster maar kan de Planner niet gebruiken of wijzigen', async () => {
     const db = await readyDb();
     try {
-        const managerId = await createUser(db, 'r5-manager', 'R5 Manager', 'manager');
+        const managerId = await createUser(db, 'r7-manager', 'R7 Manager', 'manager');
         const bve = await locationId(db, 'BVE');
         await run(db, `INSERT INTO user_location_scopes
             (user_id, location_id, can_edit_roster, can_publish_roster, effective_from)
             VALUES (?, ?, 1, 0, '2026-09-01')`, [managerId, bve]);
+        await migrateRosterAccess(db);
+
         const planner = await createRosterPlanner(db);
         const bveContext = await planner.buildContext({
             userId: managerId,
             locationCode: 'BVE',
             weekStart: '2026-09-07'
         });
-        assert.equal(bveContext.permissions.canEdit, true);
+        assert.equal(bveContext.permissions.canEdit, false);
         assert.equal(bveContext.permissions.canPublish, false);
+        assert.equal(bveContext.permissions.canViewDraft, false);
         assert.equal(bveContext.locations.length, 5);
+        assert.ok(bveContext.locations.every((location) => location.canEdit === false));
 
-        const aveContext = await planner.buildContext({
-            userId: managerId,
-            locationCode: 'AVE',
-            weekStart: '2026-09-07'
-        });
-        assert.equal(aveContext.permissions.canEdit, false);
         await assert.rejects(
-            planner.ensureDraft({ userId: managerId, locationCode: 'AVE', weekStart: '2026-09-07' }),
+            planner.ensureDraft({ userId: managerId, locationCode: 'BVE', weekStart: '2026-09-07' }),
             (error) => error && error.code === 'ROSTER_EDIT_FORBIDDEN'
         );
     } finally {
