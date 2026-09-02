@@ -15,7 +15,7 @@
 | R4 | Legacy importadapter | Excel → canonical draft, parityrapport, nooit direct publiceren |
 | R5 | Nieuwe weekplanner | locatie/week, shift CRUD, open shifts, conflicts, mobile-first, uren |
 | R6 | Publicatiemotor | validate, diff, publish, history, changed-since-last-publication, urgent publish |
-| R7 | Rechten | Employee/Manager published read-only, Planner en roosterbewerkingen uitsluitend Admin, Guest default deny |
+| R7 | Rechten | Employee published; Manager published + CML read-only; Planner/bewerken/publiceren uitsluitend Admin; Guest deny |
 | R8 | Staffing + uren | coverage rules uit DB, backend staffing engine, planned hours uit published shifts, Excel shadow parity |
 | R9 | Export | ExcelJS, week-/maandexport, Graph upload, exportlog/checksum, noodrestore |
 | R10 | Cutover | rooster.sportsocietyoverview.net, database officiële roosterbron, feature flags, monitoring |
@@ -246,6 +246,7 @@ R7 maakt de roosterrechten server-side afdwingbaar en verwijdert legacy velden/b
 - [x] `roster.html` vereist server-side minimaal Employee;
 - [x] `planner.html` is server-side uitsluitend Admin;
 - [x] published rooster blijft organisatiebreed voor Employee, Manager en Admin;
+- [x] Manager kan roosterwijzigingen/CML organisatiebreed read-only inzien;
 - [x] Guest heeft standaard geen rooster-API of roosterpagina-toegang;
 - [x] legacy `/api/roster` en `/api/roster-effective` zijn niet meer anoniem opvraagbaar;
 - [x] `/api/roster-preview` is Admin-only;
@@ -263,4 +264,32 @@ R7 maakt de roosterrechten server-side afdwingbaar en verwijdert legacy velden/b
 
 Zie `docs/r7-access-control.md` voor het volledige rechtencontract.
 
-**Status: R7 afgerond — Planner en alle roosterbewerkingen uitsluitend Admin.**
+**Status: R7 afgerond — Manager published + CML read-only; Planner en roosterbewerkingen uitsluitend Admin.**
+
+## R8 — staffing + uren
+
+R8 maakt de nieuwste gepubliceerde canonical shifts ook de operationele bron voor staffing en uren.
+
+- [x] `staffing_coverage_windows` als relationele databasebron toegevoegd;
+- [x] 51 bestaande coveragevensters idempotent als baseline geseed;
+- [x] backend staffing-engine bepaalt `under / vulnerable / sufficient` server-side;
+- [x] alleen de hoogste gepubliceerde `version_no` per locatie/week telt mee;
+- [x] drafts tellen niet mee voor staffing of officiële maanduren;
+- [x] open diensten tellen niet als aanwezige medewerker en leveren nul medewerkeruren op;
+- [x] avondpiek, groepslesregels en enkele-bezetting uitzonderingen blijven onderdeel van de analyse;
+- [x] Admin kan staffing organisatiebreed analyseren;
+- [x] Manager kan staffing alleen voor actieve organisatorische locatie-scope(s) analyseren zonder Plannerrechten te krijgen;
+- [x] vanaf `2026-09` komen geplande uren uitsluitend uit canonical published shifts;
+- [x] contractomvang komt vanaf de baseline uit effective-dated `contract_terms`;
+- [x] historische maanden vóór de baseline blijven via legacydata leesbaar;
+- [x] actieve staffingpagina rekent niet meer client-side op `/api/roster`;
+- [x] actieve urenpagina wordt niet meer door de Excel-overlay overschreven;
+- [x] Excel/legacy is vanaf de baseline uitsluitend Admin shadow parity;
+- [x] shadow-parity API en CLI rapporteren `match / different / canonical_only / legacy_only`;
+- [x] R8-migratie ondersteunt `--quiet` en is de bovenste roostermigratie in de compacte serverstart;
+- [x] R8 backend- en frontendcontracttests zijn opgenomen in `npm test`;
+- [x] groepslesdruk is expliciet als tijdelijke `historical-template` bron gemarkeerd totdat een live lesroosterbron beschikbaar is.
+
+Zie `docs/r8-staffing-hours.md` voor het volledige staffing- en urencontract.
+
+**Status: implementatie gereed; R8 wordt definitief afgerond zodra de eindstand groen is in GitHub Actions.**
