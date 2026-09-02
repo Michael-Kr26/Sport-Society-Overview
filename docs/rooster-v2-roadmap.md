@@ -182,3 +182,58 @@ Een paritystatus `attention` is bewust geen stille correctie en ook geen publica
 De goedgekeurde change-form frontend blijft in R4 intact. Omdat de adapter ook `roster_overrides` leest, zijn via het formulier gemaakte operationele wijzigingen wel zichtbaar in de canonical overgangslaag. De daadwerkelijke formulierwrite wordt pas in de planner/publicatieflow volledig naar canonical drafts omgezet.
 
 **Status: R4 afgerond.**
+
+## R5 — nieuwe weekplanner
+
+R5 maakt de canonical R2/R3-roosterdatalaag operationeel bruikbaar voor dagelijkse planning.
+
+- [x] `planner.html` is de aparte bewerkbare roosterwerkplek;
+- [x] `roster.html` is afgesplitst als read-only published overzicht;
+- [x] week- en vestigingsnavigatie;
+- [x] zeven dagkolommen desktop en dagtabs mobiel;
+- [x] shift drawer zonder drag-and-drop;
+- [x] vloer / administratie / stage;
+- [x] open diensten;
+- [x] shift toevoegen, wijzigen en verwijderen;
+- [x] optimistic locking;
+- [x] validatie- en waarschuwingspaneel;
+- [x] urenbankprojectie;
+- [x] Manager alleen eigen edit-scope, Admin alle locaties;
+- [x] Employee uitsluitend published;
+- [x] handmatige edits/verwijderingen worden beschermd tegen legacy/pattern sync;
+- [x] wijzigingsformulier spiegelt wijzigingen direct naar de canonical overgangslaag;
+- [x] quiet-blue frontend behouden als actuele ontwerpvariant;
+- [x] R5-tests opgenomen in `npm test`;
+- [x] GitHub Actions groen op de R5-implementatie.
+
+**Status: R5 afgerond.**
+
+## R6 — publicatiemotor
+
+R6 maakt de R3-publicatiekern operationeel en zorgt dat de gepubliceerde canonical shifts daadwerkelijk de officiële roosterweergave kunnen voeden.
+
+- [x] Admin-only publicatie-API;
+- [x] publicatiedrawer in de Planner;
+- [x] selectie van meerdere locaties en meerdere weken;
+- [x] changed-since-last-publication preview;
+- [x] toegevoegd / gewijzigd / verwijderd per stable `shift_uid`;
+- [x] harde validation errors blokkeren de volledige batch;
+- [x] waarschuwingen blokkeren niet;
+- [x] reden verplicht bij iedere herpublicatie;
+- [x] 6-weken minimum, 12-weken target en 24-weken horizon zichtbaar per vestiging;
+- [x] geprojecteerde horizon zichtbaar vóór publicatie;
+- [x] atomaire batchpublicatie via R3 `PublicationService`;
+- [x] published historie blijft immutable;
+- [x] laatste publicaties zichtbaar in de publicatiedrawer;
+- [x] herpublicatie projecteert één samenvattende `Roosterpublicatie` naar het CML;
+- [x] `Roosterpublicatie`-CML-regels zijn backend én frontend immutable;
+- [x] notification-outbox voor `roster_published` en `roster_changed`;
+- [x] wijzigingsformulier kan een veilige reeds gepubliceerde week direct herpubliceren;
+- [x] wijzigingsformulier maakt daarbij geen dubbele CML-regel;
+- [x] protected drafts, eerste publicatie en hard conflicts worden niet stil via het wijzigingsformulier gepubliceerd;
+- [x] R6-migratie is opgenomen in de stille serverstart;
+- [x] R6-tests zijn opgenomen in `npm test`.
+
+Zie `docs/r6-publication-engine.md` voor het volledige publicatiecontract.
+
+**Status: R6 implementatie gereed; definitief afgerond zodra de laatste GitHub Actions-run op de documentatiestand groen is.**
