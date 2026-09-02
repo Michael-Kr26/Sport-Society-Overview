@@ -14,7 +14,7 @@
     "test:rosterplanner": "node --test tests/roster-planner.test.js tests/r5-transition-protection.test.js",
     "test:rosterpublication": "node --test tests/roster-publication.test.js",
     "test:rosteraccess": "node --test tests/roster-access.test.js",
-    "test:rosteroperations": "node --test tests/roster-operations.test.js",
+    "test:rosteroperations": "node --test tests/roster-operations.test.js tests/r8-ui-contracts.test.js",
     "test:rosterpages": "node --test tests/roster-page-split.test.js",
     "test:restore": "node --test tests/database-restore.test.js",
     "start": "node migrate-roster-operations.js --quiet && node migrate-employee-names.js --quiet && node migrate-hours.js && node start-server.js",
