@@ -2,7 +2,7 @@
 
 **Branch:** `design/quiet-blue-ui-overhaul`
 
-R7 maakt de rechtenmatrix uit R1/R3 daadwerkelijk afdwingbaar aan de serverrand. Frontendverbergen van knoppen blijft alleen UX; de server beslist altijd opnieuw op basis van de actieve sessie en canonical scopes.
+R7 maakt de roosterrechten daadwerkelijk afdwingbaar aan de serverrand. De definitieve beleidskeuze is expliciet: **Managers mogen het rooster niet plannen. Alleen Admin mag drafts openen, wijzigen en publiceren.** Frontendverbergen van knoppen blijft alleen UX; de server beslist altijd opnieuw op basis van de actieve sessie.
 
 ## Rechtenmatrix
 
@@ -10,10 +10,10 @@ R7 maakt de rechtenmatrix uit R1/R3 daadwerkelijk afdwingbaar aan de serverrand.
 |---|---|---|---|---|
 | Guest | nee | nee | nee | nee |
 | Employee | organisatiebreed | nee | nee | nee |
-| Manager | organisatiebreed | ja | alleen toegewezen vestiging(en) | nee |
+| Manager | organisatiebreed | nee | nee | nee |
 | Admin | organisatiebreed | ja | organisatiebreed | ja |
 
-Een Employee-account hoeft niet per se aan een `employees`-record gekoppeld te zijn om het organisatiebrede published rooster te mogen bekijken. Een `user_employee_links`-koppeling is bedoeld voor medewerker-specifieke self-service, niet als voorwaarde voor basisroostertoegang.
+Een Employee- of Manager-account hoeft niet per se aan een `employees`-record gekoppeld te zijn om het organisatiebrede published rooster te mogen bekijken. Een `user_employee_links`-koppeling is bedoeld voor medewerker-specifieke self-service, niet als voorwaarde voor basisroostertoegang.
 
 ## Autoriteitsbronnen
 
@@ -21,10 +21,12 @@ Voor roosterrechten gelden uitsluitend:
 
 1. de actieve `sso_session`;
 2. `users.role`;
-3. effective-dated `user_location_scopes` voor Manager-editrechten;
-4. de R3 `AuthorizationService` voor draftmutaties en publicatie.
+3. de R7 server-side policy voor Planner-toegang;
+4. de Planner/R3-services voor mutaties en publicatie.
 
-`users.location` is geen roosterautorisatie. Dat veld bestaat nog voor de legacy account-UI en wordt door R7 alleen gebruikt om een nieuwe Manager-accountkoppeling naar `user_location_scopes` te synchroniseren.
+`user_location_scopes` kan een Manager nog organisatorisch aan één of meerdere vestigingen koppelen, maar verleent **geen roosterbewerkingsrecht**. R7 neutraliseert voor Manager-accounts zowel `can_edit_roster` als `can_publish_roster` naar `0`.
+
+`users.location` is eveneens geen roosterautorisatie. Dat veld bestaat nog voor de legacy account-UI en kan alleen worden gebruikt om een organisatorische locatie-scope te synchroniseren.
 
 `localStorage.demoRole` en eventuele client-side rolweergave zijn geen security boundary. Een gemanipuleerde browserstate kan hooguit UI beïnvloeden; de server controleert iedere beschermde roosteractie opnieuw.
 
@@ -35,7 +37,7 @@ Voor roosterrechten gelden uitsluitend:
 Beschermde pagina's:
 
 - `roster.html` — minimaal Employee;
-- `planner.html` — minimaal Manager;
+- `planner.html` — uitsluitend Admin;
 - `cml.html` — minimaal Manager;
 - `cf.html` — Admin.
 
@@ -43,50 +45,56 @@ Belangrijkste beschermde API-families:
 
 - `/api/roster` — Employee+;
 - `/api/roster-effective` — Employee+;
-- `/api/roster-planner/*` — Employee+ aan de rand; draftmutaties worden daarna opnieuw door R3 gecontroleerd;
+- `/api/roster-planner/*` — Employee+ aan de rand omdat `roster.html` de published context uit deze API leest; iedere draftmutatie is daarna expliciet Admin-only;
 - `/api/roster-preview` — Admin;
 - `/api/roster-publication/*` — Admin;
 - `/api/change-form/*` en `/api/change-workflow` — Admin.
 
 Guest krijgt voor API's `401`; een ingelogde rol zonder voldoende rechten krijgt `403`. Beschermde HTML-pagina's sturen een Guest naar login en een ingelogde maar onvoldoende bevoegde rol naar Home.
 
-## Manager-scopes
+## Manager-locaties
 
-Manager-editrechten blijven effective-dated:
+Managers kunnen nog een organisatorische vestigingskoppeling hebben. Die kan later worden gebruikt voor managementweergaven, bezettingsanalyse of andere locatiegebonden functies, maar **niet om het rooster te plannen**.
 
-- `effective_from` bepaalt de eerste geldige datum;
-- `effective_to` is inclusief en optioneel;
-- buiten die periode bestaat geen editrecht;
-- meerdere vestigingen kunnen technisch tegelijk geldig zijn;
-- `can_edit_roster=1` is vereist;
-- `can_publish_roster` geeft een Manager geen publicatierecht: publiceren blijft uitsluitend Admin.
+R7 zorgt daarom voor het volgende:
 
-De account-UI heeft historisch één `users.location`-veld. R7 maakt daar geen tweede autoriteitsbron van. Bij het aanmaken/updaten van een Manager met zo'n legacy locatie zorgt een database-trigger dat minimaal de corresponderende canonical scope bestaat. Bestaande canonical scopes worden niet stil verwijderd, zodat multi-location Manager-scopes mogelijk blijven.
+- bestaande Manager-scopes met `can_edit_roster=1` worden bij migratie/start naar `0` gezet;
+- `can_publish_roster` wordt voor Managers eveneens `0`;
+- nieuwe Manager-locatiescopes worden direct met beide roosterflags op `0` aangemaakt;
+- meerdere organisatorische locatiescopes blijven technisch mogelijk;
+- `effective_from` / `effective_to` kunnen voor die organisatorische scope behouden blijven;
+- een oude of handmatig fout ingestelde scope is niet voldoende om de Planner te gebruiken, omdat de Planner-service daarnaast expliciet `users.role === 'admin'` vereist.
 
-Bij demotie van Manager naar een andere rol worden nog open Manager-scopes beëindigd/verwijderd. Daarnaast controleert de R3-domainlaag altijd de actuele accountrol, zodat een achtergebleven historische scope nooit zelfstandig rechten kan verlenen.
-
-Nieuwe Manager-scopes worden niet teruggedateerd. Alleen een bestaand legacy Manager-account zonder enige canonical scope kan tijdens R7-migratie een éénmalige backfill krijgen; de ingangsdatum is nooit eerder dan de R1-planningsbaseline en nooit eerder dan de accountaanmaakdatum.
+Hiermee is de rol zelf doorslaggevend voor planning: **Manager = read-only rooster, Admin = planner.**
 
 ## Planner
 
-`planner.html` mag door Manager en Admin worden geopend.
+`planner.html` mag uitsluitend door Admin worden geopend.
 
-Dit betekent niet dat een Manager ieder concept kan bekijken. Voor iedere locatie/week bepaalt `AuthorizationService.canEditLocation()` opnieuw of er op die effectieve datum een geldige scope bestaat:
+De Planner-service controleert dit nogmaals vóór:
 
-- geldige scope → draft kan worden bekeken/bewerkt;
-- geen scope → alleen de published organisatiebrede weergave;
-- Employee → published only, en krijgt de Plannerpagina zelf niet;
-- Admin → alle locaties en drafts.
+- concept aanmaken;
+- dienst toevoegen;
+- dienst wijzigen;
+- dienst verwijderen.
 
-Shift create/update/delete en draft-create gebruiken dezelfde server-side scopecontrole. Het wijzigen van URL's, request bodies of DOM-elementen om een andere vestiging te selecteren omzeilt dit niet.
+Ook de context die via `/api/roster-planner/context` wordt opgevraagd geeft voor Employee en Manager altijd:
+
+- `canEdit = false`;
+- `canPublish = false`;
+- `canViewDraft = false`;
+- geen draft-ID/revision;
+- geen medewerkerkeuzelijst voor planning.
+
+Een Manager die zelf een `view=draft`, version-ID, andere locatie of mutatiepayload probeert te sturen krijgt daardoor geen toegang tot een concept of wijzigingsactie.
 
 ## Published rooster
 
-Het published rooster blijft organisatiebreed voor Employee, Manager en Admin. Dit is bewust niet beperkt tot primaire vestiging of Manager-scope.
+Het published rooster blijft organisatiebreed voor Employee, Manager en Admin. Dit is bewust niet beperkt tot primaire vestiging of Manager-locatiescope.
 
 De pagina `roster.html` leest uitsluitend canonical published versions. Drafts zijn via deze pagina niet opvraagbaar.
 
-De legacy endpoints blijven tijdens de overgang bestaan, maar R7 zet daar nu dezelfde minimale sessiegrens voor: zij zijn niet meer anoniem opvraagbaar.
+De legacy endpoints blijven tijdens de overgang bestaan, maar R7 zet daar dezelfde minimale sessiegrens voor: zij zijn niet meer anoniem opvraagbaar.
 
 ## Publiceren
 
@@ -95,23 +103,23 @@ R6-publicatie blijft Admin-only op twee niveaus:
 - de R7 serverrand vereist Admin voor de publication API;
 - R3/R6 `AuthorizationService.assertCanPublish()` controleert dit opnieuw binnen de domeinservice.
 
-Een Manager-scope met `can_publish_roster` kan daardoor niet stil tot publicatierecht leiden. Die kolom blijft gereserveerd voor eventuele toekomstige beleidswijziging.
+Managers kunnen dus noch plannen, noch publiceren.
 
 ## Tests
 
-`tests/roster-access.test.js` controleert onder andere:
+De R7/R5 regressietests controleren onder andere:
 
 - Guest deny;
 - Employee published access;
-- Employee geen Planner/edit;
-- Manager Planner maar geen publicatie;
-- Admin organisatiebreed + publiceren;
-- Manager-scope vóór `effective_from` ongeldig;
-- Manager-scope na `effective_to` ongeldig;
-- geen editrecht op een andere vestiging;
-- legacy Manager-account → canonical scope;
-- Managerdemotie trekt editrecht in;
+- Manager published access;
+- Manager geen Planner;
+- Manager geen draft;
+- Manager geen create/update/delete;
+- ook een legacy `can_edit_roster=1`-scope wordt naar `0` geneutraliseerd;
+- nieuwe Manager-locatiescope krijgt geen roosterrechten;
+- Admin kan organisatiebreed plannen en publiceren;
+- frontend toont Planner alleen aan Admin;
 - serverstart loopt via de R7-guard;
 - belangrijkste roosterpagina/API-minimumrollen zijn centraal vastgelegd.
 
-**Status: R7 afgerond.**
+**Status: R7 gecorrigeerd naar Admin-only planning; definitief afgerond zodra de correctierun groen is.**
