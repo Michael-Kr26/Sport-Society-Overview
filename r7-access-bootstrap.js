@@ -121,12 +121,13 @@ app.get('/api/access/roster-policy', async (req, res) => {
             effectiveDate,
             permissions: {
                 canViewPublishedRoster: ['employee', 'manager', 'admin'].includes(user.role),
-                canOpenPlanner: ['manager', 'admin'].includes(user.role),
+                canOpenPlanner: user.role === 'admin',
+                canEditRoster: user.role === 'admin',
                 canPublish: user.role === 'admin'
             },
             locationScopes: scopes.map((scope) => ({
                 ...scope,
-                canEditRoster: Boolean(scope.canEditRoster),
+                canEditRoster: false,
                 canPublishRoster: false
             }))
         });
