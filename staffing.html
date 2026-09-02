@@ -6,8 +6,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="staffing.css">
     <script src="auth-ui.js" defer></script>
-    <script src="staffing.js" defer></script>
-    <script src="staffing-coverage.js?v=20260717-six-weeks" defer></script>
+    <script src="staffing-canonical-ui.js" defer></script>
     <title>Sport Society - Bezettingsanalyse</title>
 </head>
 <body data-manager-page>
@@ -27,12 +26,13 @@
             <div>
                 <div class="staffing-heading-row">
                     <p class="staffing-label">Capaciteitscontrole</p>
-                    <span class="staffing-version-badge" data-admin-only hidden>Werkende eerste versie</span>
+                    <span class="staffing-version-badge" data-admin-only hidden>Canonical R8</span>
                 </div>
                 <h2>Geen, enkele en voldoende bezetting</h2>
                 <p>
-                    De analyse kijkt standaard vanaf vandaag zes weken vooruit. Vaste standaarddiensten
-                    worden ook getoond wanneer er in het rooster helemaal niemand is ingepland.
+                    De analyse rekent server-side met uitsluitend de nieuwste gepubliceerde Rooster V2-diensten.
+                    Concepten en open diensten tellen niet als aanwezige medewerker. De vaste coveragevensters
+                    komen uit de database.
                 </p>
             </div>
         </section>
@@ -67,6 +67,7 @@
                         <option value="all">Alle tijdsblokken</option>
                         <option value="under">Alleen onderbezet</option>
                         <option value="vulnerable">Alleen kwetsbaar</option>
+                        <option value="sufficient">Alleen voldoende</option>
                     </select>
                 </label>
                 <button type="submit" class="admin-button">Analyseren</button>
@@ -85,13 +86,12 @@
 
         <section class="staffing-card integration-note" data-admin-content hidden>
             <div>
-                <p class="staffing-label">Integratiegereed</p>
-                <h2>Bronnen kunnen later worden vervangen</h2>
+                <p class="staffing-label">Databronnen</p>
+                <h2>Rooster V2 is leidend</h2>
                 <p>
-                    Roosterdiensten worden opgehaald via <code>/api/roster</code>. De groepslessen
-                    staan nu als historische weektemplates in de analyse. Dezelfde datastructuur kan
-                    later rechtstreeks worden gevuld vanuit DEWI of een andere live lesroosterbron.
-                    De bezettingsstandaarden worden afzonderlijk opgeslagen en blijven daardoor actief.
+                    Medewerkerbezetting komt uit de immutable gepubliceerde rooster-versies. Coveragevensters en
+                    bezettingsstandaarden staan in de database. Alleen de groepslesdruk gebruikt nog de bestaande
+                    historische weektemplates; die bron kan later door DEWI of een andere live lesroosterbron worden vervangen.
                 </p>
             </div>
         </section>
