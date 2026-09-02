@@ -263,4 +263,4 @@ R7 maakt de roosterrechten server-side afdwingbaar en verwijdert legacy velden/b
 
 Zie `docs/r7-access-control.md` voor het volledige rechtencontract.
 
-**Status: R7 gecorrigeerd naar Admin-only planning; definitief afgerond zodra de correctierun groen is.**
+**Status: R7 afgerond — Planner en alle roosterbewerkingen uitsluitend Admin.**
