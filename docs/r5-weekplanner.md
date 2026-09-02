@@ -1,8 +1,8 @@
 # R5 — Nieuwe weekplanner
 
-**Status: afgerond op `agent/v1-5-operational-release`.**
+**Status: afgerond op `agent/v1-5-operational-release`; rechtenbeleid later aangescherpt in R7.**
 
-R5 maakt de canonical R2/R3-roosterdatalaag operationeel bruikbaar via `roster.html`, zonder de publicatieflow van R6 vooruit te lopen.
+R5 maakt de canonical R2/R3-roosterdatalaag operationeel bruikbaar via de aparte Planner, zonder de publicatieflow van R6 vooruit te lopen.
 
 ## Gebruikersinterface
 
@@ -23,10 +23,15 @@ R5 maakt de canonical R2/R3-roosterdatalaag operationeel bruikbaar via `roster.h
 
 ## Rechten
 
+De oorspronkelijke R5-implementatie ondersteunde Manager-edit-scope per vestiging. **R7 heeft dit beleid expliciet vervangen.** De actuele regel is:
+
 - Employee ziet uitsluitend gepubliceerde roosters;
-- Manager ziet organisatiebreed gepubliceerd en kan alleen een toegewezen vestiging bewerken;
-- Admin kan alle vestigingen bewerken;
-- publicatie blijft Admin-only en wordt operationeel in R6 ontsloten.
+- Manager ziet eveneens uitsluitend het organisatiebrede gepubliceerde rooster;
+- Manager kan de Planner niet openen en geen draft aanmaken of wijzigen;
+- alleen Admin kan alle vestigingen in de Planner bewerken;
+- publicatie blijft eveneens Admin-only.
+
+De Planner-service controleert Admin vóór iedere create/update/delete-mutatie, los van eventuele historische `user_location_scopes`.
 
 ## API/service
 
@@ -40,7 +45,7 @@ R5 maakt de canonical R2/R3-roosterdatalaag operationeel bruikbaar via `roster.h
 - `PATCH /api/roster-planner/shifts/:shiftUid`;
 - `DELETE /api/roster-planner/shifts/:shiftUid`.
 
-Mutaties gebruiken optimistic locking via `expectedRevision`.
+De GET-context blijft Employee+ omdat `roster.html` daarmee published canonical data leest. Draftmutaties zijn sinds R7 uitsluitend Admin. Mutaties gebruiken optimistic locking via `expectedRevision`.
 
 ## Legacy-overgang
 
@@ -68,19 +73,19 @@ De serverstart is compacter gemaakt:
 
 ## Tests
 
-R5-tests dekken onder andere:
+De huidige regressietests dekken onder andere:
 
-- concept aanmaken;
+- concept aanmaken door Admin;
 - lokale tijd ↔ UTC;
 - shift CRUD;
 - open diensten;
 - optimistic locking;
-- Manager-vestigingsscope;
+- Manager published-only en geen Planner-mutaties;
 - Employee published-only;
 - bescherming van handmatige wijzigingen tegen latere Excel-import;
 - bescherming van handmatig verwijderde diensten tegen terugplaatsing door Excel.
 
-De volledige bestaande testketen en PowerShell-checks zijn groen op de R5-implementatie.
+De volledige bestaande testketen en PowerShell-checks blijven onderdeel van de quality gate.
 
 ## Niet onderdeel van R5
 
