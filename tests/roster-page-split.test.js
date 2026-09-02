@@ -8,7 +8,7 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
-test('Rooster is read-only gepubliceerd overzicht en Planner bevat de weekplanner', () => {
+test('Rooster is read-only gepubliceerd overzicht en Planner is Admin-only weekplanner', () => {
     const rosterHtml = read('roster.html');
     const plannerHtml = read('planner.html');
     const authUi = read('auth-ui.js');
@@ -23,8 +23,8 @@ test('Rooster is read-only gepubliceerd overzicht en Planner bevat de weekplanne
     assert.match(plannerHtml, /roster\.js/);
 
     assert.match(authUi, /navigationItem\('roster\.html', '▦', 'Rooster', 'employee'\)/);
-    assert.match(authUi, /navigationItem\('planner\.html', '▦', 'Planner', 'manager'\)/);
-    assert.match(authUi, /'planner\.html': 'manager'/);
+    assert.match(authUi, /navigationItem\('planner\.html', '▦', 'Planner', 'admin'\)/);
+    assert.match(authUi, /'planner\.html': 'admin'/);
 
     assert.match(changeWorkflow, /rosterUrl: `planner\.html\?/);
 });
