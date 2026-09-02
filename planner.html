@@ -6,19 +6,9 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="roster.css?v=20260901-r5-weekplanner">
     <link rel="stylesheet" href="planner-theme.css?v=20260901-quiet-blue-v1">
+    <link rel="stylesheet" href="publication.css?v=20260902-r6-publication">
     <script src="auth-ui.js" defer></script>
-    <script>
-        (() => {
-            const originalReplaceState = window.history.replaceState.bind(window.history);
-            window.history.replaceState = (state, title, url) => {
-                if (typeof url === 'string' && url.startsWith('roster.html?')) {
-                    url = `planner.html?${url.slice('roster.html?'.length)}`;
-                }
-                return originalReplaceState(state, title, url);
-            };
-        })();
-    </script>
-    <script src="roster.js?v=20260901-r5-weekplanner" defer></script>
+    <script src="roster.js?v=20260902-r6-publication" defer></script>
     <title>Sport Society - Planner</title>
 </head>
 <body>
@@ -84,6 +74,7 @@
                 <div class="planner-actions">
                     <button type="button" id="create-draft" class="roster-secondary-button" hidden>Concept maken</button>
                     <button type="button" id="add-shift" class="admin-button" hidden>+ Dienst toevoegen</button>
+                    <button type="button" id="publish-roster" class="admin-button publication-open-button" hidden>Publiceren</button>
                 </div>
             </div>
         </section>
@@ -147,6 +138,54 @@
                 </div>
             </div>
         </form>
+    </aside>
+
+    <div id="publication-backdrop" class="publication-backdrop" hidden></div>
+    <aside id="publication-drawer" class="publication-drawer" aria-hidden="true" aria-labelledby="publication-title">
+        <div class="publication-head">
+            <div>
+                <p class="roster-label">Publicatie</p>
+                <h2 id="publication-title">Rooster publiceren</h2>
+                <p>Publiceer één of meerdere vestigingen en weken in één handeling.</p>
+            </div>
+            <button type="button" id="close-publication" class="roster-icon-button" aria-label="Sluiten">×</button>
+        </div>
+
+        <section class="publication-section">
+            <div class="publication-section-heading">
+                <div><strong>Publicatiehorizon</strong><span>6 weken minimaal · 12 weken streef · 24 weken planningshorizon</span></div>
+            </div>
+            <div id="publication-horizon" class="publication-horizon"><p class="empty-state">Horizon laden...</p></div>
+        </section>
+
+        <section class="publication-section">
+            <div class="publication-section-heading">
+                <div><strong>Concepten selecteren</strong><span>Alle open concepten binnen de horizon</span></div>
+                <button type="button" id="refresh-publication" class="publication-text-button">Vernieuwen</button>
+            </div>
+            <div id="publication-candidates" class="publication-candidates"><p class="empty-state">Concepten laden...</p></div>
+        </section>
+
+        <section id="publication-preview-section" class="publication-section" hidden>
+            <div class="publication-section-heading"><div><strong>Controle vóór publicatie</strong><span>Verschillen sinds de vorige publicatie</span></div></div>
+            <div id="publication-preview" class="publication-preview"></div>
+        </section>
+
+        <label id="publication-reason-field" class="publication-reason-field" hidden>
+            Reden van wijziging
+            <textarea id="publication-reason" rows="3" placeholder="Verplicht wanneer een eerder gepubliceerd rooster wordt gewijzigd."></textarea>
+            <span>Deze reden wordt onderdeel van de publicatiehistorie en het CML.</span>
+        </label>
+
+        <p id="publication-message" class="planner-message is-error" hidden></p>
+
+        <div class="publication-actions">
+            <button type="button" id="cancel-publication" class="roster-secondary-button">Sluiten</button>
+            <div class="publication-actions-right">
+                <button type="button" id="prepare-publication" class="roster-secondary-button">Controleren</button>
+                <button type="button" id="confirm-publication" class="admin-button" hidden>Definitief publiceren</button>
+            </div>
+        </div>
     </aside>
 
     <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
