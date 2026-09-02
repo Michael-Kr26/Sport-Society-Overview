@@ -23,7 +23,8 @@
         message: document.getElementById('publication-message'),
         prepare: document.getElementById('prepare-publication'),
         confirm: document.getElementById('confirm-publication'),
-        plannerSuccess: document.getElementById('planner-success')
+        plannerSuccess: document.getElementById('planner-success'),
+        history: null
     };
 
     if (!elements.open || !elements.drawer) return;
@@ -75,6 +76,18 @@
         return new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short' }).format(dateObject(value));
     }
 
+    function formatPublishedAt(value) {
+        if (!value) return '-';
+        const normalized = /Z$|[+-]\d\d:\d\d$/.test(value)
+            ? value
+            : `${String(value).replace(' ', 'T')}Z`;
+        const date = new Date(normalized);
+        if (Number.isNaN(date.getTime())) return value;
+        return new Intl.DateTimeFormat('nl-NL', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }).format(date);
+    }
+
     function referenceWeekStart() {
         return mondayOf(todayString());
     }
@@ -112,7 +125,22 @@
         return payload;
     }
 
+    function ensureHistorySection() {
+        if (elements.history) return;
+        const section = document.createElement('section');
+        section.className = 'publication-section publication-history-section';
+        section.innerHTML = `
+            <div class="publication-section-heading">
+                <div><strong>Laatste publicaties</strong><span>Immutable publicatiehistorie</span></div>
+            </div>
+            <div id="publication-history" class="publication-history"><p class="empty-state">Historie laden...</p></div>
+        `;
+        elements.previewSection.parentNode.insertBefore(section, elements.previewSection);
+        elements.history = section.querySelector('#publication-history');
+    }
+
     function openDrawer() {
+        ensureHistorySection();
         elements.backdrop.hidden = false;
         elements.drawer.classList.add('is-open');
         elements.drawer.setAttribute('aria-hidden', 'false');
@@ -193,6 +221,36 @@
         });
     }
 
+    function renderHistory(items) {
+        ensureHistorySection();
+        if (!items?.length) {
+            elements.history.innerHTML = '<div class="publication-empty">Nog geen rooster gepubliceerd.</div>';
+            return;
+        }
+        elements.history.innerHTML = items.map((item) => `
+            <article class="publication-history-row">
+                <div>
+                    <strong>${escapeHtml(formatPublishedAt(item.publishedAt))}</strong>
+                    <span>${escapeHtml(item.publishedBy || 'Admin')} · ${item.versionCount} week/vestiging · ${item.changeCount} wijziging(en)</span>
+                </div>
+                <span class="publication-history-state is-${escapeHtml(item.notificationState || 'pending')}">${escapeHtml(item.notificationState || 'pending')}</span>
+                ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ''}
+            </article>
+        `).join('');
+    }
+
+    async function loadHistory() {
+        ensureHistorySection();
+        elements.history.innerHTML = '<p class="empty-state">Historie laden...</p>';
+        try {
+            const data = await request('/api/roster-publication/history?limit=6');
+            renderHistory(data.items || []);
+        } catch (error) {
+            console.error(error);
+            elements.history.innerHTML = '<div class="publication-empty">Publicatiehistorie kon niet worden geladen.</div>';
+        }
+    }
+
     async function currentDraftId() {
         try {
             const params = new URLSearchParams({
@@ -214,6 +272,7 @@
         elements.candidates.innerHTML = '<p class="empty-state">Concepten laden...</p>';
         elements.horizon.innerHTML = '<p class="empty-state">Horizon laden...</p>';
         invalidatePreview();
+        loadHistory();
         try {
             const activeDraft = await currentDraftId();
             const params = new URLSearchParams({
