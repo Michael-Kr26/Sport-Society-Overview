@@ -442,17 +442,20 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
                     });
                     const onlyRepublish = preview.items.every((item) => Boolean(item.version.basedOnVersionId));
                     if (onlyRepublish && preview.canPublish) {
-                        const published = await publication.domain.PublicationService.publish({
+                        const published = await publication.publish({
                             versionIds,
                             actorUserId: req.changeUser.id,
-                            reason: change.reason
+                            reason: change.reason,
+                            referenceWeekStart: getIsoWeekStart(change.reportedDate),
+                            projectCml: false
                         });
                         autoPublication = {
                             attempted: true,
                             status: 'published',
                             publicationId: published.publicationId,
                             publicationUid: published.publicationUid,
-                            versionIds
+                            versionIds,
+                            notifications: published.sideEffects?.notifications || null
                         };
                     } else {
                         autoPublication = {
