@@ -16,7 +16,7 @@
     const PAGE_ACCESS = {
         'index.html': 'guest',
         'roster.html': 'employee',
-        'planner.html': 'manager',
+        'planner.html': 'admin',
         'help.html': 'guest',
         'changelog.html': 'guest',
         'login.html': 'guest',
@@ -169,7 +169,7 @@
                     navigationItem('changelog.html', '≡', 'Changelog') +
                     navigationItem('help.html', '?', 'Handleiding'))}
                 ${navigationGroup('operational', 'Operationeel', '◫',
-                    navigationItem('planner.html', '▦', 'Planner', 'manager') +
+                    navigationItem('planner.html', '▦', 'Planner', 'admin') +
                     navigationItem('staffing.html', '◫', 'Bezettingsanalyse', 'manager') +
                     navigationItem('staffing-standards.html', '⚙', 'Bezettingsstandaarden', 'manager') +
                     navigationItem('cml.html', '↔', 'Roosterwijzigingen', 'manager'), 'manager')}
