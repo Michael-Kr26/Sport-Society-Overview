@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const sqlite3 = require('sqlite3').verbose();
 const { importLegacyRosterToCanonical } = require('./lib/legacy-roster-adapter');
+const { createRosterPublicationWorkflow } = require('./lib/roster-publication');
 
 const expressPath = require.resolve('express');
 const originalExpress = require('express');
@@ -42,6 +43,7 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const db = new sqlite3.Database(DB_PATH);
 db.configure('busyTimeout', 5000);
+const publicationReady = createRosterPublicationWorkflow(db);
 
 function run(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -392,6 +394,7 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
         transactionStarted = false;
 
         const focusWeekStart = getIsoWeekStart(change.date);
+        let relevantPeriods = [];
         let canonicalSync = { attempted: false, status: 'not_applicable', relevantActions: [] };
         if (override) {
             canonicalSync.attempted = true;
@@ -402,7 +405,7 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
                     ? await all(`SELECT id, name FROM locations WHERE name IN (${locationNames.map(() => '?').join(',')})`, locationNames)
                     : [];
                 const locationIds = new Set(locationRows.map((row) => row.id));
-                const relevantPeriods = report.periods.filter((period) => (
+                relevantPeriods = report.periods.filter((period) => (
                     period.weekStart === focusWeekStart && locationIds.has(period.locationId)
                 ));
                 canonicalSync = {
@@ -410,7 +413,8 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
                     status: relevantPeriods.some((period) => period.action === 'protected_draft') ? 'attention' : 'synced',
                     parityStatus: report.parityStatus,
                     importUid: report.importUid,
-                    relevantActions: relevantPeriods.map((period) => period.action)
+                    relevantActions: relevantPeriods.map((period) => period.action),
+                    relevantVersions: relevantPeriods.map((period) => period.versionId).filter(Boolean)
                 };
             } catch (canonicalError) {
                 console.error('Canonical rooster-sync na wijziging mislukt:', canonicalError);
@@ -419,6 +423,54 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
                     status: 'failed',
                     message: canonicalError.message
                 };
+            }
+        }
+
+        let autoPublication = { attempted: false, status: 'not_applicable' };
+        if (override && canonicalSync.status === 'synced') {
+            const versionIds = relevantPeriods
+                .filter((period) => period.action === 'created_draft' && period.versionId)
+                .map((period) => period.versionId);
+            if (versionIds.length) {
+                autoPublication.attempted = true;
+                try {
+                    const publication = await publicationReady;
+                    const preview = await publication.prepare({
+                        actorUserId: req.changeUser.id,
+                        versionIds,
+                        referenceWeekStart: getIsoWeekStart(change.reportedDate)
+                    });
+                    const onlyRepublish = preview.items.every((item) => Boolean(item.version.basedOnVersionId));
+                    if (onlyRepublish && preview.canPublish) {
+                        const published = await publication.domain.PublicationService.publish({
+                            versionIds,
+                            actorUserId: req.changeUser.id,
+                            reason: change.reason
+                        });
+                        autoPublication = {
+                            attempted: true,
+                            status: 'published',
+                            publicationId: published.publicationId,
+                            publicationUid: published.publicationUid,
+                            versionIds
+                        };
+                    } else {
+                        autoPublication = {
+                            attempted: true,
+                            status: onlyRepublish ? 'validation_required' : 'initial_publication_required',
+                            versionIds,
+                            errors: preview.totals.errors,
+                            warnings: preview.totals.warnings
+                        };
+                    }
+                } catch (publicationError) {
+                    console.error('Automatische herpublicatie na wijziging mislukt:', publicationError);
+                    autoPublication = {
+                        attempted: true,
+                        status: 'failed',
+                        message: publicationError.message
+                    };
+                }
             }
         }
 
@@ -432,6 +484,10 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
             message = 'Wijziging is geregistreerd in het CML en operationele rooster. De V2-weekplanner kon niet automatisch worden bijgewerkt; controleer de planner.';
         } else if (canonicalSync.status === 'attention') {
             message = 'Wijziging is geregistreerd in het CML en operationele rooster. De V2-week bevat handmatige conceptwijzigingen en is daarom niet automatisch overschreven.';
+        } else if (autoPublication.status === 'published') {
+            message = 'Wijziging is direct verwerkt in het CML, de planner én het gepubliceerde rooster.';
+        } else if (autoPublication.status === 'validation_required') {
+            message = 'Wijziging staat in CML en planner, maar de herpublicatie heeft nog een blokkerende controle. Open de Planner om te publiceren.';
         } else {
             message = 'Wijziging is direct verwerkt in het rooster, de V2-weekplanner en het CML.';
         }
@@ -442,8 +498,10 @@ app.post('/api/change-workflow', requireAdmin(async (req, res) => {
             rosterUpdated: Boolean(override),
             rosterOverrideId: overrideId,
             canonicalSync,
+            autoPublication,
             correlationId,
             rosterUrl: `planner.html?${rosterParams.toString()}`,
+            publishedRosterUrl: `roster.html?${rosterParams.toString()}`,
             cmlUrl: `cml.html?focusWeekStart=${encodeURIComponent(focusWeekStart)}&changeId=${result.lastID}`
         });
     } catch (error) {
