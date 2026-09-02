@@ -292,4 +292,4 @@ R8 maakt de nieuwste gepubliceerde canonical shifts ook de operationele bron voo
 
 Zie `docs/r8-staffing-hours.md` voor het volledige staffing- en urencontract.
 
-**Status: implementatie gereed; R8 wordt definitief afgerond zodra de eindstand groen is in GitHub Actions.**
+**Status: R8 afgerond.**
