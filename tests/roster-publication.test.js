@@ -70,6 +70,24 @@ async function addOneShiftDraft(db, domain, adminId, locationId, weekStart, empl
     });
 }
 
+async function createRepublishDraft(domain, admin, locationId) {
+    const cloned = await domain.DraftService.ensureDraft({
+        locationId,
+        weekStart: '2026-09-14',
+        actorUserId: admin,
+        changeNote: 'Tijd aangepast'
+    });
+    return domain.DraftService.updateShift({
+        versionId: cloned.version.id,
+        shiftUid: cloned.shifts[0].shiftUid,
+        expectedRevision: cloned.version.revision,
+        actorUserId: admin,
+        startsAtUtc: '2026-09-14T16:00:00.000Z',
+        endsAtUtc: '2026-09-14T19:00:00.000Z',
+        shiftType: 'floor'
+    });
+}
+
 test('R6 preview en eerste publicatie maken published waarheid en notificatie-outbox', async () => {
     const db = await readyDb();
     try {
@@ -98,7 +116,7 @@ test('R6 preview en eerste publicatie maken published waarheid en notificatie-ou
         });
         assert.equal(result.versions.length, 1);
         assert.equal((await get(db, 'SELECT state FROM roster_versions WHERE id=?', [draft.id])).state, 'published');
-        assert.equal(Number((await get(db, "SELECT COUNT(*) AS count FROM roster_notification_outbox WHERE event_type='roster_published'" )).count), 1);
+        assert.equal(Number((await get(db, "SELECT COUNT(*) AS count FROM roster_notification_outbox WHERE event_type='roster_published'")).count), 1);
         assert.equal(Number((await get(db, 'SELECT COUNT(*) AS count FROM roster_publication_cml_links')).count), 0);
         const horizon = await workflow.horizon({ referenceWeekStart: '2026-09-07' });
         assert.equal(horizon.locations.find((item) => item.code === 'AVE').futurePublishedWeeks, 1);
@@ -107,7 +125,7 @@ test('R6 preview en eerste publicatie maken published waarheid en notificatie-ou
     }
 });
 
-test('R6 republish vereist reden en projecteert wijziging naar CML', async () => {
+test('R6 republish vereist reden, projecteert naar immutable CML en bewaart historie', async () => {
     const db = await readyDb();
     try {
         const admin = await user(db, 'admin-r6-republish', 'admin');
@@ -119,21 +137,7 @@ test('R6 republish vereist reden en projecteert wijziging naar CML', async () =>
         const initialDraft = await addOneShiftDraft(db, domain, admin, ave, '2026-09-14', michael);
         await workflow.publish({ actorUserId: admin, versionIds: [initialDraft.id], referenceWeekStart: '2026-09-07' });
 
-        const cloned = await domain.DraftService.ensureDraft({
-            locationId: ave,
-            weekStart: '2026-09-14',
-            actorUserId: admin,
-            changeNote: 'Tijd aangepast'
-        });
-        const changed = await domain.DraftService.updateShift({
-            versionId: cloned.version.id,
-            shiftUid: cloned.shifts[0].shiftUid,
-            expectedRevision: cloned.version.revision,
-            actorUserId: admin,
-            startsAtUtc: '2026-09-14T16:00:00.000Z',
-            endsAtUtc: '2026-09-14T19:00:00.000Z',
-            shiftType: 'floor'
-        });
+        const changed = await createRepublishDraft(domain, admin, ave);
         const preview = await workflow.prepare({
             actorUserId: admin,
             versionIds: [changed.id],
@@ -154,15 +158,53 @@ test('R6 republish vereist reden en projecteert wijziging naar CML', async () =>
             referenceWeekStart: '2026-09-07'
         });
         assert.equal(result.sideEffects.status, 'complete');
-        const cml = await get(db, `SELECT change_type AS type, location, reason, status
+        const cml = await get(db, `SELECT id, change_type AS type, location, reason, status
             FROM changes WHERE change_type='Roosterpublicatie'`);
         assert.equal(cml.type, 'Roosterpublicatie');
         assert.equal(cml.location, 'Achterveld');
         assert.equal(cml.status, 'Afgerond');
         assert.match(cml.reason, /Afgestemd met medewerker/);
         assert.match(cml.reason, /1 gewijzigd/);
-        assert.equal(Number((await get(db, "SELECT COUNT(*) AS count FROM roster_notification_outbox WHERE event_type='roster_changed'" )).count), 1);
-        assert.equal(Number((await get(db, 'SELECT COUNT(*) AS count FROM roster_versions WHERE state=\'published\'')).count), 2);
+        assert.equal(Number((await get(db, "SELECT COUNT(*) AS count FROM roster_notification_outbox WHERE event_type='roster_changed'")).count), 1);
+        assert.equal(Number((await get(db, "SELECT COUNT(*) AS count FROM roster_versions WHERE state='published'")).count), 2);
+
+        await assert.rejects(run(db, "UPDATE changes SET status='Open' WHERE id=?", [cml.id]), /immutable/);
+        await assert.rejects(run(db, 'DELETE FROM changes WHERE id=?', [cml.id]), /immutable/);
+
+        const history = await workflow.history({ limit: 10 });
+        assert.equal(history.length, 2);
+        assert.equal(history[0].changeCount, 1);
+        assert.equal(history[0].note, 'Afgestemd met medewerker');
+    } finally {
+        await close(db);
+    }
+});
+
+test('R6 kan CML-projectie overslaan maar notificaties behouden voor wijzigingsformulier', async () => {
+    const db = await readyDb();
+    try {
+        const admin = await user(db, 'admin-r6-form', 'admin');
+        const ave = await id(db, "SELECT id FROM locations WHERE code='AVE'");
+        const michael = await id(db, "SELECT id FROM employees WHERE display_name='Michael'");
+        const domain = createRosterDomain(db);
+        await domain.ready;
+        const workflow = await createRosterPublicationWorkflow(db);
+        const initialDraft = await addOneShiftDraft(db, domain, admin, ave, '2026-09-14', michael);
+        await workflow.publish({ actorUserId: admin, versionIds: [initialDraft.id], referenceWeekStart: '2026-09-07' });
+        const changed = await createRepublishDraft(domain, admin, ave);
+
+        const result = await workflow.publish({
+            actorUserId: admin,
+            versionIds: [changed.id],
+            reason: 'Reeds vastgelegd door wijzigingsformulier',
+            referenceWeekStart: '2026-09-07',
+            projectCml: false
+        });
+        assert.equal(result.sideEffects.status, 'complete');
+        assert.equal(result.sideEffects.cml.status, 'skipped');
+        assert.equal(result.sideEffects.cml.reason, 'already_recorded_by_change_workflow');
+        assert.equal(Number((await get(db, "SELECT COUNT(*) AS count FROM changes WHERE change_type='Roosterpublicatie'")).count), 0);
+        assert.equal(Number((await get(db, "SELECT COUNT(*) AS count FROM roster_notification_outbox WHERE event_type='roster_changed'")).count), 1);
     } finally {
         await close(db);
     }
