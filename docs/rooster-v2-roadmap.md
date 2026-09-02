@@ -238,3 +238,31 @@ R6 maakt de R3-publicatiekern operationeel en zorgt dat de gepubliceerde canonic
 Zie `docs/r6-publication-engine.md` voor het volledige publicatiecontract.
 
 **Status: R6 afgerond.**
+
+## R7 — rechten
+
+R7 maakt de roosterrechten server-side afdwingbaar en verwijdert legacy velden/browserstate als security boundary.
+
+- [x] `roster.html` vereist server-side minimaal Employee;
+- [x] `planner.html` vereist server-side minimaal Manager;
+- [x] published rooster blijft organisatiebreed voor Employee, Manager en Admin;
+- [x] Guest heeft standaard geen rooster-API of roosterpagina-toegang;
+- [x] legacy `/api/roster` en `/api/roster-effective` zijn niet meer anoniem opvraagbaar;
+- [x] `/api/roster-preview` is Admin-only;
+- [x] planner-API heeft een centrale sessiegrens en R3 controleert daarna draft-scope per locatie/week;
+- [x] `user_location_scopes` is de enige autoriteitsbron voor Manager-editrecht;
+- [x] Manager-scopes blijven effective-dated;
+- [x] `users.location` verleent zelfstandig geen roosterrecht;
+- [x] bestaande account-UI synchroniseert een Manager-locatie naar een canonical scope;
+- [x] nieuwe Manager-scopes worden niet met terugwerkende kracht vóór accountaanmaak gebackfilled;
+- [x] Managerdemotie trekt open edit-scopes in;
+- [x] meerdere canonical Manager-scopes blijven technisch mogelijk;
+- [x] Manager kan nooit publiceren; Admin blijft de enige publicatierol;
+- [x] wijzigingsformulier en publication API blijven Admin-only;
+- [x] browser-/frontendrol is alleen UX; iedere beschermde actie wordt server-side opnieuw gecontroleerd;
+- [x] `/api/access/roster-policy` maakt de actuele roosterrechten/scopes inspecteerbaar;
+- [x] R7-rechtenmatrix en effective-date-randgevallen zijn opgenomen in `npm test`.
+
+Zie `docs/r7-access-control.md` voor het volledige rechtencontract.
+
+**Status: R7 afgerond zodra de definitieve GitHub Actions-run op deze roadmapstand groen is.**
