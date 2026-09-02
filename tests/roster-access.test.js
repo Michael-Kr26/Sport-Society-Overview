@@ -47,23 +47,23 @@ async function user(db, username, role, location = null) {
         VALUES (?, ?, 'x', ?, 1, ?)`, [username, username, role, location])).lastID;
 }
 
-test('R7 policy: Guest deny, Employee published, Manager planner en Admin publicatie', () => {
+test('R7 policy: Guest deny, Employee/Manager published en alleen Admin Planner/publicatie', () => {
     assert.equal(roleAllows('guest', 'employee'), false);
     assert.equal(roleAllows('employee', 'employee'), true);
-    assert.equal(roleAllows('employee', 'manager'), false);
-    assert.equal(roleAllows('manager', 'manager'), true);
+    assert.equal(roleAllows('employee', 'admin'), false);
+    assert.equal(roleAllows('manager', 'employee'), true);
     assert.equal(roleAllows('manager', 'admin'), false);
     assert.equal(roleAllows('admin', 'admin'), true);
 
     assert.equal(minimumRoleForPage('/roster.html'), 'employee');
-    assert.equal(minimumRoleForPage('/planner.html'), 'manager');
+    assert.equal(minimumRoleForPage('/planner.html'), 'admin');
     assert.equal(minimumRoleForApi('/api/roster-planner/context'), 'employee');
     assert.equal(minimumRoleForApi('/api/roster-effective'), 'employee');
     assert.equal(minimumRoleForApi('/api/roster-publication/publish'), 'admin');
     assert.equal(minimumRoleForApi('/api/change-workflow'), 'admin');
 });
 
-test('R7 gebruikt effective-dated user_location_scopes als Manager edit-autoriteit', async () => {
+test('R7 neutraliseert Manager-roosterscopes en laat alleen Admin wijzigen', async () => {
     const db = await readyDb();
     try {
         const ave = await locationId(db, 'AVE');
@@ -77,13 +77,19 @@ test('R7 gebruikt effective-dated user_location_scopes als Manager edit-autorite
         await run(db, `INSERT INTO user_location_scopes
             (user_id, location_id, can_edit_roster, can_publish_roster, effective_from, effective_to)
             VALUES (?, ?, 1, 0, '2026-10-01', '2026-10-31')`, [managerId, ave]);
+        await migrateRosterAccess(db);
+
+        const scope = await get(db, `SELECT can_edit_roster AS canEdit, can_publish_roster AS canPublish
+            FROM user_location_scopes WHERE user_id=? AND location_id=? ORDER BY id DESC LIMIT 1`, [managerId, ave]);
+        assert.equal(scope.canEdit, 0);
+        assert.equal(scope.canPublish, 0);
 
         assert.equal(await domain.AuthorizationService.canViewPublishedRoster(employeeId), true);
+        assert.equal(await domain.AuthorizationService.canViewPublishedRoster(managerId), true);
         assert.equal(await domain.AuthorizationService.canEditLocation(employeeId, ave, '2026-10-10'), false);
-        assert.equal(await domain.AuthorizationService.canEditLocation(managerId, ave, '2026-09-30'), false);
-        assert.equal(await domain.AuthorizationService.canEditLocation(managerId, ave, '2026-10-10'), true);
-        assert.equal(await domain.AuthorizationService.canEditLocation(managerId, ave, '2026-11-01'), false);
+        assert.equal(await domain.AuthorizationService.canEditLocation(managerId, ave, '2026-10-10'), false);
         assert.equal(await domain.AuthorizationService.canEditLocation(managerId, bve, '2026-10-10'), false);
+        assert.equal(await domain.AuthorizationService.canEditLocation(adminId, ave, '2026-10-10'), true);
         assert.equal(await domain.AuthorizationService.canEditLocation(adminId, bve, '2026-10-10'), true);
         assert.equal(await domain.AuthorizationService.canPublish(managerId), false);
         assert.equal(await domain.AuthorizationService.canPublish(adminId), true);
@@ -92,7 +98,7 @@ test('R7 gebruikt effective-dated user_location_scopes als Manager edit-autorite
     }
 });
 
-test('R7 maakt voor nieuwe legacy Manager-accountkoppeling automatisch canonical scope', async () => {
+test('R7 maakt voor Manager-account alleen organisatorische locatie-scope zonder roosterrechten', async () => {
     const db = await readyDb();
     try {
         const ave = await locationId(db, 'AVE');
@@ -101,26 +107,30 @@ test('R7 maakt voor nieuwe legacy Manager-accountkoppeling automatisch canonical
             can_publish_roster AS canPublish, effective_from AS effectiveFrom
             FROM user_location_scopes WHERE user_id=? ORDER BY id DESC LIMIT 1`, [managerId]);
         assert.equal(scope.locationId, ave);
-        assert.equal(scope.canEdit, 1);
+        assert.equal(scope.canEdit, 0);
         assert.equal(scope.canPublish, 0);
         assert.match(scope.effectiveFrom, /^\d{4}-\d{2}-\d{2}$/);
 
-        await run(db, "UPDATE users SET role='employee' WHERE id=?", [managerId]);
         const domain = createRosterDomain(db);
         await domain.ready;
+        assert.equal(await domain.AuthorizationService.canViewPublishedRoster(managerId), true);
         assert.equal(await domain.AuthorizationService.canEditLocation(managerId, ave, new Date().toISOString().slice(0, 10)), false);
     } finally {
         await close(db);
     }
 });
 
-test('R7 serverstart loopt via toegangsbootstrap en niet rechtstreeks via planner', () => {
+test('R7 serverstart en frontend leggen Planner vast als Admin-only', () => {
     const root = path.join(__dirname, '..');
     const startServer = fs.readFileSync(path.join(root, 'start-server.js'), 'utf8');
     const accessBootstrap = fs.readFileSync(path.join(root, 'r7-access-bootstrap.js'), 'utf8');
+    const authUi = fs.readFileSync(path.join(root, 'auth-ui.js'), 'utf8');
     assert.match(startServer, /require\('\.\/r7-access-bootstrap'\)/);
     assert.doesNotMatch(startServer, /require\('\.\/roster-planner-bootstrap'\)/);
     assert.match(accessBootstrap, /minimumRoleForPage/);
     assert.match(accessBootstrap, /minimumRoleForApi/);
+    assert.match(accessBootstrap, /canOpenPlanner: user\.role === 'admin'/);
     assert.match(accessBootstrap, /app\.use\(accessGuard\)/);
+    assert.match(authUi, /'planner\.html': 'admin'/);
+    assert.match(authUi, /navigationItem\('planner\.html', '▦', 'Planner', 'admin'\)/);
 });
