@@ -15,7 +15,7 @@
 | R4 | Legacy importadapter | Excel → canonical draft, parityrapport, nooit direct publiceren |
 | R5 | Nieuwe weekplanner | locatie/week, shift CRUD, open shifts, conflicts, mobile-first, uren |
 | R6 | Publicatiemotor | validate, diff, publish, history, changed-since-last-publication, urgent publish |
-| R7 | Rechten | Employee volledig gepubliceerd rooster, Manager edit-scope per vestiging, Admin organisatiebreed, Guest default deny |
+| R7 | Rechten | Employee/Manager published read-only, Planner en roosterbewerkingen uitsluitend Admin, Guest default deny |
 | R8 | Staffing + uren | coverage rules uit DB, backend staffing engine, planned hours uit published shifts, Excel shadow parity |
 | R9 | Export | ExcelJS, week-/maandexport, Graph upload, exportlog/checksum, noodrestore |
 | R10 | Cutover | rooster.sportsocietyoverview.net, database officiële roosterbron, feature flags, monitoring |
@@ -130,7 +130,7 @@ Technische acceptatie:
 
 R3 maakt de R2-tabellen daadwerkelijk bruikbaar als roostermotor.
 
-- [x] `AuthorizationService`: organisatiebreed gepubliceerd lezen, Manager eigen edit-scope, Admin publiceren;
+- [x] `AuthorizationService`: organisatiebreed published lezen en Admin publiceren; de latere R7-policy maakt planning/edits definitief Admin-only;
 - [x] `DraftService`: on-demand drafts, published → draft clone en optimistic locking;
 - [x] `PatternService`: local-time generatie, stable shift UID en automatische propagatie;
 - [x] handmatige pattern-weekexceptions voorkomen dat incidentele edits door sync worden teruggedraaid;
@@ -198,8 +198,8 @@ R5 maakt de canonical R2/R3-roosterdatalaag operationeel bruikbaar voor dagelijk
 - [x] optimistic locking;
 - [x] validatie- en waarschuwingspaneel;
 - [x] urenbankprojectie;
-- [x] Manager alleen eigen edit-scope, Admin alle locaties;
-- [x] Employee uitsluitend published;
+- [x] Planner en alle roosterbewerkingen zijn door R7 definitief Admin-only;
+- [x] Employee en Manager zien uitsluitend published roosterdata;
 - [x] handmatige edits/verwijderingen worden beschermd tegen legacy/pattern sync;
 - [x] wijzigingsformulier spiegelt wijzigingen direct naar de canonical overgangslaag;
 - [x] quiet-blue frontend behouden als actuele ontwerpvariant;
@@ -244,25 +244,23 @@ Zie `docs/r6-publication-engine.md` voor het volledige publicatiecontract.
 R7 maakt de roosterrechten server-side afdwingbaar en verwijdert legacy velden/browserstate als security boundary.
 
 - [x] `roster.html` vereist server-side minimaal Employee;
-- [x] `planner.html` vereist server-side minimaal Manager;
+- [x] `planner.html` is server-side uitsluitend Admin;
 - [x] published rooster blijft organisatiebreed voor Employee, Manager en Admin;
 - [x] Guest heeft standaard geen rooster-API of roosterpagina-toegang;
 - [x] legacy `/api/roster` en `/api/roster-effective` zijn niet meer anoniem opvraagbaar;
 - [x] `/api/roster-preview` is Admin-only;
-- [x] planner-API heeft een centrale sessiegrens en R3 controleert daarna draft-scope per locatie/week;
-- [x] `user_location_scopes` is de enige autoriteitsbron voor Manager-editrecht;
-- [x] Manager-scopes blijven effective-dated;
+- [x] planner-API houdt Employee+ published context beschikbaar voor `roster.html`, maar draftmutaties zijn expliciet Admin-only;
+- [x] Manager heeft geen Planner-, draft-, create-, update- of delete-recht;
+- [x] bestaande Manager-scopes worden naar `can_edit_roster=0` en `can_publish_roster=0` geneutraliseerd;
+- [x] nieuwe Manager-locatiescopes zijn uitsluitend organisatorisch en geven geen roosterrechten;
 - [x] `users.location` verleent zelfstandig geen roosterrecht;
-- [x] bestaande account-UI synchroniseert een Manager-locatie naar een canonical scope;
-- [x] nieuwe Manager-scopes worden niet met terugwerkende kracht vóór accountaanmaak gebackfilled;
-- [x] Managerdemotie trekt open edit-scopes in;
-- [x] meerdere canonical Manager-scopes blijven technisch mogelijk;
+- [x] ook een fout ingestelde legacy scope is onvoldoende: de Planner-service vereist daarnaast expliciet Admin;
 - [x] Manager kan nooit publiceren; Admin blijft de enige publicatierol;
 - [x] wijzigingsformulier en publication API blijven Admin-only;
 - [x] browser-/frontendrol is alleen UX; iedere beschermde actie wordt server-side opnieuw gecontroleerd;
 - [x] `/api/access/roster-policy` maakt de actuele roosterrechten/scopes inspecteerbaar;
-- [x] R7-rechtenmatrix en effective-date-randgevallen zijn opgenomen in `npm test`.
+- [x] R7/R5-regressietests leggen Manager read-only en Admin-only planning vast.
 
 Zie `docs/r7-access-control.md` voor het volledige rechtencontract.
 
-**Status: R7 afgerond zodra de definitieve GitHub Actions-run op deze roadmapstand groen is.**
+**Status: R7 gecorrigeerd naar Admin-only planning; definitief afgerond zodra de correctierun groen is.**
