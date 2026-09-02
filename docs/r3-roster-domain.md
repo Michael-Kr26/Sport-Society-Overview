@@ -2,7 +2,7 @@
 
 ## Status
 
-**R3 afgerond — implementatie en testset groen in GitHub Actions.**
+**R3 afgerond — implementatie en testset groen in GitHub Actions. Rechtenbeleid later aangescherpt in R7.**
 
 R3 maakt van de relationele roosterfundering uit R2 een werkende domeinlaag. R3 introduceert nog geen nieuwe weekplanner en schakelt de bestaande Excel-/overrideworkflow nog niet om naar de nieuwe bron van waarheid. Die overgang wordt bewust later uitgevoerd zodat er tijdens de migratie geen twee concurrerende roosterbronnen ontstaan.
 
@@ -19,10 +19,13 @@ Patterns mogen toekomstige concepten automatisch bijwerken. Een bestaande gepubl
 ### AuthorizationService
 
 - Employee, Manager en Admin mogen het volledige gepubliceerde organisatierooster lezen;
-- Manager mag alleen een rooster wijzigen voor een vestiging waarvoor een actieve `user_location_scope` met `can_edit_roster=1` bestaat;
+- R3 introduceerde technisch vestigingsgebonden Manager-scopes;
+- **R7 heeft het operationele rechtenbeleid daarna aangescherpt: Managers mogen niet plannen en geen drafts wijzigen; de Planner is uitsluitend Admin**;
 - Admin mag organisatiebreed wijzigen;
 - alleen Admin mag publiceren;
 - `user_employee_links` kan een ingelogde gebruiker aan het employee-record koppelen.
+
+De R3-domainprimitieven blijven onderdeel van de interne service-laag. De actuele server-/Planner-policy uit R7 is leidend voor producttoegang en neutraliseert Manager-roosterflags naar `0`.
 
 ### DraftService
 
@@ -34,6 +37,8 @@ Patterns mogen toekomstige concepten automatisch bijwerken. Een bestaande gepubl
 - pattern-exceptions worden meegekopieerd;
 - shift add/update/remove gebruikt optimistic locking op `roster_versions.revision`;
 - een verouderde editor krijgt `ROSTER_VERSION_CONFLICT` en kan een nieuwere wijziging niet stil overschrijven.
+
+Sinds R7 worden deze mutaties vanuit de operationele Planner uitsluitend met een Admin-account uitgevoerd.
 
 ### PatternService
 
@@ -127,7 +132,8 @@ Op dit moment schrijft het formulier tijdens de transitie nog naar de bestaande 
 
 - [x] R3-migratie is idempotent;
 - [x] lokale `Europe/Amsterdam`-tijd wordt correct naar UTC gematerialiseerd;
-- [x] AuthorizationService volgt de afgesproken organisatiebrede leesrechten en edit-scopes;
+- [x] AuthorizationService ondersteunt organisatiebreed published lezen en Admin-publicatie;
+- [x] R7 bepaalt aanvullend dat operationele draftmutaties uitsluitend Admin zijn;
 - [x] on-demand drafts worden aangemaakt of uit published gekloond;
 - [x] optimistic locking voorkomt silent overwrites;
 - [x] patterns genereren stabiele concrete shifts;
