@@ -114,4 +114,4 @@ Een Manager-scope met `can_publish_roster` kan daardoor niet stil tot publicatie
 - serverstart loopt via de R7-guard;
 - belangrijkste roosterpagina/API-minimumrollen zijn centraal vastgelegd.
 
-**Status: R7 afgerond zodra de definitieve GitHub Actions-run op de documentatiestand groen is.**
+**Status: R7 afgerond.**
