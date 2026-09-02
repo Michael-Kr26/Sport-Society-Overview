@@ -155,4 +155,4 @@ R8-contracttests controleren onder andere:
 - shadow parity detecteert gelijkheid en afwijkingen;
 - actieve staffing-/urenpagina’s laden de nieuwe R8-API en niet de oude browser-/Excel-overlay.
 
-**Status: implementatie gereed; R8 wordt definitief afgerond nadat de eindcommit volledig groen is in GitHub Actions.**
+**Status: R8 afgerond.**
