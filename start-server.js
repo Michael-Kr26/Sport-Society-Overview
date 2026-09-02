@@ -8,4 +8,4 @@ console.log = (...args) => {
     originalLog(...args);
 };
 
-require('./roster-planner-bootstrap');
+require('./r7-access-bootstrap');
