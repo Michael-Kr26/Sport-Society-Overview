@@ -122,4 +122,4 @@ De R7/R5 regressietests controleren onder andere:
 - serverstart loopt via de R7-guard;
 - belangrijkste roosterpagina/API-minimumrollen zijn centraal vastgelegd.
 
-**Status: R7 gecorrigeerd naar Admin-only planning; definitief afgerond zodra de correctierun groen is.**
+**Status: R7 afgerond — Planner en alle roosterbewerkingen uitsluitend Admin.**
