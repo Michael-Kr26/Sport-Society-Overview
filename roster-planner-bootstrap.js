@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const sqlite3 = require('sqlite3').verbose();
 const { createRosterPlanner } = require('./lib/roster-planner');
+const { createRosterPublicationWorkflow } = require('./lib/roster-publication');
 
 const expressPath = require.resolve('express');
 const originalExpress = require('express');
@@ -18,13 +19,14 @@ require.cache[expressPath].exports = new Proxy(originalExpress, {
 require('./change-workflow-bootstrap');
 require.cache[expressPath].exports = originalExpress;
 
-if (!app) throw new Error('Express-app kon niet worden gekoppeld aan de R5-weekplanner.');
+if (!app) throw new Error('Express-app kon niet worden gekoppeld aan de R5/R6-roosterplanner.');
 
 const DB_PATH = path.join(__dirname, 'data', 'sport-society.db');
 const SESSION_COOKIE_NAME = 'sso_session';
 const db = new sqlite3.Database(DB_PATH);
 db.configure('busyTimeout', 5000);
 const plannerReady = createRosterPlanner(db);
+const publicationReady = createRosterPublicationWorkflow(db);
 
 function run(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -110,6 +112,16 @@ function route(handler) {
     };
 }
 
+function publicationRoute(handler) {
+    return route(async (req, res, user, planner) => {
+        if (user.role !== 'admin') {
+            return res.status(403).json({ message: 'Alleen Admin kan roosters publiceren.', code: 'ROSTER_PUBLISH_FORBIDDEN' });
+        }
+        const publication = await publicationReady;
+        return handler(req, res, user, planner, publication);
+    });
+}
+
 app.get('/api/roster-planner/context', route(async (req, res, user, planner) => {
     const context = await planner.buildContext({
         userId: user.id,
@@ -188,4 +200,48 @@ app.delete('/api/roster-planner/shifts/:shiftUid', route(async (req, res, user, 
             || 'Handmatig verwijderd via weekplanner; niet door legacy/pattern generator terugplaatsen.'
     });
     res.json(context);
+}));
+
+app.get('/api/roster-publication/candidates', publicationRoute(async (req, res, user, planner, publication) => {
+    const result = await publication.listCandidates({
+        actorUserId: user.id,
+        fromWeekStart: String(req.query.fromWeekStart || ''),
+        weeks: req.query.weeks ? Number(req.query.weeks) : null
+    });
+    res.json(result);
+}));
+
+app.get('/api/roster-publication/horizon', publicationRoute(async (req, res, user, planner, publication) => {
+    const result = await publication.horizon({
+        referenceWeekStart: String(req.query.referenceWeekStart || '')
+    });
+    res.json(result);
+}));
+
+app.post('/api/roster-publication/prepare', publicationRoute(async (req, res, user, planner, publication) => {
+    const result = await publication.prepare({
+        actorUserId: user.id,
+        versionIds: Array.isArray(req.body.versionIds) ? req.body.versionIds : [],
+        referenceWeekStart: String(req.body.referenceWeekStart || '')
+    });
+    res.json(result);
+}));
+
+app.post('/api/roster-publication/publish', publicationRoute(async (req, res, user, planner, publication) => {
+    const result = await publication.publish({
+        actorUserId: user.id,
+        versionIds: Array.isArray(req.body.versionIds) ? req.body.versionIds : [],
+        reason: String(req.body.reason || '').trim().slice(0, 1000) || null,
+        referenceWeekStart: String(req.body.referenceWeekStart || '')
+    });
+    res.status(201).json(result);
+}));
+
+app.get('/api/roster-publication/history', publicationRoute(async (req, res, user, planner, publication) => {
+    const result = await publication.history({
+        limit: req.query.limit ? Number(req.query.limit) : 20,
+        locationId: req.query.locationId ? Number(req.query.locationId) : null,
+        weekStart: req.query.weekStart ? String(req.query.weekStart) : null
+    });
+    res.json({ items: result });
 }));
