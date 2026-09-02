@@ -61,6 +61,9 @@ test('R7 policy: Guest deny, Employee/Manager published en alleen Admin Planner/
     assert.equal(minimumRoleForApi('/api/roster-effective'), 'employee');
     assert.equal(minimumRoleForApi('/api/roster-publication/publish'), 'admin');
     assert.equal(minimumRoleForApi('/api/change-workflow'), 'admin');
+    assert.equal(minimumRoleForApi('/api/roster-operations/staffing'), 'manager');
+    assert.equal(minimumRoleForApi('/api/roster-operations/hours'), 'manager');
+    assert.equal(minimumRoleForApi('/api/roster-operations/parity'), 'admin');
 });
 
 test('R7 neutraliseert Manager-roosterscopes en laat alleen Admin wijzigen', async () => {
@@ -120,13 +123,15 @@ test('R7 maakt voor Manager-account alleen organisatorische locatie-scope zonder
     }
 });
 
-test('R7 serverstart en frontend leggen Planner vast als Admin-only', () => {
+test('R7/R8 serverstart houdt Planner Admin-only en laadt access control onder operations', () => {
     const root = path.join(__dirname, '..');
     const startServer = fs.readFileSync(path.join(root, 'start-server.js'), 'utf8');
+    const operationsBootstrap = fs.readFileSync(path.join(root, 'r8-operations-bootstrap.js'), 'utf8');
     const accessBootstrap = fs.readFileSync(path.join(root, 'r7-access-bootstrap.js'), 'utf8');
     const authUi = fs.readFileSync(path.join(root, 'auth-ui.js'), 'utf8');
-    assert.match(startServer, /require\('\.\/r7-access-bootstrap'\)/);
+    assert.match(startServer, /require\('\.\/r8-operations-bootstrap'\)/);
     assert.doesNotMatch(startServer, /require\('\.\/roster-planner-bootstrap'\)/);
+    assert.match(operationsBootstrap, /require\('\.\/r7-access-bootstrap'\)/);
     assert.match(accessBootstrap, /minimumRoleForPage/);
     assert.match(accessBootstrap, /minimumRoleForApi/);
     assert.match(accessBootstrap, /canOpenPlanner: user\.role === 'admin'/);
