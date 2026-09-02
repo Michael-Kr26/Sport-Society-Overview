@@ -232,8 +232,9 @@ R6 maakt de R3-publicatiekern operationeel en zorgt dat de gepubliceerde canonic
 - [x] wijzigingsformulier maakt daarbij geen dubbele CML-regel;
 - [x] protected drafts, eerste publicatie en hard conflicts worden niet stil via het wijzigingsformulier gepubliceerd;
 - [x] R6-migratie is opgenomen in de stille serverstart;
-- [x] R6-tests zijn opgenomen in `npm test`.
+- [x] R6-tests zijn opgenomen in `npm test`;
+- [x] GitHub Actions groen op de volledige R6-implementatie.
 
 Zie `docs/r6-publication-engine.md` voor het volledige publicatiecontract.
 
-**Status: R6 implementatie gereed; definitief afgerond zodra de laatste GitHub Actions-run op de documentatiestand groen is.**
+**Status: R6 afgerond.**
