@@ -8,4 +8,4 @@ console.log = (...args) => {
     originalLog(...args);
 };
 
-require('./r7-access-bootstrap');
+require('./r8-operations-bootstrap');
