@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="roster-overview.css?v=20260901-roster-overview">
+    <link rel="stylesheet" href="roster-overview.css?v=20260903-r9-export">
     <script src="auth-ui.js" defer></script>
-    <script src="roster-overview.js?v=20260901-roster-overview" defer></script>
+    <script src="roster-overview.js?v=20260903-r9-export" defer></script>
     <title>Sport Society - Rooster</title>
 </head>
 <body>
@@ -28,7 +28,24 @@
                 <h2>Roosteroverzicht</h2>
                 <p>Bekijk het gepubliceerde rooster van alle vestigingen. Conceptwijzigingen staan alleen in de Planner en verschijnen hier pas na publicatie.</p>
             </div>
-            <a id="open-planner" class="roster-secondary-button" href="planner.html" data-min-role="manager">Open Planner</a>
+            <a id="open-planner" class="roster-secondary-button" href="planner.html" data-min-role="admin">Open Planner</a>
+        </section>
+
+        <section id="roster-export-card" class="roster-card roster-export-card" hidden>
+            <div class="roster-export-copy">
+                <p class="roster-label">Excel</p>
+                <h2>Maandrooster exporteren</h2>
+                <p>Altijd organisatiebreed en uitsluitend uit het volledig gepubliceerde rooster. De Excel-opbouw volgt het bestaande Sport Society-maandrooster.</p>
+            </div>
+            <div class="roster-export-controls">
+                <label class="roster-filter-field">
+                    Maand
+                    <input type="month" id="roster-export-month" min="2026-09">
+                </label>
+                <button type="button" id="download-roster-export" class="roster-secondary-button">Excel downloaden</button>
+                <button type="button" id="sharepoint-roster-export" class="admin-button" hidden>SharePoint bijwerken</button>
+            </div>
+            <p id="roster-export-message" class="roster-export-message" hidden></p>
         </section>
 
         <section class="roster-card">
