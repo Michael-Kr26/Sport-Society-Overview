@@ -3,7 +3,7 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { activeLocationScopes } = require('./lib/roster-access');
-const { createRosterOperations } = require('./lib/roster-operations');
+const { analyzeHours, analyzeStaffing, shadowParity } = require('./lib/roster-operations');
 
 const expressPath = require.resolve('express');
 const originalExpress = require('express');
@@ -23,7 +23,16 @@ if (!app) throw new Error('Express-app kon niet worden gekoppeld aan R8 staffing
 const DB_PATH = path.join(__dirname, 'data', 'sport-society.db');
 const db = new sqlite3.Database(DB_PATH);
 db.configure('busyTimeout', 5000);
-const operations = createRosterOperations(db);
+
+// R8-schema en coverage seed worden vóór serverstart gemigreerd. Runtime-API's
+// lezen en analyseren daarna alleen het voorbereide schema; dit voorkomt dat
+// R8 tijdens bootstrap opnieuw met andere SQLite-writers concurreert.
+const operations = {
+    ready: Promise.resolve(),
+    analyzeStaffing: (options) => analyzeStaffing(db, options),
+    analyzeHours: (options) => analyzeHours(db, options),
+    shadowParity: (options) => shadowParity(db, options)
+};
 
 function apiError(res, error, fallback) {
     console.error(error);
