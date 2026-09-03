@@ -3,7 +3,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 const sqlite3 = require('sqlite3').verbose();
 const { migrateR1Masterdata } = require('../lib/masterdata-r1b');
@@ -105,6 +104,8 @@ test('R7 maakt voor Manager-account alleen organisatorische locatie-scope zonder
     try {
         await prepareUsers(db);
         await migrateR1Masterdata(db);
+        // R7 voegt users.location toe; de fixture mag die kolom pas daarna gebruiken.
+        await migrateRosterAccess(db);
         const ave = (await get(db, `SELECT id FROM locations WHERE code='AVE'`)).id;
         const managerId = (await run(db, `INSERT INTO users (username, display_name, role, location)
             VALUES ('manager-new','Manager New','manager','Achterveld')`)).lastID;
