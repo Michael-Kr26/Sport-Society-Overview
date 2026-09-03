@@ -22,8 +22,8 @@ test('Rooster is read-only gepubliceerd overzicht en Planner is Admin-only weekp
     assert.match(plannerHtml, /shift-drawer/);
     assert.match(plannerHtml, /roster\.js/);
 
-    assert.match(authUi, /navigationItem\('roster\.html', '▦', 'Rooster', 'employee'\)/);
-    assert.match(authUi, /navigationItem\('planner\.html', '▦', 'Planner', 'admin'\)/);
+    assert.match(authUi, /navigationItem\('roster\.html', 'calendar', 'Rooster', 'employee'\)/);
+    assert.match(authUi, /navigationItem\('planner\.html', 'calendar', 'Planner', 'admin'\)/);
     assert.match(authUi, /'planner\.html': 'admin'/);
 
     assert.match(changeWorkflow, /rosterUrl: `planner\.html\?/);
