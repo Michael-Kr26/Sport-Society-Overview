@@ -63,7 +63,7 @@ test('npm start initialiseert R1 masterdata vóór R7/R9 migraties', () => {
     assert.ok(exportIndex > accessIndex, 'R9 exportmigratie moet na R7 access draaien');
 });
 
-test('migrate-masterdata kan stil een volledig lege database initialiseren', async () => {
+test('migrate-masterdata initialiseert een lege database zonder medewerkers te fabriceren', async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sso-fresh-clone-'));
     const dbPath = path.join(tempDir, 'fresh.db');
     const result = spawnSync(process.execPath, ['migrate-masterdata.js', '--quiet', dbPath], {
@@ -79,8 +79,12 @@ test('migrate-masterdata kan stil een volledig lege database initialiseren', asy
         try {
             const locations = await get(db, 'SELECT COUNT(*) AS count FROM locations');
             const employees = await get(db, 'SELECT COUNT(*) AS count FROM employees');
+            const aliases = await get(db, 'SELECT COUNT(*) AS count FROM legacy_employee_aliases');
+            const accessSeeds = await get(db, 'SELECT COUNT(*) AS count FROM masterdata_access_seeds');
             assert.equal(Number(locations.count), 5);
-            assert.ok(Number(employees.count) >= 22);
+            assert.equal(Number(employees.count), 0);
+            assert.equal(Number(aliases.count), 0);
+            assert.equal(Number(accessSeeds.count), 0);
         } finally {
             await close(db);
         }
