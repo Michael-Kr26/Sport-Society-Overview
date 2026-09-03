@@ -26,9 +26,10 @@ test('legacy medewerker zonder canonieke ID krijgt gecontroleerde naam-fallback'
     assert.equal(view.resolveEmployee({ employees: [employee], name: 'Historische Medewerker' }), employee);
 });
 
-test('medewerkersoverzicht bevat geen permanente profiel- of contractedits', () => {
+test('medewerkersoverzicht bevat geen permanente profiel- of contractedits en gebruikt dynamische detailrouting', () => {
     const html = read('employee-settings.html');
-    assert.match(html, /employee\.html/);
+    const js = read('employee-settings.js');
+    assert.match(js, /view\.employeeHref\(employee, directory\)/);
     assert.doesNotMatch(html, /data-profile-form/);
     assert.doesNotMatch(html, /data-period-form/);
     assert.match(html, /toggle-add-employee/);
