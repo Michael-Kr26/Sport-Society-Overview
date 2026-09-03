@@ -9,6 +9,7 @@ const {
     minimumRoleForPage,
     roleAllows
 } = require('./lib/roster-access');
+const { listEmployeeLocations, replaceEmployeeLocations } = require('./lib/employee-locations');
 
 const expressPath = require.resolve('express');
 const originalExpress = require('express');
@@ -107,6 +108,28 @@ async function accessGuard(req, res, next) {
     }
 }
 
+function adminMasterdataRoute(handler) {
+    return async (req, res) => {
+        try {
+            await accessReady;
+            const user = await authenticatedUser(req);
+            if (!user) return res.status(401).json({ message: 'Log eerst in.' });
+            if (user.role !== 'admin') {
+                return res.status(403).json({ message: 'Alleen Admin kan medewerkerlocaties wijzigen.' });
+            }
+            await handler(req, res, user);
+        } catch (error) {
+            console.error(error);
+            if (!res.headersSent) {
+                res.status(error.status || 500).json({
+                    message: error.status ? error.message : 'Medewerkerlocaties konden niet worden verwerkt.',
+                    code: error.code || null
+                });
+            }
+        }
+    };
+}
+
 app.get('/api/access/roster-policy', async (req, res) => {
     try {
         await accessReady;
@@ -138,6 +161,22 @@ app.get('/api/access/roster-policy', async (req, res) => {
         res.status(500).json({ message: 'Roosterrechten konden niet worden geladen.' });
     }
 });
+
+app.get('/api/employee-locations/:employeeId', adminMasterdataRoute(async (req, res) => {
+    const result = await listEmployeeLocations(db, req.params.employeeId, req.query.effectiveDate);
+    res.json(result);
+}));
+
+app.put('/api/employee-locations/:employeeId', adminMasterdataRoute(async (req, res, user) => {
+    const result = await replaceEmployeeLocations(db, {
+        employeeId: req.params.employeeId,
+        primaryLocationCode: req.body.primaryLocationCode,
+        eligibleLocationCodes: req.body.eligibleLocationCodes,
+        effectiveFrom: req.body.effectiveFrom || undefined,
+        note: `Gewijzigd via Medewerkerinstellingen door ${user.displayName || user.username}`
+    });
+    res.json({ message: 'Medewerkerlocaties opgeslagen.', ...result });
+}));
 
 app.use(accessGuard);
 
