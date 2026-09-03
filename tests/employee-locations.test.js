@@ -71,17 +71,18 @@ test('primaire locatie moet ook inzetbaar zijn', async () => {
     }
 });
 
-test('medewerkerdetail laadt locatie-editor en server exposeert Admin-API', () => {
+test('medewerkerdetail laadt locatie-editor en R7 exposeert Admin-API zonder nieuwe outer bootstrap', () => {
     const root = path.join(__dirname, '..');
     const startServer = fs.readFileSync(path.join(root, 'start-server.js'), 'utf8');
-    const bootstrap = fs.readFileSync(path.join(root, 'employee-location-bootstrap.js'), 'utf8');
+    const accessBootstrap = fs.readFileSync(path.join(root, 'r7-access-bootstrap.js'), 'utf8');
     const viewModel = fs.readFileSync(path.join(root, 'employee-view-model.js'), 'utf8');
     const ui = fs.readFileSync(path.join(root, 'employee-location-ui.js'), 'utf8');
 
-    assert.match(startServer, /require\('\.\/employee-location-bootstrap'\)/);
-    assert.match(bootstrap, /app\.get\('\/api\/employee-locations\/:employeeId'/);
-    assert.match(bootstrap, /app\.put\('\/api\/employee-locations\/:employeeId'/);
-    assert.match(bootstrap, /user\.role !== 'admin'/);
+    assert.match(startServer, /require\('\.\/r9-export-bootstrap'\)/);
+    assert.doesNotMatch(startServer, /employee-location-bootstrap/);
+    assert.match(accessBootstrap, /app\.get\('\/api\/employee-locations\/:employeeId'/);
+    assert.match(accessBootstrap, /app\.put\('\/api\/employee-locations\/:employeeId'/);
+    assert.match(accessBootstrap, /user\.role !== 'admin'/);
     assert.match(viewModel, /employee-location-ui\.js/);
     assert.match(ui, /Primaire locatie/);
     assert.match(ui, /Inzetbaar op/);
