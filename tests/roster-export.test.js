@@ -150,29 +150,46 @@ test('R9 maakt current-layout maand-Excel uit uitsluitend published canonical sh
     }
 });
 
-test('R9 Graph upload archiveert iedere export en overschrijft current alleen voor huidige maand', async () => {
+test('R9 Graph upload schrijft onder de gedeelde Rooster-root naar Actueel en Archief', async () => {
     const calls = [];
     const response = (payload) => ({ ok: true, status: 200, text: async () => JSON.stringify(payload) });
     const fetchImpl = async (url, options = {}) => {
         calls.push({ url, method: options.method || 'GET', body: options.body || null });
-        if ((options.method || 'GET') === 'GET') return response({ id: 'current-item', name: 'Rooster actueel.xlsx', parentReference: { driveId: 'drive-1' } });
-        if (url.includes('Rooster%20Archief')) return response({ id: 'archive-item', name: 'SSO-Rooster-2026-10-exp-000001.xlsx' });
-        return response({ id: 'current-item', name: 'Rooster actueel.xlsx' });
+        if ((options.method || 'GET') === 'GET') {
+            return response({
+                id: 'rooster-root',
+                name: 'Rooster',
+                folder: { childCount: 2 },
+                parentReference: { driveId: 'drive-1' }
+            });
+        }
+        if (url.includes('/Archief/')) return response({ id: 'archive-item', name: 'SSO-Rooster-2026-10-exp-000001.xlsx' });
+        return response({ id: 'current-item', name: 'Rooster.xlsx' });
     };
     const exporter = createGraphRosterExporter({
-        env: { GRAPH_DRIVE_ID: 'drive-1', GRAPH_ITEM_ID: 'current-item', GRAPH_ROSTER_ARCHIVE_PATH: 'Rooster Archief' },
+        env: {
+            GRAPH_ROSTER_ROOT_DRIVE_ID: 'drive-1',
+            GRAPH_ROSTER_ROOT_ITEM_ID: 'rooster-root',
+            GRAPH_ROSTER_CURRENT_PATH: 'Actueel/Rooster.xlsx',
+            GRAPH_ROSTER_ARCHIVE_PATH: 'Archief'
+        },
         fetchImpl,
         tokenProvider: async () => 'token'
     });
+
     const future = await exporter.upload({
         buffer: Buffer.from('xlsx'),
         fileName: 'SSO-Rooster-2026-10-exp-000001.xlsx',
         month: '2026-10',
         currentMonth: '2026-09'
     });
+    assert.equal(future.root.itemId, 'rooster-root');
     assert.equal(future.archive.status, 'success');
+    assert.equal(future.archive.remotePath, 'Archief/SSO-Rooster-2026-10-exp-000001.xlsx');
     assert.equal(future.current.status, 'skipped');
+    assert.equal(future.current.remotePath, 'Actueel/Rooster.xlsx');
     assert.equal(calls.filter((call) => call.method === 'PUT').length, 1);
+    assert.match(calls.find((call) => call.method === 'PUT').url, /\/items\/rooster-root:\/Archief\/SSO-Rooster/);
 
     calls.length = 0;
     const current = await exporter.upload({
@@ -182,5 +199,25 @@ test('R9 Graph upload archiveert iedere export en overschrijft current alleen vo
         currentMonth: '2026-09'
     });
     assert.equal(current.current.status, 'success');
+    assert.equal(current.current.remotePath, 'Actueel/Rooster.xlsx');
     assert.equal(calls.filter((call) => call.method === 'PUT').length, 2);
+    assert.ok(calls.some((call) => call.method === 'PUT' && /\/items\/rooster-root:\/Actueel\/Rooster\.xlsx:\/content$/.test(call.url)));
+    assert.ok(calls.some((call) => call.method === 'PUT' && call.url.includes('/Archief/')));
+});
+
+test('R9 Graph export valt niet terug op de legacy GRAPH_SHARE_LINK', async () => {
+    const exporter = createGraphRosterExporter({
+        env: { GRAPH_SHARE_LINK: 'https://example.invalid/oud-roosterbestand' },
+        fetchImpl: async () => { throw new Error('fetch mag niet worden aangeroepen'); },
+        tokenProvider: async () => 'token'
+    });
+    await assert.rejects(
+        exporter.upload({
+            buffer: Buffer.from('xlsx'),
+            fileName: 'SSO-Rooster-2026-09-exp-000003.xlsx',
+            month: '2026-09',
+            currentMonth: '2026-09'
+        }),
+        /GRAPH_ROSTER_ROOT_SHARE_LINK/
+    );
 });
