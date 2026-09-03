@@ -5,7 +5,6 @@ const crypto = require('crypto');
 const sqlite3 = require('sqlite3').verbose();
 const {
     activeLocationScopes,
-    migrateRosterAccess,
     minimumRoleForApi,
     minimumRoleForPage,
     roleAllows
@@ -35,7 +34,10 @@ const get = (sql, params = []) => new Promise((resolve, reject) => {
     db.get(sql, params, (error, row) => error ? reject(error) : resolve(row || null));
 });
 
-const accessReady = migrateRosterAccess(db);
+// Schemawijzigingen horen bij de expliciete pre-start migraties. De runtime
+// gebruikt daarna alleen het reeds voorbereide schema om dubbele SQLite-writes
+// op meerdere bootstrapverbindingen te voorkomen.
+const accessReady = Promise.resolve();
 
 function parseCookies(req) {
     return String(req.headers.cookie || '').split(';').reduce((cookies, part) => {
