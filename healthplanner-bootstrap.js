@@ -23,14 +23,26 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const LOCATIONS = ['Achterveld', 'Barneveld', 'Voorthuizen', 'Wekerom', 'Harskamp', 'Sport Society totaal'];
 const SCOPES = ['day', 'month_to_date'];
 const db = new sqlite3.Database(DB_PATH);
-db.configure('busyTimeout', 5000);
+db.configure('busyTimeout', 10000);
 
-const run = (sql, params = []) => new Promise((resolve, reject) => {
+const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const runOnce = (sql, params = []) => new Promise((resolve, reject) => {
     db.run(sql, params, function (error) {
         if (error) reject(error);
         else resolve({ lastID: this.lastID, changes: this.changes });
     });
 });
+async function run(sql, params = []) {
+    const maxBusyRetries = 5;
+    for (let attempt = 0; ; attempt += 1) {
+        try {
+            return await runOnce(sql, params);
+        } catch (error) {
+            if (error?.code !== 'SQLITE_BUSY' || attempt >= maxBusyRetries) throw error;
+            await sleep(100 * (attempt + 1));
+        }
+    }
+}
 const get = (sql, params = []) => new Promise((resolve, reject) => {
     db.get(sql, params, (error, row) => error ? reject(error) : resolve(row || null));
 });
