@@ -65,3 +65,10 @@
         sortedPeriods
     };
 });
+
+if (typeof window !== 'undefined' && /(^|\/)employee\.html$/.test(window.location.pathname)) {
+    const script = document.createElement('script');
+    script.src = 'employee-location-ui.js?v=20260903-employee-locations';
+    script.defer = true;
+    document.head.appendChild(script);
+}
