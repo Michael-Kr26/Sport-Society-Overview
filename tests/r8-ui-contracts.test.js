@@ -30,10 +30,13 @@ test('R8 urenpagina gebruikt canonical published als primaire bron en Excel alle
     assert.match(html, /Shadow parity/);
 });
 
-test('R8 startup migreert stil en behoudt compacte terminaloutput', () => {
+test('R8/R9 startup migreert stil via de bovenste exportlaag en behoudt compacte terminaloutput', () => {
     const pkg = JSON.parse(read('package.json'));
     const start = read('start-server.js');
-    assert.match(pkg.scripts.start, /migrate-roster-operations\.js --quiet/);
+    const exportMigration = read('migrate-roster-export.js');
+    assert.match(pkg.scripts.start, /migrate-roster-export\.js --quiet/);
+    assert.doesNotMatch(pkg.scripts.start, /migrate-roster-operations\.js/);
     assert.doesNotMatch(pkg.scripts.start, /migrate-roster-publication\.js/);
-    assert.match(start, /r8-operations-bootstrap/);
+    assert.match(exportMigration, /migrateRosterExport/);
+    assert.match(start, /r9-export-bootstrap/);
 });
