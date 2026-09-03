@@ -1,0 +1,489 @@
+:root {
+    --sso-bg: #f4f7fb;
+    --sso-surface: #ffffff;
+    --sso-surface-subtle: #f8fafd;
+    --sso-surface-muted: #f1f5fa;
+    --sso-text: #16233a;
+    --sso-text-secondary: #65748b;
+    --sso-text-muted: #8794a8;
+    --sso-primary: #0f66df;
+    --sso-primary-hover: #0b58c5;
+    --sso-primary-soft: #eaf2fe;
+    --sso-navy: #0b1d38;
+    --sso-navy-soft: #122a4a;
+    --sso-border: #dce4ee;
+    --sso-border-strong: #c9d5e4;
+    --sso-success: #238553;
+    --sso-success-bg: #e9f7ef;
+    --sso-warning: #9a6607;
+    --sso-warning-bg: #fff5df;
+    --sso-danger: #c63f48;
+    --sso-danger-bg: #fff0f1;
+    --sso-neutral-bg: #edf2f7;
+    --sso-radius-sm: 8px;
+    --sso-radius: 10px;
+    --sso-radius-lg: 12px;
+    --sso-shadow: 0 1px 2px rgba(22, 35, 58, 0.04), 0 8px 24px rgba(22, 35, 58, 0.045);
+    --sso-focus: 0 0 0 3px rgba(15, 102, 223, 0.16);
+    --sso-space-1: 4px;
+    --sso-space-2: 8px;
+    --sso-space-3: 12px;
+    --sso-space-4: 16px;
+    --sso-space-5: 20px;
+    --sso-space-6: 24px;
+    --sso-space-8: 32px;
+    --sso-space-10: 40px;
+}
+
+html {
+    color-scheme: light;
+    background: var(--sso-bg);
+}
+
+body {
+    background: var(--sso-bg);
+    color: var(--sso-text);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+body, button, input, select, textarea {
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--sso-text);
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    line-height: 1.25;
+    text-transform: none;
+}
+
+p, li, dd, td {
+    color: var(--sso-text-secondary);
+}
+
+a {
+    color: var(--sso-primary);
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.sso-page {
+    width: min(100% - 48px, 1360px);
+    margin: 0 auto;
+}
+
+.sso-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sso-space-6);
+    width: min(100% - 48px, 1360px);
+    margin: 0 auto;
+    padding: 26px 0 20px;
+}
+
+.sso-page-heading {
+    min-width: 0;
+}
+
+.sso-page-title {
+    margin: 0;
+    color: var(--sso-text);
+    font-size: clamp(1.55rem, 2.4vw, 2rem);
+    font-weight: 620;
+    letter-spacing: -0.03em;
+}
+
+.sso-breadcrumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 6px;
+    color: var(--sso-text-muted);
+    font-size: 0.86rem;
+    font-weight: 400;
+}
+
+.sso-breadcrumbs a {
+    color: #617a9f;
+    text-decoration: none;
+}
+
+.sso-breadcrumbs a:hover {
+    color: var(--sso-primary);
+}
+
+.sso-breadcrumb-separator {
+    color: #b1bdcc;
+}
+
+.sso-card,
+.sso-section {
+    border: 1px solid var(--sso-border);
+    border-radius: var(--sso-radius-lg);
+    background: var(--sso-surface);
+    box-shadow: var(--sso-shadow);
+}
+
+.sso-card {
+    padding: var(--sso-space-6);
+}
+
+.sso-card--subtle {
+    background: var(--sso-surface-subtle);
+    box-shadow: none;
+}
+
+.sso-section {
+    padding: var(--sso-space-6);
+}
+
+.sso-section + .sso-section {
+    margin-top: var(--sso-space-5);
+}
+
+.sso-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sso-space-4);
+    margin-bottom: var(--sso-space-5);
+}
+
+.sso-section-title {
+    margin: 0;
+    font-size: 1.08rem;
+    font-weight: 600;
+}
+
+.sso-section-copy {
+    margin-top: 4px;
+    color: var(--sso-text-secondary);
+    font-size: 0.9rem;
+}
+
+.sso-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid transparent;
+    border-radius: var(--sso-radius-sm);
+    background: transparent;
+    color: var(--sso-text);
+    font-size: 0.9rem;
+    font-weight: 550;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.sso-button--primary {
+    border-color: var(--sso-primary);
+    background: var(--sso-primary);
+    color: #fff;
+}
+
+.sso-button--primary:hover {
+    border-color: var(--sso-primary-hover);
+    background: var(--sso-primary-hover);
+}
+
+.sso-button--secondary {
+    border-color: var(--sso-border-strong);
+    background: var(--sso-surface);
+    color: #365373;
+}
+
+.sso-button--secondary:hover {
+    border-color: #aebfd4;
+    background: var(--sso-surface-subtle);
+}
+
+.sso-button--danger {
+    border-color: #e8aeb3;
+    background: var(--sso-surface);
+    color: var(--sso-danger);
+}
+
+.sso-button--danger:hover {
+    background: var(--sso-danger-bg);
+}
+
+.sso-button--text {
+    min-height: 34px;
+    padding: 5px 8px;
+    color: var(--sso-primary);
+}
+
+.sso-button--text:hover {
+    background: var(--sso-primary-soft);
+}
+
+.sso-icon-button {
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+}
+
+.sso-field {
+    display: grid;
+    gap: 6px;
+}
+
+.sso-field-label,
+.sso-field > label,
+label.sso-field {
+    color: #52637b;
+    font-size: 0.86rem;
+    font-weight: 500;
+}
+
+.sso-input,
+.sso-field input,
+.sso-field select,
+.sso-field textarea {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    border: 1px solid var(--sso-border-strong);
+    border-radius: var(--sso-radius-sm);
+    background: #fff;
+    color: var(--sso-text);
+    font: inherit;
+    font-size: 0.94rem;
+    font-weight: 400;
+}
+
+.sso-field textarea {
+    min-height: 104px;
+    resize: vertical;
+}
+
+.sso-input::placeholder,
+.sso-field input::placeholder,
+.sso-field textarea::placeholder {
+    color: #99a5b5;
+}
+
+.sso-input:focus,
+.sso-field input:focus,
+.sso-field select:focus,
+.sso-field textarea:focus {
+    border-color: #72a3e4;
+    outline: 0;
+    box-shadow: var(--sso-focus);
+}
+
+.sso-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #52637b;
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.sso-checkbox input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--sso-primary);
+}
+
+.sso-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    background: var(--sso-neutral-bg);
+    color: #53657c;
+    font-size: 0.78rem;
+    font-weight: 550;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.sso-badge--success {
+    background: var(--sso-success-bg);
+    color: var(--sso-success);
+}
+
+.sso-badge--warning {
+    background: var(--sso-warning-bg);
+    color: var(--sso-warning);
+}
+
+.sso-badge--danger {
+    background: var(--sso-danger-bg);
+    color: var(--sso-danger);
+}
+
+.sso-badge--neutral {
+    background: var(--sso-neutral-bg);
+    color: #53657c;
+}
+
+.sso-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--sso-border);
+    border-radius: var(--sso-radius);
+    background: #fff;
+}
+
+.sso-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    color: var(--sso-text);
+    font-size: 0.9rem;
+}
+
+.sso-table th,
+.sso-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--sso-border);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.sso-table th {
+    background: var(--sso-surface-subtle);
+    color: #617087;
+    font-size: 0.78rem;
+    font-weight: 550;
+}
+
+.sso-table td {
+    color: var(--sso-text);
+    font-weight: 400;
+}
+
+.sso-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.sso-table tbody tr:hover td {
+    background: #fbfcfe;
+}
+
+.sso-empty-state {
+    padding: 28px 20px;
+    color: var(--sso-text-secondary);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.sso-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 58px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--sso-border);
+}
+
+.sso-list-row:last-child {
+    border-bottom: 0;
+}
+
+.sso-eyebrow {
+    color: #71819a;
+    font-size: 0.7rem;
+    font-weight: 550;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+}
+
+.sso-muted {
+    color: var(--sso-text-secondary);
+}
+
+.sso-danger-text {
+    color: var(--sso-danger);
+}
+
+.sso-button:focus-visible,
+.sso-icon-button:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+    outline: 2px solid rgba(15, 102, 223, 0.55);
+    outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+    .sso-page,
+    .sso-page-header {
+        width: min(100% - 28px, 1360px);
+    }
+
+    .sso-page-header {
+        padding-top: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        font-size: 15px;
+    }
+
+    .sso-page,
+    .sso-page-header {
+        width: min(100% - 20px, 1360px);
+    }
+
+    .sso-page-header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 18px 0 14px;
+    }
+
+    .sso-card,
+    .sso-section {
+        padding: 18px;
+    }
+
+    .sso-section-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sso-button {
+        min-height: 44px;
+    }
+
+    .sso-input,
+    .sso-field input,
+    .sso-field select,
+    .sso-field textarea {
+        min-height: 44px;
+        font-size: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
