@@ -8,7 +8,7 @@
     "test:syntax": "node scripts/check-javascript.js",
     "test:contracts": "node --test tests/legacy-contracts.test.js",
     "test:freshclone": "node --test tests/fresh-clone-startup.test.js",
-    "test:employeeui": "node --test tests/employee-ui-v2.test.js",
+    "test:employeeui": "node --test tests/employee-ui-v2.test.js tests/employee-locations.test.js",
     "test:ui": "node --test tests/ui-design-system.test.js",
     "test:masterdata": "node --test tests/masterdata.test.js tests/masterdata-r1b.test.js",
     "test:rosterdata": "node --test tests/roster-data.test.js",
