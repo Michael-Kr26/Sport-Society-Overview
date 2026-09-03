@@ -22,7 +22,12 @@ const elements = {
     count: document.getElementById('roster-result-count'),
     results: document.getElementById('roster-results'),
     error: document.getElementById('roster-error'),
-    plannerLink: document.getElementById('open-planner')
+    plannerLink: document.getElementById('open-planner'),
+    exportCard: document.getElementById('roster-export-card'),
+    exportMonth: document.getElementById('roster-export-month'),
+    exportDownload: document.getElementById('download-roster-export'),
+    exportSharePoint: document.getElementById('sharepoint-roster-export'),
+    exportMessage: document.getElementById('roster-export-message')
 };
 
 const query = new URLSearchParams(window.location.search);
@@ -34,7 +39,8 @@ const state = {
     weekStart: mondayOf(initialFocusDate || todayString()),
     shifts: [],
     contexts: [],
-    loading: false
+    loading: false,
+    role: 'guest'
 };
 
 function escapeHtml(value) {
@@ -98,11 +104,34 @@ function setError(message) {
     elements.error.textContent = message || '';
 }
 
+function setExportMessage(message, type = 'info') {
+    if (!elements.exportMessage) return;
+    elements.exportMessage.hidden = !message;
+    elements.exportMessage.textContent = message || '';
+    elements.exportMessage.className = `roster-export-message is-${type}`;
+}
+
 async function api(url) {
     const response = await fetch(url);
     let payload = {};
     try { payload = await response.json(); } catch {}
     if (!response.ok) throw new Error(payload.message || 'Rooster kon niet worden geladen.');
+    return payload;
+}
+
+async function jsonRequest(url, options = {}) {
+    const response = await fetch(url, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    let payload = {};
+    try { payload = await response.json(); } catch {}
+    if (!response.ok) {
+        const error = new Error(payload.message || 'Export kon niet worden verwerkt.');
+        error.code = payload.code || null;
+        error.details = payload.details || null;
+        throw error;
+    }
     return payload;
 }
 
@@ -151,6 +180,7 @@ function renderToolbar() {
     if (elements.plannerLink) {
         const location = elements.location.value || 'AVE';
         elements.plannerLink.href = `planner.html?focusDate=${encodeURIComponent(state.weekStart)}&location=${encodeURIComponent(location)}`;
+        elements.plannerLink.hidden = state.role !== 'admin';
     }
 }
 
@@ -248,6 +278,66 @@ async function loadWeek() {
     }
 }
 
+function selectedExportMonth() {
+    const month = String(elements.exportMonth?.value || '');
+    if (!/^\d{4}-\d{2}$/.test(month)) throw new Error('Selecteer eerst een geldige maand.');
+    return month;
+}
+
+async function downloadMonthlyExport() {
+    const month = selectedExportMonth();
+    setExportMessage('Excel wordt opgebouwd...', 'info');
+    elements.exportDownload.disabled = true;
+    try {
+        const response = await fetch(`/api/roster-export/month?month=${encodeURIComponent(month)}`);
+        if (!response.ok) {
+            let payload = {};
+            try { payload = await response.json(); } catch {}
+            throw new Error(payload.message || 'Excel-export kon niet worden gemaakt.');
+        }
+        const blob = await response.blob();
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const fileName = disposition.match(/filename="([^"]+)"/)?.[1] || `SSO-Rooster-${month}.xlsx`;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        setExportMessage(`${fileName} is aangemaakt uit het gepubliceerde rooster.`, 'success');
+    } catch (error) {
+        console.error(error);
+        setExportMessage(error.message, 'error');
+    } finally {
+        elements.exportDownload.disabled = false;
+    }
+}
+
+async function updateSharePointExport() {
+    const month = selectedExportMonth();
+    setExportMessage('Excel wordt opgebouwd en naar SharePoint gestuurd...', 'info');
+    elements.exportSharePoint.disabled = true;
+    elements.exportDownload.disabled = true;
+    try {
+        const result = await jsonRequest('/api/roster-export/sharepoint', {
+            method: 'POST',
+            body: JSON.stringify({ month })
+        });
+        const currentText = result.upload?.current?.status === 'success'
+            ? 'Het actuele roosterbestand is ook bijgewerkt.'
+            : 'De archiefkopie is opgeslagen; het actuele bestand blijft op de huidige kalendermaand.';
+        setExportMessage(`${result.fileName} staat in het roosterarchief. ${currentText}`, 'success');
+    } catch (error) {
+        console.error(error);
+        setExportMessage(error.message, 'error');
+    } finally {
+        elements.exportSharePoint.disabled = false;
+        elements.exportDownload.disabled = false;
+    }
+}
+
 function shiftWeek(delta) {
     state.weekStart = addDays(state.weekStart, delta * 7);
     loadWeek();
@@ -268,8 +358,19 @@ elements.reset.addEventListener('click', () => {
     elements.type.value = '';
     renderResults();
 });
+if (elements.exportDownload) elements.exportDownload.addEventListener('click', downloadMonthlyExport);
+if (elements.exportSharePoint) elements.exportSharePoint.addEventListener('click', updateSharePointExport);
+if (elements.exportMonth) elements.exportMonth.addEventListener('change', () => setExportMessage(''));
 
-document.addEventListener('authready', () => {
+document.addEventListener('authready', (event) => {
+    const authState = event.detail || window.currentAuthState || {};
+    state.role = authState.role || 'guest';
     applyInitialFilters();
+    if (elements.exportMonth && !elements.exportMonth.value) {
+        elements.exportMonth.value = String(initialFocusDate || todayString()).slice(0, 7);
+    }
+    if (elements.exportCard) elements.exportCard.hidden = !['manager', 'admin'].includes(state.role);
+    if (elements.exportSharePoint) elements.exportSharePoint.hidden = state.role !== 'admin';
+    renderToolbar();
     loadWeek();
 });
