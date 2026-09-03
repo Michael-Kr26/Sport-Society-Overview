@@ -1,0 +1,59 @@
+.employee-location-form {
+    display: grid;
+    gap: 20px;
+}
+
+.employee-location-options-wrap {
+    display: grid;
+    gap: 10px;
+}
+
+.employee-location-options-label {
+    font-weight: 500;
+    color: var(--sso-text, #10243e);
+}
+
+.employee-location-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px 18px;
+}
+
+.employee-location-choice {
+    min-height: 40px;
+}
+
+.employee-location-copy,
+.employee-location-message {
+    margin: 0;
+    color: var(--sso-text-muted, #64748b);
+}
+
+.employee-location-message:empty {
+    display: none;
+}
+
+.employee-location-message.is-success {
+    color: var(--sso-success, #16803c);
+}
+
+.employee-location-message.is-warning {
+    color: var(--sso-warning, #a15c00);
+}
+
+.employee-location-message.is-error {
+    color: var(--sso-danger, #b42318);
+}
+
+.employee-location-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .employee-location-options {
+        grid-template-columns: 1fr;
+    }
+}
