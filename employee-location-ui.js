@@ -1,5 +1,51 @@
 (() => {
-    const section = document.getElementById('employee-location-section');
+    function ensureStylesheet() {
+        if (document.querySelector('link[href^="employee-locations.css"]')) return;
+        const stylesheet = document.createElement('link');
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = 'employee-locations.css?v=20260903-employee-locations';
+        document.head.appendChild(stylesheet);
+    }
+
+    function ensureUi() {
+        let section = document.getElementById('employee-location-section');
+        if (section) return section;
+        const anchor = document.getElementById('employee-settings-section');
+        if (!anchor) return null;
+
+        section = document.createElement('section');
+        section.className = 'sso-section';
+        section.id = 'employee-location-section';
+        section.hidden = true;
+        section.innerHTML = `
+            <div class="sso-section-header">
+                <div>
+                    <h2 class="sso-section-title">Locaties</h2>
+                    <p class="sso-section-copy">Beheer de primaire vestiging en de locaties waarop deze medewerker in de Planner inzetbaar is.</p>
+                </div>
+            </div>
+            <form id="employee-location-form" class="employee-location-form">
+                <label class="sso-field">Primaire locatie
+                    <select class="sso-input" id="employee-primary-location" name="primaryLocationCode" required></select>
+                </label>
+                <div class="employee-location-options-wrap">
+                    <div class="employee-location-options-label">Inzetbaar op</div>
+                    <div class="employee-location-options" id="employee-location-options"></div>
+                    <p class="employee-location-copy" id="employee-location-effective-copy">Wijzigingen gelden vanaf vandaag.</p>
+                </div>
+                <div class="employee-location-actions">
+                    <button type="submit" class="sso-button sso-button--primary">Locaties opslaan</button>
+                    <p id="employee-location-message" class="employee-location-message" aria-live="polite"></p>
+                </div>
+            </form>`;
+        anchor.insertAdjacentElement('afterend', section);
+        return section;
+    }
+
+    ensureStylesheet();
+    const section = ensureUi();
+    if (!section) return;
+
     const form = document.getElementById('employee-location-form');
     const primarySelect = document.getElementById('employee-primary-location');
     const options = document.getElementById('employee-location-options');
@@ -33,7 +79,6 @@
     }
 
     function setMessage(text, type = '') {
-        if (!message) return;
         message.textContent = text;
         message.className = `employee-location-message${type ? ` is-${type}` : ''}`;
     }
@@ -59,7 +104,7 @@
     }
 
     function render() {
-        if (!settings || !section || !form) return;
+        if (!settings) return;
         const eligible = new Set(settings.eligibleLocationCodes || []);
         primarySelect.innerHTML = settings.locations.map((location) =>
             `<option value="${escapeHtml(location.code)}">${escapeHtml(location.name)}</option>`).join('');
@@ -112,7 +157,7 @@
         }
 
         const submit = form.querySelector('button[type="submit"]');
-        if (submit) submit.disabled = true;
+        submit.disabled = true;
         setMessage('Locaties opslaan...');
         try {
             settings = await requestJson(`/api/employee-locations/${employeeId}`, {
@@ -127,17 +172,22 @@
         } catch (error) {
             setMessage(error.message, 'error');
         } finally {
-            if (submit) submit.disabled = false;
+            submit.disabled = false;
         }
     }
 
-    primarySelect?.addEventListener('change', () => {
+    primarySelect.addEventListener('change', () => {
         ensurePrimaryIsEligible();
         setMessage('');
     });
-    form?.addEventListener('submit', save);
+    form.addEventListener('submit', save);
 
-    document.addEventListener('authready', (event) => {
-        if (event.detail.authenticated && event.detail.role === 'admin') load();
-    }, { once: true });
+    const authState = window.currentAuthState;
+    if (authState?.authenticated && authState.role === 'admin') {
+        load();
+    } else {
+        document.addEventListener('authready', (event) => {
+            if (event.detail.authenticated && event.detail.role === 'admin') load();
+        }, { once: true });
+    }
 })();
