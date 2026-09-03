@@ -4,17 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="employee-settings.css?v=20260717-existing-employee">
-    <script src="auth-ui.js?v=20260717-usability" defer></script>
-    <script src="employee-settings.js?v=20260717-existing-employee" defer></script>
-    <script src="employment-end-ui.js?v=20260717-existing-employee" defer></script>
-    <title>Sport Society - Medewerkerinstellingen</title>
+    <link rel="stylesheet" href="employee-settings.css?v=20260903-low-fatigue-v2">
+    <script src="auth-ui.js?v=20260903-low-fatigue-v2" defer></script>
+    <script src="employee-view-model.js?v=20260903-low-fatigue-v2" defer></script>
+    <script src="employee-settings.js?v=20260903-low-fatigue-v2" defer></script>
+    <title>Sport Society - Medewerkers</title>
 </head>
 <body data-admin-page>
-    <header>
-        <h1>Sport Society Overview</h1>
-        <p>Medewerkers, contractperiodes, laatste werkdagen en urenbankinstellingen</p>
-    </header>
+    <header><h1>Medewerkers</h1></header>
 
     <nav>
         <input type="checkbox" id="nav-toggle">
@@ -23,63 +20,54 @@
     </nav>
 
     <main class="employee-admin-page" data-admin-content hidden>
-        <section class="employee-card employee-intro">
-            <p class="employee-label">Adminbeheer</p>
-            <h2>Medewerkerinstellingen</h2>
-            <p>
-                Beheer wanneer een medewerker actief wordt, de inclusieve laatste werkdag, de beginstand van de urenbank
-                en afzonderlijke contractperiodes. Na de laatste werkdag verdwijnt een medewerker uit toekomstige
-                urenoverzichten, terwijl historische maanden behouden blijven.
-            </p>
-        </section>
-
-        <section class="employee-card">
-            <div class="employee-section-header">
+        <section class="sso-section employee-overview-section">
+            <div class="sso-section-header employee-overview-heading">
                 <div>
-                    <p class="employee-label">Nieuwe medewerker</p>
-                    <h2>Medewerker toevoegen</h2>
+                    <h2 class="sso-section-title">Medewerkers</h2>
+                    <p class="sso-section-copy">Open een medewerker om instellingen, contracthistorie en laatste werkdag te beheren.</p>
                 </div>
+                <button type="button" class="sso-button sso-button--secondary" id="toggle-add-employee">+ Medewerker toevoegen</button>
             </div>
 
-            <form id="add-employee-form" class="employee-add-form">
-                <label>Naam<input type="text" id="new-employee-name" maxlength="120" required></label>
-                <label>Actief vanaf<input type="month" id="new-employee-month" required></label>
-                <label>Startstand urenbank<input type="number" id="new-employee-bank" min="-1000" max="1000" step="0.25" value="0"></label>
-                <label>Startmaand urenbank<input type="month" id="new-employee-bank-month" required></label>
-                <label>Start als
-                    <select id="new-employee-type">
-                        <option value="flex">Flexcontract</option>
-                        <option value="contract">Vaste uren</option>
-                    </select>
-                </label>
-                <label data-initial-contract-field hidden>Uren per week<input type="number" id="new-employee-hours" min="0.25" max="60" step="0.25"></label>
-                <label data-initial-contract-field hidden>Contract start<input type="date" id="new-contract-start"></label>
-                <label data-initial-contract-field hidden>Contract stop<input type="date" id="new-contract-stop"></label>
-                <button type="submit" class="admin-button">Medewerker toevoegen</button>
-            </form>
-            <p id="employee-message" class="employee-message" aria-live="polite"></p>
-        </section>
-
-        <section class="employee-card">
-            <div class="employee-section-header">
-                <div>
-                    <p class="employee-label">Overzicht</p>
-                    <h2>Medewerkers beheren</h2>
+            <div id="employee-create-panel" class="employee-create-panel sso-card sso-card--subtle" hidden>
+                <div class="employee-create-heading">
+                    <div>
+                        <h3>Nieuwe medewerker</h3>
+                        <p>Maak de medewerker aan. Contractgegevens worden alleen gevraagd wanneer vaste uren worden gekozen.</p>
+                    </div>
+                    <button type="button" class="sso-button sso-button--text" id="cancel-add-employee">Sluiten</button>
                 </div>
-                <p id="employee-count" class="employee-count">Laden...</p>
+                <form id="add-employee-form" class="employee-add-form">
+                    <label class="sso-field">Naam<input class="sso-input" type="text" id="new-employee-name" maxlength="120" required></label>
+                    <label class="sso-field">Actief vanaf<input class="sso-input" type="month" id="new-employee-month" required></label>
+                    <label class="sso-field">Startstand urenbank<input class="sso-input" type="number" id="new-employee-bank" min="-1000" max="1000" step="0.25" value="0"></label>
+                    <label class="sso-field">Startmaand urenbank<input class="sso-input" type="month" id="new-employee-bank-month" required></label>
+                    <label class="sso-field">Start als
+                        <select class="sso-input" id="new-employee-type">
+                            <option value="flex">Flexcontract</option>
+                            <option value="contract">Vaste uren</option>
+                        </select>
+                    </label>
+                    <label class="sso-field" data-initial-contract-field hidden>Uren per week<input class="sso-input" type="number" id="new-employee-hours" min="0.25" max="60" step="0.25"></label>
+                    <label class="sso-field" data-initial-contract-field hidden>Contract start<input class="sso-input" type="date" id="new-contract-start"></label>
+                    <label class="sso-field" data-initial-contract-field hidden>Contract stop<input class="sso-input" type="date" id="new-contract-stop"></label>
+                    <div class="employee-create-actions">
+                        <button type="submit" class="sso-button sso-button--primary">Medewerker toevoegen</button>
+                    </div>
+                </form>
             </div>
 
-            <form id="employee-filter-form" class="employee-filter-form">
-                <label>Zoeken<input type="search" id="employee-search" placeholder="Naam medewerker"></label>
-                <label>Status
-                    <select id="employee-status-filter">
+            <form id="employee-filter-form" class="employee-filter-form" role="search">
+                <label class="sso-field employee-search-field">Zoeken<input class="sso-input" type="search" id="employee-search" placeholder="Naam medewerker"></label>
+                <label class="sso-field">Status
+                    <select class="sso-input" id="employee-status-filter">
                         <option value="active">Actief en toekomstig</option>
-                        <option value="inactive">Verwijderd</option>
+                        <option value="inactive">Inactief / uit dienst</option>
                         <option value="all">Alle medewerkers</option>
                     </select>
                 </label>
-                <label>Contract
-                    <select id="employee-contract-filter">
+                <label class="sso-field">Contract
+                    <select class="sso-input" id="employee-contract-filter">
                         <option value="all">Alle contractvormen</option>
                         <option value="contract">Met contractperiodes</option>
                         <option value="flex">Zonder contractperiode</option>
@@ -87,12 +75,30 @@
                 </label>
             </form>
 
-            <div id="employee-list" class="employee-list">
-                <p class="empty-state">Medewerkers laden...</p>
+            <div class="employee-list-header">
+                <p id="employee-count" class="employee-count">Laden...</p>
+                <p id="employee-message" class="employee-message" aria-live="polite"></p>
+            </div>
+
+            <div class="sso-table-wrap employee-table-wrap">
+                <table class="sso-table employee-table">
+                    <thead>
+                        <tr>
+                            <th>Medewerker</th>
+                            <th>Uren per week</th>
+                            <th>Status</th>
+                            <th>Locaties</th>
+                            <th><span class="visually-hidden">Actie</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="employee-list">
+                        <tr><td colspan="5" class="sso-empty-state">Medewerkers laden...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </section>
     </main>
 
-    <footer><p>&copy; 2026 Sport Society. All rights reserved. Build By Krijnen M&amp;B</p></footer>
+    <footer><p>&copy; 2026 Sport Society. Build by Krijnen M&amp;B</p></footer>
 </body>
 </html>

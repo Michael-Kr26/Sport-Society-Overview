@@ -4,9 +4,10 @@
   "description": "Operationeel administratie- en analyseplatform voor Sport Society",
   "main": "app.js",
   "scripts": {
-    "test": "npm run test:syntax && npm run test:contracts && npm run test:masterdata && npm run test:rosterdata && npm run test:rosterdomain && npm run test:legacyadapter && npm run test:rosterplanner && npm run test:rosterpublication && npm run test:rosteraccess && npm run test:rosteroperations && npm run test:rosterexport && npm run test:rosterpages && npm run test:restore",
+    "test": "npm run test:syntax && npm run test:contracts && npm run test:employeeui && npm run test:masterdata && npm run test:rosterdata && npm run test:rosterdomain && npm run test:legacyadapter && npm run test:rosterplanner && npm run test:rosterpublication && npm run test:rosteraccess && npm run test:rosteroperations && npm run test:rosterexport && npm run test:rosterpages && npm run test:restore",
     "test:syntax": "node scripts/check-javascript.js",
     "test:contracts": "node --test tests/legacy-contracts.test.js",
+    "test:employeeui": "node --test tests/employee-ui-v2.test.js",
     "test:masterdata": "node --test tests/masterdata.test.js tests/masterdata-r1b.test.js",
     "test:rosterdata": "node --test tests/roster-data.test.js",
     "test:rosterdomain": "node --test tests/roster-domain.test.js",

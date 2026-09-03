@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="employee-settings.css?v=20260903-low-fatigue-v2">
+    <script src="auth-ui.js?v=20260903-low-fatigue-v2" defer></script>
+    <script src="employee-view-model.js?v=20260903-low-fatigue-v2" defer></script>
+    <script src="employee-detail.js?v=20260903-low-fatigue-v2" defer></script>
+    <title>Sport Society - Medewerkerinstellingen</title>
+</head>
+<body data-admin-page>
+    <header><h1>Medewerkerinstellingen</h1></header>
+
+    <nav>
+        <input type="checkbox" id="nav-toggle">
+        <label for="nav-toggle" class="nav-toggle-label"><span></span></label>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="employee-detail-page" data-admin-content hidden>
+        <div id="employee-detail-message" class="employee-detail-message" aria-live="polite"></div>
+
+        <section class="sso-section employee-profile-summary" id="employee-profile-summary" hidden>
+            <div class="employee-avatar" id="employee-avatar" aria-hidden="true">?</div>
+            <div class="employee-profile-copy">
+                <div class="employee-profile-name-row">
+                    <h2 id="employee-profile-name">Medewerker</h2>
+                    <span id="employee-profile-status" class="sso-badge sso-badge--neutral">Laden</span>
+                </div>
+                <div class="employee-profile-meta">
+                    <span id="employee-profile-hours">—</span>
+                    <span class="employee-meta-separator" aria-hidden="true"></span>
+                    <span id="employee-profile-active-from">—</span>
+                    <span class="employee-meta-separator" aria-hidden="true"></span>
+                    <span id="employee-profile-locations">—</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="sso-section" id="employee-settings-section" hidden>
+            <div class="sso-section-header">
+                <div>
+                    <h2 class="sso-section-title">Basisinstellingen</h2>
+                </div>
+            </div>
+            <form id="employee-profile-form" class="employee-detail-form">
+                <label class="sso-field">Actief vanaf<input class="sso-input" name="activeFrom" type="date" required></label>
+                <label class="sso-field">Startstand urenbank<input class="sso-input" name="openingBankHours" type="number" min="-1000" max="1000" step="0.25"></label>
+                <label class="sso-field">Startmaand urenbank<input class="sso-input" name="openingBankMonth" type="month" required></label>
+                <label class="sso-field">Laatste werkdag<input class="sso-input" name="activeUntil" type="date"></label>
+                <label class="sso-checkbox employee-active-toggle"><input name="isActive" type="checkbox"> Actief</label>
+                <div class="employee-settings-actions">
+                    <button type="submit" class="sso-button sso-button--primary">Instellingen opslaan</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="sso-section" id="employee-contract-section" hidden>
+            <div class="sso-section-header employee-contract-heading">
+                <div>
+                    <h2 class="sso-section-title">Contracthistorie</h2>
+                    <p class="sso-section-copy">Contractperioden mogen elkaar niet overlappen. De meest recente periode staat bovenaan.</p>
+                </div>
+            </div>
+
+            <div class="sso-table-wrap employee-contract-table-wrap">
+                <table class="sso-table employee-contract-table">
+                    <thead>
+                        <tr>
+                            <th>Periode</th>
+                            <th>Uren per week</th>
+                            <th>Status</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contract-period-list"></tbody>
+                </table>
+            </div>
+
+            <div class="employee-contract-actions">
+                <button type="button" class="sso-button sso-button--secondary" id="show-add-contract">+ Nieuwe contractperiode toevoegen</button>
+            </div>
+
+            <form id="contract-add-form" class="employee-contract-editor sso-card sso-card--subtle" hidden>
+                <div class="employee-contract-editor-title">Nieuwe contractperiode</div>
+                <label class="sso-field">Start<input class="sso-input" name="effectiveFrom" type="date" required></label>
+                <label class="sso-field">Stop<input class="sso-input" name="effectiveTo" type="date"></label>
+                <label class="sso-field">Uren per week<input class="sso-input" name="weeklyHours" type="number" min="0.25" max="60" step="0.25" required></label>
+                <div class="employee-contract-editor-actions">
+                    <button type="button" class="sso-button sso-button--secondary" id="cancel-add-contract">Annuleren</button>
+                    <button type="submit" class="sso-button sso-button--primary">Opslaan</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="sso-section employee-danger-zone" id="employee-danger-section" hidden>
+            <div class="employee-danger-copy">
+                <h2 class="sso-section-title">Medewerker verwijderen</h2>
+                <p class="sso-section-copy">De medewerker verdwijnt uit actieve overzichten. Historische rooster- en urengegevens blijven behouden en de medewerker kan later worden hersteld.</p>
+            </div>
+            <button type="button" class="sso-button sso-button--danger" id="toggle-employee-active">Medewerker verwijderen</button>
+        </section>
+
+        <section class="sso-section employee-not-found" id="employee-not-found" hidden>
+            <h2 class="sso-section-title">Medewerker niet gevonden</h2>
+            <p class="sso-section-copy">De opgegeven medewerker bestaat niet of is niet meer beschikbaar.</p>
+            <a class="sso-button sso-button--secondary" href="employee-settings.html">Terug naar medewerkers</a>
+        </section>
+    </main>
+
+    <footer><p>&copy; 2026 Sport Society. Build by Krijnen M&amp;B</p></footer>
+</body>
+</html>
