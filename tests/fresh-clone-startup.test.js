@@ -38,14 +38,29 @@ async function waitForServer(child, output, attempts = 80) {
     throw new Error(`Server werd niet binnen 20 seconden bereikbaar.\n${output.join('')}`);
 }
 
-test('npm start initialiseert R1 masterdata vóór R9 exportmigratie', () => {
+function stopProcessTree(child, signal = 'SIGTERM') {
+    if (!child || child.exitCode !== null) return;
+    if (process.platform === 'win32') {
+        spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
+        return;
+    }
+    try {
+        process.kill(-child.pid, signal);
+    } catch (error) {
+        if (error.code !== 'ESRCH') throw error;
+    }
+}
+
+test('npm start initialiseert R1 masterdata vóór R7/R9 migraties', () => {
     const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
     const start = packageJson.scripts.start;
     const masterdataIndex = start.indexOf('migrate-masterdata.js --quiet');
+    const accessIndex = start.indexOf('migrate-roster-access.js --quiet');
     const exportIndex = start.indexOf('migrate-roster-export.js --quiet');
 
     assert.ok(masterdataIndex >= 0, 'startscript moet R1 masterdata initialiseren');
-    assert.ok(exportIndex > masterdataIndex, 'R1 masterdata moet vóór R9 exportmigratie draaien');
+    assert.ok(accessIndex > masterdataIndex, 'R7 access moet na R1 masterdata migreren');
+    assert.ok(exportIndex > accessIndex, 'R9 exportmigratie moet na R7 access draaien');
 });
 
 test('migrate-masterdata kan stil een volledig lege database initialiseren', async () => {
@@ -89,7 +104,8 @@ test('CI kan npm start vanaf een lege data-map daadwerkelijk bereiken', { skip: 
     const child = spawn(command, ['start', '--silent'], {
         cwd: ROOT,
         env: { ...process.env },
-        stdio: ['ignore', 'pipe', 'pipe']
+        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: process.platform !== 'win32'
     });
     const output = [];
     child.stdout.on('data', (chunk) => output.push(String(chunk)));
@@ -98,11 +114,13 @@ test('CI kan npm start vanaf een lege data-map daadwerkelijk bereiken', { skip: 
     try {
         await waitForServer(child, output);
     } finally {
-        if (child.exitCode === null) child.kill('SIGTERM');
+        stopProcessTree(child, 'SIGTERM');
         await Promise.race([
             new Promise((resolve) => child.once('exit', resolve)),
             sleep(2000)
         ]);
-        if (child.exitCode === null) child.kill('SIGKILL');
+        if (child.exitCode === null) stopProcessTree(child, 'SIGKILL');
+        child.stdout.destroy();
+        child.stderr.destroy();
     }
 });
