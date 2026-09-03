@@ -21,7 +21,6 @@ const CONTRACT_TYPES = new Set(['flex', 'contract']);
 const ADJUSTMENT_TYPES = new Set(['credited', 'bank']);
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const SEED_VERSION = 1;
 const db = new sqlite3.Database(DB_PATH);
 db.configure('busyTimeout', 5000);
 
@@ -37,16 +36,6 @@ const get = (sql, params = []) => new Promise((resolve, reject) => {
 const all = (sql, params = []) => new Promise((resolve, reject) => {
     db.all(sql, params, (error, rows) => error ? reject(error) : resolve(rows || []));
 });
-
-const DEFAULT_CONTRACTS = [
-    ['Leroy', 36, '2026-01-01'], ['Leon', 38, '2026-01-01'],
-    ['Mario', 32, '2026-01-01'], ['Koen', 21, '2026-01-01'],
-    ['Lucas V', 36, '2026-01-01'], ['Dysianne', 34, '2026-01-01'],
-    ['Michael', 28, '2026-01-01'], ['Tristan', 15, '2026-01-01', '2026-05-31'],
-    ['Tristan', 8, '2026-06-01'], ['Denise', 22, '2026-01-01']
-].map(([employeeName, weeklyHours, effectiveFrom, effectiveTo = null]) => ({
-    employeeName, weeklyHours, effectiveFrom, effectiveTo
-}));
 
 function cookies(req) {
     return String(req.headers.cookie || '').split(';').reduce((result, part) => {
@@ -152,55 +141,6 @@ async function ensureColumn(table, column, definition) {
     if (!columns.some((item) => item.name === column)) await run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
 
-async function ensureRosterEmployees() {
-    const rows = await all(
-        `SELECT TRIM(employee_name) AS employeeName, MIN(date(roster_date)) AS activeFrom
-         FROM roster_items
-         WHERE employee_name IS NOT NULL AND TRIM(employee_name) != '' AND UPPER(TRIM(employee_name)) != 'ALL'
-         GROUP BY LOWER(TRIM(employee_name))`
-    ).catch((error) => String(error.message).includes('no such table: roster_items') ? [] : Promise.reject(error));
-
-    for (const row of rows) {
-        await run(
-            `INSERT OR IGNORE INTO hour_employee_settings
-             (employee_name, contract_type, weekly_contract_hours, opening_bank_hours, opening_bank_month,
-              active_from, is_active, updated_by)
-             VALUES (?, 'flex', 0, 0, ?, ?, 1, 'Automatisch uit rooster')`,
-            [row.employeeName, String(row.activeFrom || currentMonth()).slice(0, 7), row.activeFrom || monthStart(currentMonth())]
-        );
-    }
-}
-
-async function seedContracts() {
-    const seed = await get('SELECT version FROM hour_seed_state WHERE id = 1');
-    if (Number(seed?.version || 0) >= SEED_VERSION) return;
-
-    for (const contract of DEFAULT_CONTRACTS) {
-        await run(
-            `INSERT INTO hour_employee_settings
-             (employee_name, contract_type, weekly_contract_hours, opening_bank_hours, opening_bank_month,
-              active_from, is_active, updated_by, updated_at)
-             VALUES (?, 'contract', ?, 0, '2026-01', ?, 1, 'Aangeleverde contracturen', CURRENT_TIMESTAMP)
-             ON CONFLICT(employee_name) DO UPDATE SET contract_type='contract', weekly_contract_hours=excluded.weekly_contract_hours,
-                 active_from=MIN(active_from, excluded.active_from), updated_by=excluded.updated_by,
-                 updated_at=CURRENT_TIMESTAMP`,
-            [contract.employeeName, contract.weeklyHours, contract.effectiveFrom]
-        );
-        await run(
-            `INSERT OR IGNORE INTO hour_contract_periods
-             (employee_name, effective_from, effective_to, weekly_hours, created_by)
-             VALUES (?, ?, ?, ?, 'Aangeleverde contracturen')`,
-            [contract.employeeName, contract.effectiveFrom, contract.effectiveTo, contract.weeklyHours]
-        );
-    }
-
-    await run(
-        `INSERT INTO hour_seed_state (id, version, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP)
-         ON CONFLICT(id) DO UPDATE SET version=excluded.version, updated_at=CURRENT_TIMESTAMP`,
-        [SEED_VERSION]
-    );
-}
-
 const ready = (async () => {
     await run(`CREATE TABLE IF NOT EXISTS hour_employee_settings (
         employee_name TEXT PRIMARY KEY COLLATE NOCASE,
@@ -228,15 +168,11 @@ const ready = (async () => {
         created_by TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (employee_name) REFERENCES hour_employee_settings(employee_name) ON UPDATE CASCADE ON DELETE CASCADE
     )`);
-    await run(`CREATE TABLE IF NOT EXISTS hour_seed_state (
-        id INTEGER PRIMARY KEY CHECK (id=1), version INTEGER NOT NULL,
-        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )`);
+    // hour_seed_state blijft alleen als legacy schema bestaan wanneer een oude DB hem al heeft.
+    // De runtime seedt geen medewerkers of contracten meer en maakt ook geen medewerkers uit roosterregels.
     await run('CREATE INDEX IF NOT EXISTS idx_hour_adjustments_date ON hour_adjustments(adjustment_date)');
     await run('CREATE INDEX IF NOT EXISTS idx_hour_adjustments_employee ON hour_adjustments(employee_name)');
     await run('CREATE INDEX IF NOT EXISTS idx_hour_contract_periods_employee ON hour_contract_periods(employee_name)');
-    await ensureRosterEmployees();
-    await seedContracts();
 })();
 
 async function employeesWithPeriods() {
@@ -258,7 +194,6 @@ async function employeesWithPeriods() {
 }
 
 async function analysisFor(month) {
-    await ensureRosterEmployees();
     const { employees, periodsByEmployee } = await employeesWithPeriods();
     const selectedEnd = monthEnd(month);
     const activeEmployees = employees.filter((employee) => employee.isActive && (!employee.activeFrom || employee.activeFrom <= selectedEnd));
@@ -441,7 +376,6 @@ app.get('/api/hours/analysis', requireRoles('manager', 'admin'), async (req, res
 
 app.get('/api/hours/employees', requireRoles('manager', 'admin'), async (req, res) => {
     try {
-        await ensureRosterEmployees();
         const { employees, periodsByEmployee } = await employeesWithPeriods();
         res.json({
             employees: employees.map((employee) => ({

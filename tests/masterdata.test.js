@@ -32,7 +32,7 @@ function close(db) {
     return new Promise((resolve, reject) => db.close((error) => error ? reject(error) : resolve()));
 }
 
-test('R1A seedt de vijf canonieke locaties en blijft idempotent', async () => {
+test('R1A seedt alleen de vijf canonieke locaties en blijft idempotent', async () => {
     const db = database();
     try {
         await migrateMasterdata(db);
@@ -47,15 +47,17 @@ test('R1A seedt de vijf canonieke locaties en blijft idempotent', async () => {
         ]);
         const meta = await get(db, 'SELECT planning_baseline AS planningBaseline FROM masterdata_meta WHERE id=1');
         assert.equal(meta.planningBaseline, PLANNING_BASELINE);
+        assert.equal(Number((await get(db, 'SELECT COUNT(*) AS count FROM employees')).count), 0);
+        assert.equal(Number((await get(db, 'SELECT COUNT(*) AS count FROM legacy_employee_aliases')).count), 0);
+        assert.equal(Number((await get(db, 'SELECT COUNT(*) AS count FROM masterdata_access_seeds')).count), 0);
     } finally {
         await close(db);
     }
 });
 
-test('historische Lucas-namen worden naar de canonieke korte namen vertaald', async () => {
-    assert.equal(canonicalEmployeeName('Lucas Veenendaal'), 'Lucas V');
-    assert.equal(canonicalEmployeeName('  Lucas Leeuwis  '), 'Lucas L');
-    assert.equal(canonicalEmployeeName('Leroy'), 'Leroy');
+test('medewerkernamen worden niet meer door persoonsgebonden code-aliases herschreven', () => {
+    assert.equal(canonicalEmployeeName('  Voorbeeld Medewerker  '), 'Voorbeeld Medewerker');
+    assert.equal(canonicalEmployeeName('Naam   Met   Spaties'), 'Naam Met Spaties');
 });
 
 test('contract- en dienstverbandmodel staat onbekende oude startdatum toe', async () => {
@@ -92,34 +94,23 @@ test('employee codes zijn stabiele oplopende EMP-codes', async () => {
     }
 });
 
-test('Manager-seeds krijgen alleen edit-scope op de eigen vestiging en rollen worden niet stil aangepast', async () => {
+test('masterdatamigratie leidt geen account-scopes af uit namen', async () => {
     const db = database();
     try {
         await exec(db, `CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
             display_name TEXT NOT NULL,
+            password_hash TEXT NOT NULL DEFAULT 'x',
             role TEXT NOT NULL,
             is_active INTEGER NOT NULL DEFAULT 1
         );
         INSERT INTO users (username, display_name, role) VALUES
-            ('lucas', 'Lucas V', 'manager'),
-            ('leroy', 'Leroy', 'employee'),
-            ('michael', 'Michael', 'admin');`);
+            ('manager-test', 'Manager Test', 'manager'),
+            ('admin-test', 'Admin Test', 'admin');`);
         const report = await migrateMasterdata(db);
-        const scopes = await all(db, `SELECT u.display_name AS displayName, l.code AS locationCode,
-            s.can_edit_roster AS canEdit, s.can_publish_roster AS canPublish
-            FROM user_location_scopes s
-            JOIN users u ON u.id=s.user_id
-            JOIN locations l ON l.id=s.location_id
-            ORDER BY u.display_name`);
-        assert.deepEqual(scopes, [
-            { displayName: 'Lucas V', locationCode: 'BVE', canEdit: 1, canPublish: 0 }
-        ]);
-        assert.ok(report.access.roleMismatches.some((item) => item.principalName === 'Leroy' && item.currentRole === 'employee'));
-        assert.ok(report.access.applied.some((item) => item.principalName === 'Michael' && item.role === 'admin'));
-        const leroy = await get(db, "SELECT role FROM users WHERE display_name='Leroy'");
-        assert.equal(leroy.role, 'employee');
+        assert.deepEqual(await all(db, 'SELECT * FROM user_location_scopes'), []);
+        assert.deepEqual(report.access, { applied: [], unresolved: [], roleMismatches: [] });
     } finally {
         await close(db);
     }

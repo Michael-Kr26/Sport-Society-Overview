@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
-const { migrateR1Masterdata } = require('./lib/masterdata-r1b');
+const { migrateMasterdata } = require('./lib/masterdata');
 
 const quiet = process.argv.includes('--quiet');
 const explicitDatabasePath = process.argv.slice(2).find((argument) => argument !== '--quiet');
@@ -23,39 +23,16 @@ function log(...args) {
     if (!quiet) console.log(...args);
 }
 
-function warn(...args) {
-    if (!quiet) console.warn(...args);
-}
-
 (async () => {
     try {
-        const report = await migrateR1Masterdata(db);
-        log(`R1 masterdata voorbereid: ${report.locations.length} locaties, ${report.employees.length} medewerkers, ${report.aliases.length} aliases.`);
+        const report = await migrateMasterdata(db);
+        log(`Masterdata voorbereid: ${report.locations.length} locaties, ${report.employeeCount} bestaande medewerkers.`);
         log(`Planningsbaseline: ${report.meta.planningBaseline}`);
-        log(`Nieuwe employee-records: ${report.baseline.createdEmployees.length}`);
-        log(`Nieuwe dienstverbandbaselines: ${report.baseline.createdEmploymentPeriods.length}`);
-        log(`Nieuwe contractbaselines: ${report.baseline.createdContractTerms.length}`);
-        log(`Nieuwe locatie-eligibilities: ${report.baseline.createdEligibility.length}`);
-        if (report.baseline.dataMismatches.length) {
-            warn(`R1B baseline-afwijkingen die bewust niet zijn overschreven: ${report.baseline.dataMismatches.length}.`);
-        }
-        if (report.employeeLinks.linked.length) log(`User↔employee-koppelingen herkend: ${report.employeeLinks.linked.length}`);
-        if (report.employeeLinks.roleMismatches.length) {
-            warn(`Employee-accounts met afwijkende bestaande rol: ${report.employeeLinks.roleMismatches.length}. Rollen zijn niet automatisch aangepast.`);
-        }
-        if (report.employeeLinks.ambiguous.length || report.employeeLinks.conflicts.length) {
-            warn(`Employee-accountkoppelingen met conflict/ambiguïteit: ${report.employeeLinks.ambiguous.length + report.employeeLinks.conflicts.length}.`);
-        }
-        if (report.access.applied.length) log(`Access-scopes gekoppeld: ${report.access.applied.length}`);
-        if (report.access.roleMismatches.length) {
-            warn(`Access-seeds met afwijkende bestaande rol: ${report.access.roleMismatches.length}. Rollen zijn niet automatisch aangepast.`);
-        }
-        if (report.access.unresolved.length) warn(`Nog niet gekoppelde access-seeds: ${report.access.unresolved.length}.`);
-        log('Beschikbaarheid is nog niet ingevuld; R1B maakt daar geen aannames over.');
+        log('Medewerkers, contracten, aliases en account-scopes worden niet meer vanuit code geseed.');
     } finally {
         await close();
     }
 })().catch((error) => {
-    console.error('R1 masterdatamigratie mislukt:', error);
+    console.error('Masterdatamigratie mislukt:', error);
     process.exitCode = 1;
 });

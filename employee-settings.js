@@ -35,13 +35,6 @@
         .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     const formatHours = (value) => `${new Intl.NumberFormat('nl-NL', { maximumFractionDigits: 2 }).format(Number(value || 0))} u/week`;
 
-    function mondayOfCurrentWeek() {
-        const date = new Date();
-        const day = date.getDay() || 7;
-        date.setDate(date.getDate() - day + 1);
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    }
-
     function setMessage(text, type = '') {
         if (!message) return;
         message.textContent = text;
@@ -57,36 +50,20 @@
         if (!response.ok) {
             const error = new Error(payload.message || 'De aanvraag is mislukt.');
             error.status = response.status;
+            error.code = payload.code || null;
             throw error;
         }
         return payload;
     }
 
     async function loadDirectory() {
-        const locationCodes = ['AVE', 'BVE', 'VHU', 'WEK', 'HAR'];
-        const weekStart = mondayOfCurrentWeek();
-        const results = await Promise.allSettled(locationCodes.map((location) =>
-            requestJson(`/api/roster-planner/context?location=${location}&weekStart=${weekStart}&view=published`)));
-        const byEmployee = new Map();
-        results.filter((result) => result.status === 'fulfilled').forEach((result) => {
-            const context = result.value;
-            for (const employee of context.employees || []) {
-                const key = view.normalizeName(employee.employeeName);
-                if (!byEmployee.has(key)) {
-                    byEmployee.set(key, {
-                        employeeId: employee.employeeId,
-                        employeeCode: employee.employeeCode,
-                        employeeName: employee.employeeName,
-                        locations: []
-                    });
-                }
-                if (employee.eligibleAtLocation && context.location?.name) {
-                    const record = byEmployee.get(key);
-                    if (!record.locations.includes(context.location.name)) record.locations.push(context.location.name);
-                }
-            }
-        });
-        directory = [...byEmployee.values()];
+        const payload = await requestJson(`/api/masterdata/employees?effectiveDate=${encodeURIComponent(today())}`);
+        directory = (payload.employees || []).map((employee) => ({
+            employeeId: employee.employeeId,
+            employeeCode: employee.employeeCode,
+            employeeName: employee.employeeName,
+            locations: employee.locations || []
+        }));
     }
 
     function statusFor(employee) {
@@ -148,7 +125,7 @@
             employees = employeePayload.employees || [];
             employmentStatuses = new Map((statusPayload.employees || [])
                 .map((status) => [view.normalizeName(status.employeeName), status]));
-            await loadDirectory().catch((error) => console.warn('Canonieke employee-ID context niet beschikbaar:', error));
+            await loadDirectory().catch((error) => console.warn('Canonieke employee-directory niet beschikbaar:', error));
             renderEmployees();
             setMessage('');
         } catch (error) {
@@ -185,6 +162,18 @@
         }
 
         try {
+            const startDate = isContract ? newContractStart.value : monthFirstDay(month);
+            const canonical = await requestJson('/api/masterdata/employees', {
+                method: 'POST',
+                body: JSON.stringify({
+                    displayName: name,
+                    employmentType: isContract ? 'contract' : 'flex',
+                    startsOn: startDate,
+                    endsOn: isContract ? (newContractStop.value || null) : null,
+                    weeklyHours: isContract ? Number(newHours.value) : 0
+                })
+            });
+
             await requestJson(`/api/hours/employees/${encodeURIComponent(name)}`, {
                 method: 'PUT',
                 body: JSON.stringify({
@@ -198,6 +187,12 @@
                     isActive: true
                 })
             });
+
+            const employeeId = canonical.employee?.employeeId || canonical.employee?.id;
+            if (employeeId) {
+                window.location.href = `employee.html?id=${encodeURIComponent(employeeId)}`;
+                return;
+            }
             await loadEmployees();
             const created = employees.find((employee) => view.normalizeName(employee.employeeName) === view.normalizeName(name));
             if (created) window.location.href = view.employeeHref(created, directory);

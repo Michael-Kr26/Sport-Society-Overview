@@ -10,6 +10,7 @@ const {
     roleAllows
 } = require('./lib/roster-access');
 const { listEmployeeLocations, replaceEmployeeLocations } = require('./lib/employee-locations');
+const { createEmployee, listEmployees } = require('./lib/employee-masterdata');
 
 const expressPath = require.resolve('express');
 const originalExpress = require('express');
@@ -76,7 +77,8 @@ function effectiveDateFromRequest(req) {
         req.query?.weekStart,
         req.body?.weekStart,
         req.body?.date,
-        req.query?.from
+        req.query?.from,
+        req.query?.effectiveDate
     ];
     const value = candidates.find((candidate) => /^\d{4}-\d{2}-\d{2}$/.test(String(candidate || '')));
     return value || new Date().toISOString().slice(0, 10);
@@ -115,14 +117,14 @@ function adminMasterdataRoute(handler) {
             const user = await authenticatedUser(req);
             if (!user) return res.status(401).json({ message: 'Log eerst in.' });
             if (user.role !== 'admin') {
-                return res.status(403).json({ message: 'Alleen Admin kan medewerkerlocaties wijzigen.' });
+                return res.status(403).json({ message: 'Alleen Admin kan medewerker-masterdata beheren.' });
             }
             await handler(req, res, user);
         } catch (error) {
             console.error(error);
             if (!res.headersSent) {
                 res.status(error.status || 500).json({
-                    message: error.status ? error.message : 'Medewerkerlocaties konden niet worden verwerkt.',
+                    message: error.status ? error.message : 'Medewerker-masterdata kon niet worden verwerkt.',
                     code: error.code || null
                 });
             }
@@ -134,9 +136,7 @@ app.get('/api/access/roster-policy', async (req, res) => {
     try {
         await accessReady;
         const user = await authenticatedUser(req);
-        if (!user) {
-            return res.status(401).json({ message: 'Log eerst in.' });
-        }
+        if (!user) return res.status(401).json({ message: 'Log eerst in.' });
         const effectiveDate = effectiveDateFromRequest(req);
         const scopes = user.role === 'manager'
             ? await activeLocationScopes(db, user.id, effectiveDate)
@@ -161,6 +161,26 @@ app.get('/api/access/roster-policy', async (req, res) => {
         res.status(500).json({ message: 'Roosterrechten konden niet worden geladen.' });
     }
 });
+
+app.get('/api/masterdata/employees', adminMasterdataRoute(async (req, res) => {
+    const effectiveDate = effectiveDateFromRequest(req);
+    res.json({ employees: await listEmployees(db, effectiveDate), effectiveDate });
+}));
+
+app.post('/api/masterdata/employees', adminMasterdataRoute(async (req, res, user) => {
+    const result = await createEmployee(db, {
+        displayName: req.body.displayName,
+        employmentType: req.body.employmentType,
+        startsOn: req.body.startsOn,
+        endsOn: req.body.endsOn,
+        weeklyHours: req.body.weeklyHours,
+        actorUserId: user.id
+    });
+    res.status(result.created ? 201 : 200).json({
+        message: result.created ? 'Canonieke medewerker aangemaakt.' : 'Medewerker bestond al.',
+        ...result
+    });
+}));
 
 app.get('/api/employee-locations/:employeeId', adminMasterdataRoute(async (req, res) => {
     const result = await listEmployeeLocations(db, req.params.employeeId, req.query.effectiveDate);
