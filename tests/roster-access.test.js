@@ -47,7 +47,7 @@ async function user(db, username, role, location = null) {
         VALUES (?, ?, 'x', ?, 1, ?)`, [username, username, role, location])).lastID;
 }
 
-test('R7 policy: Guest deny, Employee/Manager published en alleen Admin Planner/publicatie', () => {
+test('R7/R9 policy: published read-only, Admin planning en Manager published exportdownload', () => {
     assert.equal(roleAllows('guest', 'employee'), false);
     assert.equal(roleAllows('employee', 'employee'), true);
     assert.equal(roleAllows('employee', 'admin'), false);
@@ -64,6 +64,9 @@ test('R7 policy: Guest deny, Employee/Manager published en alleen Admin Planner/
     assert.equal(minimumRoleForApi('/api/roster-operations/staffing'), 'manager');
     assert.equal(minimumRoleForApi('/api/roster-operations/hours'), 'manager');
     assert.equal(minimumRoleForApi('/api/roster-operations/parity'), 'admin');
+    assert.equal(minimumRoleForApi('/api/roster-export/month'), 'manager');
+    assert.equal(minimumRoleForApi('/api/roster-export/sharepoint'), 'admin');
+    assert.equal(minimumRoleForApi('/api/roster-export/history'), 'admin');
 });
 
 test('R7 neutraliseert Manager-roosterscopes en laat alleen Admin wijzigen', async () => {
@@ -123,14 +126,16 @@ test('R7 maakt voor Manager-account alleen organisatorische locatie-scope zonder
     }
 });
 
-test('R7/R8 serverstart houdt Planner Admin-only en laadt access control onder operations', () => {
+test('R7-R9 serverstart houdt Planner Admin-only en stapelt export boven operations/access', () => {
     const root = path.join(__dirname, '..');
     const startServer = fs.readFileSync(path.join(root, 'start-server.js'), 'utf8');
+    const exportBootstrap = fs.readFileSync(path.join(root, 'r9-export-bootstrap.js'), 'utf8');
     const operationsBootstrap = fs.readFileSync(path.join(root, 'r8-operations-bootstrap.js'), 'utf8');
     const accessBootstrap = fs.readFileSync(path.join(root, 'r7-access-bootstrap.js'), 'utf8');
     const authUi = fs.readFileSync(path.join(root, 'auth-ui.js'), 'utf8');
-    assert.match(startServer, /require\('\.\/r8-operations-bootstrap'\)/);
+    assert.match(startServer, /require\('\.\/r9-export-bootstrap'\)/);
     assert.doesNotMatch(startServer, /require\('\.\/roster-planner-bootstrap'\)/);
+    assert.match(exportBootstrap, /require\('\.\/r8-operations-bootstrap'\)/);
     assert.match(operationsBootstrap, /require\('\.\/r7-access-bootstrap'\)/);
     assert.match(accessBootstrap, /minimumRoleForPage/);
     assert.match(accessBootstrap, /minimumRoleForApi/);
