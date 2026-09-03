@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { spawnSync } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 const test = require('node:test');
 const sqlite3 = require('sqlite3').verbose();
 
@@ -18,6 +18,24 @@ function get(db, sql, params = []) {
 
 function close(db) {
     return new Promise((resolve, reject) => db.close((error) => error ? reject(error) : resolve()));
+}
+
+function sleep(milliseconds) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function waitForServer(child, output, attempts = 80) {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+        if (child.exitCode !== null) {
+            throw new Error(`npm start stopte vóór de server bereikbaar was.\n${output.join('')}`);
+        }
+        try {
+            const response = await fetch('http://127.0.0.1:3000/login.html', { redirect: 'manual' });
+            if (response.status >= 200 && response.status < 500) return;
+        } catch {}
+        await sleep(250);
+    }
+    throw new Error(`Server werd niet binnen 20 seconden bereikbaar.\n${output.join('')}`);
 }
 
 test('npm start initialiseert R1 masterdata vóór R9 exportmigratie', () => {
@@ -60,4 +78,31 @@ test('HealthPlanner schema-write retry is begrensd tot SQLITE_BUSY', () => {
     const source = fs.readFileSync(path.join(ROOT, 'healthplanner-bootstrap.js'), 'utf8');
     assert.match(source, /error\?\.code !== 'SQLITE_BUSY'/);
     assert.match(source, /const maxBusyRetries = 5/);
+});
+
+test('CI kan npm start vanaf een lege data-map daadwerkelijk bereiken', { skip: !process.env.CI }, async () => {
+    const dataDir = path.join(ROOT, 'data');
+    fs.rmSync(dataDir, { recursive: true, force: true });
+    fs.mkdirSync(dataDir, { recursive: true });
+
+    const command = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    const child = spawn(command, ['start', '--silent'], {
+        cwd: ROOT,
+        env: { ...process.env },
+        stdio: ['ignore', 'pipe', 'pipe']
+    });
+    const output = [];
+    child.stdout.on('data', (chunk) => output.push(String(chunk)));
+    child.stderr.on('data', (chunk) => output.push(String(chunk)));
+
+    try {
+        await waitForServer(child, output);
+    } finally {
+        if (child.exitCode === null) child.kill('SIGTERM');
+        await Promise.race([
+            new Promise((resolve) => child.once('exit', resolve)),
+            sleep(2000)
+        ]);
+        if (child.exitCode === null) child.kill('SIGKILL');
+    }
 });
