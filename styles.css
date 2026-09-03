@@ -6,19 +6,9 @@
     box-sizing: border-box;
 }
 
-html {
-    overflow-x: hidden;
-}
-
-body {
-    min-height: 100vh;
-    padding-bottom: 0;
-    overflow-x: hidden;
-}
-
-body > header {
-    background: transparent;
-}
+html { overflow-x: hidden; }
+body { min-height: 100vh; padding-bottom: 0; overflow-x: hidden; }
+body > header { background: transparent; }
 
 main {
     width: min(100% - 48px, 1360px);
@@ -31,25 +21,50 @@ main {
 }
 
 main.dashboard-page,
-main.dashboard-v15 {
-    background: transparent;
-    box-shadow: none;
-}
+main.dashboard-v15 { background: transparent; box-shadow: none; }
 
-.card-header {
-    margin-bottom: 12px;
-}
-
+.card-header { margin-bottom: 12px; }
 .card-label,
 .field-label {
+    color: #667890;
+    font-size: 0.76rem;
+    font-weight: 550;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+.empty-state { color: var(--sso-text-secondary); font-style: normal; }
+
+/* Tijdelijke centrale bridge voor bestaande formulieren tijdens de gefaseerde migratie. */
+main label {
     color: #52637b;
-    font-size: 0.82rem;
     font-weight: 500;
 }
 
-.empty-state {
-    color: var(--sso-text-secondary);
-    font-style: normal;
+main input:not([type="checkbox"]):not([type="radio"]),
+main select,
+main textarea {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    border: 1px solid var(--sso-border-strong);
+    border-radius: var(--sso-radius-sm);
+    background: #fff;
+    color: var(--sso-text);
+    font: inherit;
+    font-size: 0.94rem;
+    font-weight: 400;
+    box-shadow: none;
+}
+
+main textarea { min-height: 104px; resize: vertical; }
+main input::placeholder,
+main textarea::placeholder { color: #99a5b5; }
+main input:not([type="checkbox"]):not([type="radio"]):focus,
+main select:focus,
+main textarea:focus {
+    border-color: #72a3e4;
+    outline: 0;
+    box-shadow: var(--sso-focus);
 }
 
 .status-pill {
@@ -67,26 +82,10 @@ main.dashboard-v15 {
     line-height: 1;
     white-space: nowrap;
 }
-
-.status-pill.status-open {
-    background: var(--sso-warning-bg);
-    color: var(--sso-warning);
-}
-
-.status-pill.status-progress {
-    background: var(--sso-primary-soft);
-    color: var(--sso-primary);
-}
-
-.status-pill.status-done {
-    background: var(--sso-success-bg);
-    color: var(--sso-success);
-}
-
-.status-pill.status-archived {
-    background: var(--sso-neutral-bg);
-    color: #66768c;
-}
+.status-pill.status-open { background: var(--sso-warning-bg); color: var(--sso-warning); }
+.status-pill.status-progress { background: var(--sso-primary-soft); color: var(--sso-primary); }
+.status-pill.status-done { background: var(--sso-success-bg); color: var(--sso-success); }
+.status-pill.status-archived { background: var(--sso-neutral-bg); color: #66768c; }
 
 .admin-button {
     display: inline-flex;
@@ -106,51 +105,10 @@ main.dashboard-v15 {
     text-decoration: none;
     cursor: pointer;
 }
+.admin-button:hover { border-color: var(--sso-primary-hover); background: var(--sso-primary-hover); }
 
-.admin-button:hover {
-    border-color: var(--sso-primary-hover);
-    background: var(--sso-primary-hover);
-}
-
-.admin-form {
-    display: grid;
-    gap: 16px;
-}
-
-.admin-form label {
-    display: grid;
-    gap: 6px;
-    color: #52637b;
-    font-size: 0.86rem;
-    font-weight: 500;
-}
-
-.admin-form input,
-.admin-form select,
-.admin-form textarea {
-    width: 100%;
-    min-height: 42px;
-    padding: 9px 12px;
-    border: 1px solid var(--sso-border-strong);
-    border-radius: var(--sso-radius-sm);
-    background: #fff;
-    color: var(--sso-text);
-    font: inherit;
-    font-weight: 400;
-}
-
-.admin-form input:focus,
-.admin-form select:focus,
-.admin-form textarea:focus {
-    border-color: #72a3e4;
-    outline: 0;
-    box-shadow: var(--sso-focus);
-}
-
-.admin-form textarea {
-    min-height: 110px;
-    resize: vertical;
-}
+.admin-form { display: grid; gap: 16px; }
+.admin-form label { display: grid; gap: 6px; font-size: 0.86rem; }
 
 footer {
     width: 100%;
@@ -176,18 +134,9 @@ footer {
 @media (max-width: 640px) {
     main,
     main.dashboard-page,
-    main.dashboard-v15 {
-        width: min(100% - 20px, 1360px);
-    }
-
-    .admin-button {
-        min-height: 44px;
-    }
-
-    .admin-form input,
-    .admin-form select,
-    .admin-form textarea {
-        min-height: 44px;
-        font-size: 16px;
-    }
+    main.dashboard-v15 { width: min(100% - 20px, 1360px); }
+    .admin-button { min-height: 44px; }
+    main input:not([type="checkbox"]):not([type="radio"]),
+    main select,
+    main textarea { min-height: 44px; font-size: 16px; }
 }
