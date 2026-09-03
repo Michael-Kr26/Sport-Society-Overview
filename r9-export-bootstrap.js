@@ -71,7 +71,12 @@ async function uploadExport(exportData) {
             remoteDriveId: result.archive.driveId,
             remoteItemId: result.archive.itemId,
             remoteName: result.archive.name,
-            details: { archivePath: result.archive.archivePath }
+            details: {
+                rootFolderId: result.root.itemId,
+                rootFolderName: result.root.name,
+                remotePath: result.archive.remotePath,
+                archivePath: result.archive.archivePath
+            }
         });
         if (result.current.status === 'success') {
             await recordDelivery(db, exportData.exportId, {
@@ -79,16 +84,26 @@ async function uploadExport(exportData) {
                 status: 'success',
                 remoteDriveId: result.current.driveId,
                 remoteItemId: result.current.itemId,
-                remoteName: result.current.name
+                remoteName: result.current.name,
+                details: {
+                    rootFolderId: result.root.itemId,
+                    rootFolderName: result.root.name,
+                    remotePath: result.current.remotePath
+                }
             });
         } else {
             await recordDelivery(db, exportData.exportId, {
                 channel: 'sharepoint_current',
                 status: 'skipped',
-                remoteDriveId: result.target.driveId,
-                remoteItemId: result.target.itemId,
-                remoteName: result.target.name,
-                details: { reason: result.current.reason, currentMonth: currentAmsterdamMonth() }
+                remoteDriveId: result.root.driveId,
+                remoteItemId: result.root.itemId,
+                remoteName: result.current.remotePath,
+                details: {
+                    reason: result.current.reason,
+                    currentMonth: currentAmsterdamMonth(),
+                    rootFolderName: result.root.name,
+                    remotePath: result.current.remotePath
+                }
             });
         }
         return result;
