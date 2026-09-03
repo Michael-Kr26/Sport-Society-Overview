@@ -9,7 +9,6 @@ const {
     createMonthlyExport,
     currentAmsterdamMonth,
     exportHistory,
-    migrateRosterExport,
     monthsTouchedByWeeks,
     recordDelivery
 } = require('./lib/roster-export');
@@ -21,7 +20,10 @@ if (!app) throw new Error('Express-app kon niet worden gekoppeld aan R9 export.'
 const DB_PATH = path.join(__dirname, 'data', 'sport-society.db');
 const db = new sqlite3.Database(DB_PATH);
 db.configure('busyTimeout', 5000);
-const ready = migrateRosterExport(db);
+
+// R9 wordt vóór serverstart expliciet gemigreerd. Runtime gebruikt daarna
+// alleen het bestaande schema en start geen tweede migratieverbinding.
+const ready = Promise.resolve();
 
 function all(sql, params = []) {
     return new Promise((resolve, reject) => db.all(sql, params, (error, rows) => error ? reject(error) : resolve(rows || [])));
