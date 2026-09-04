@@ -35,6 +35,18 @@ test('medewerkersoverzicht bevat geen permanente profiel- of contractedits en ge
     assert.match(html, /toggle-add-employee/);
 });
 
+test('aanmaakkaart vereist een expliciete primaire locatie uit masterdata', () => {
+    const html = read('employee-settings.html');
+    const js = read('employee-settings.js');
+    const access = read('r7-access-bootstrap.js');
+    assert.match(html, /id="new-employee-primary-location" required/);
+    assert.match(js, /Kies primaire locatie/);
+    assert.match(js, /primaryLocationCode/);
+    assert.match(js, /payload\.locations/);
+    assert.match(access, /listActiveLocations/);
+    assert.match(access, /primaryLocationCode: req\.body\.primaryLocationCode/);
+});
+
 test('medewerkerdetail gebruikt bestaande business-API voor profiel, laatste werkdag en contracten', () => {
     const js = read('employee-detail.js');
     assert.match(js, /\/api\/hours\/employees\/\$\{encodeURIComponent\(employee\.employeeName\)\}/);
