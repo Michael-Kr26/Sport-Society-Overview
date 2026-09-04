@@ -68,7 +68,7 @@
 
 if (typeof window !== 'undefined' && /(^|\/)employee\.html$/.test(window.location.pathname)) {
     const script = document.createElement('script');
-    script.src = 'employee-location-ui.js?v=20260903-employee-locations';
+    script.src = 'employee-location-ui.js?v=20260904-primary-location';
     script.defer = true;
     document.head.appendChild(script);
 }
