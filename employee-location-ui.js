@@ -90,6 +90,7 @@
 
     function ensurePrimaryIsEligible() {
         const selected = primarySelect.value;
+        if (!selected) return;
         const checkbox = options.querySelector(`input[value="${CSS.escape(selected)}"]`);
         if (checkbox) checkbox.checked = true;
     }
@@ -106,9 +107,12 @@
     function render() {
         if (!settings) return;
         const eligible = new Set(settings.eligibleLocationCodes || []);
-        primarySelect.innerHTML = settings.locations.map((location) =>
-            `<option value="${escapeHtml(location.code)}">${escapeHtml(location.name)}</option>`).join('');
-        primarySelect.value = settings.primaryLocationCode || settings.locations[0]?.code || '';
+        primarySelect.innerHTML = [
+            '<option value="">Kies primaire locatie</option>',
+            ...settings.locations.map((location) =>
+                `<option value="${escapeHtml(location.code)}">${escapeHtml(location.name)}</option>`)
+        ].join('');
+        primarySelect.value = settings.primaryLocationCode || '';
 
         options.innerHTML = settings.locations.map((location) => `
             <label class="sso-checkbox employee-location-choice">
@@ -149,6 +153,11 @@
         event.preventDefault();
         const employeeId = employeeIdFromUrl();
         if (!employeeId) return;
+        if (!primarySelect.value) {
+            setMessage('Kies een primaire locatie.', 'error');
+            primarySelect.focus();
+            return;
+        }
         ensurePrimaryIsEligible();
         const eligibleLocationCodes = selectedEligibleCodes();
         if (!eligibleLocationCodes.length) {
