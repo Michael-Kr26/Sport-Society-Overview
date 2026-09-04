@@ -10,7 +10,7 @@
     "test:freshclone": "node --test tests/fresh-clone-startup.test.js",
     "test:employeeui": "node --test tests/employee-ui-v2.test.js tests/employee-locations.test.js",
     "test:ui": "node --test tests/ui-design-system.test.js",
-    "test:masterdata": "node --test tests/masterdata.test.js tests/masterdata-r1b.test.js tests/no-hardcoded-employees.test.js",
+    "test:masterdata": "node --test tests/masterdata.test.js tests/masterdata-r1b.test.js tests/no-hardcoded-employees.test.js tests/employee-reset.test.js",
     "test:rosterdata": "node --test tests/roster-data.test.js",
     "test:rosterdomain": "node --test tests/roster-domain.test.js",
     "test:legacyadapter": "node --test tests/legacy-roster-adapter.test.js",
@@ -44,6 +44,7 @@
     "backup:db": "node scripts/backup-database.js",
     "verify:backup": "node scripts/verify-database-backup.js",
     "restore:db": "node scripts/restore-database.js",
+    "reset:employees": "node scripts/purge-employee-data.js",
     "download:roster": "node download-roster.js",
     "sync:roster": "node download-roster.js && node import-roster-linked.js data/imports/live-rooster.xlsx"
   },

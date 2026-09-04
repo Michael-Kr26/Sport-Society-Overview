@@ -47,15 +47,6 @@ async function waitForTable(table, attempts = 120) {
     return false;
 }
 
-async function waitForEmployee(employeeName, attempts = 120) {
-    for (let attempt = 0; attempt < attempts; attempt += 1) {
-        const row = await get('SELECT employee_name FROM hour_employee_settings WHERE employee_name=? COLLATE NOCASE', [employeeName]);
-        if (row) return true;
-        await sleep(50);
-    }
-    return false;
-}
-
 async function transaction(work) {
     await run('BEGIN IMMEDIATE');
     try {
@@ -92,16 +83,6 @@ async function ensureEmploymentEnd() {
     const columns = await all('PRAGMA table_info(hour_employee_settings)');
     if (!columns.some((column) => column.name === 'active_until')) {
         await run('ALTER TABLE hour_employee_settings ADD COLUMN active_until TEXT');
-    }
-
-    // Aangeleverde personeelswijziging: 17 juli 2026 is Mario's laatste werkdag.
-    // Alleen invullen wanneer nog geen datum is ingesteld, zodat latere adminwijzigingen behouden blijven.
-    if (await waitForEmployee('Mario')) {
-        const mario = await get(`SELECT active_until AS activeUntil FROM hour_employee_settings
-            WHERE employee_name='Mario' COLLATE NOCASE`);
-        if (!mario?.activeUntil) {
-            await setEmploymentEnd('Mario', '2026-07-17', 'Aangeleverde laatste werkdag');
-        }
     }
 }
 const ready = ensureEmploymentEnd();

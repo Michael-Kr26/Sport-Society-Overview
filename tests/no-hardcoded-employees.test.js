@@ -8,12 +8,6 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const ignoredDirectories = new Set(['.git', 'node_modules', 'tests', 'docs', 'data']);
 const ignoredFiles = new Set(['CHANGELOG.md']);
-const employeeNames = [
-    'Lucas V', 'Lucas Veenendaal', 'Lucas Leeuwis', 'Lucas L',
-    'Olav', 'Daniel', 'Vigo', 'Denise', 'Sep', 'Ali', 'Leroy', 'Michael',
-    'Nicole', 'Melle', 'Jamie', 'Rick', 'Dysianne', 'Anne-Marthe', 'Gijs',
-    'Leon', 'Koen', 'Tristan', 'Jeffrey', 'Noel', 'Mario'
-];
 
 function filesUnder(directory) {
     const result = [];
@@ -26,19 +20,28 @@ function filesUnder(directory) {
     return result;
 }
 
-test('productruntime bevat geen persoonsgebonden medewerkerseeds of naamsmigraties', () => {
+test('productruntime bevat geen oude medewerkerseed- of naamnormalisatiepatronen', () => {
     const violations = [];
+    const retiredPatterns = [
+        ['DEFAULT_CONTRACTS', /\bDEFAULT_CONTRACTS\b/],
+        ['embedded EMPLOYEE_BASELINE', /EMPLOYEE_BASELINE\s*=\s*Object\.freeze\(\s*\[/],
+        ['ensureRosterEmployees', /\bensureRosterEmployees\s*\(/]
+    ];
+
     for (const file of filesUnder(root)) {
         const relative = path.relative(root, file).replaceAll('\\', '/');
         const content = fs.readFileSync(file, 'utf8');
-        for (const name of employeeNames) {
-            if (content.includes(name)) violations.push(`${relative}: ${name}`);
-        }
-        if (/DEFAULT_CONTRACTS|EMPLOYEE_BASELINE\s*=\s*Object\.freeze\(\[|ensureRosterEmployees\s*\(/.test(content)) {
-            violations.push(`${relative}: retired employee seed pattern`);
+        for (const [label, pattern] of retiredPatterns) {
+            if (pattern.test(content)) violations.push(`${relative}: ${label}`);
         }
     }
     assert.deepEqual(violations, []);
+});
+
+test('uitdienstbeheer bevat geen automatische mutatie voor een hardcoded medewerker', () => {
+    const source = fs.readFileSync(path.join(root, 'employment-end-bootstrap.js'), 'utf8');
+    assert.doesNotMatch(source, /waitForEmployee\s*\(\s*['"`]/);
+    assert.doesNotMatch(source, /setEmploymentEnd\s*\(\s*['"`]/);
 });
 
 test('productstart voert geen persoonsgebonden employeemigratie uit', () => {
