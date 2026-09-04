@@ -3,6 +3,7 @@
     const view = window.SSOEmployeeView;
     const addForm = byId('add-employee-form');
     const newName = byId('new-employee-name');
+    const newPrimaryLocation = byId('new-employee-primary-location');
     const newMonth = byId('new-employee-month');
     const newBank = byId('new-employee-bank');
     const newBankMonth = byId('new-employee-bank-month');
@@ -23,6 +24,7 @@
     let employees = [];
     let employmentStatuses = new Map();
     let directory = [];
+    let availableLocations = [];
 
     const currentMonth = () => {
         const date = new Date();
@@ -56,6 +58,25 @@
         return payload;
     }
 
+    function renderPrimaryLocationOptions() {
+        if (!newPrimaryLocation) return;
+        const previous = newPrimaryLocation.value;
+        if (!availableLocations.length) {
+            newPrimaryLocation.innerHTML = '<option value="">Geen actieve locaties beschikbaar</option>';
+            newPrimaryLocation.disabled = true;
+            return;
+        }
+        newPrimaryLocation.disabled = false;
+        newPrimaryLocation.innerHTML = [
+            '<option value="">Kies primaire locatie</option>',
+            ...availableLocations.map((location) =>
+                `<option value="${escapeHtml(location.code)}">${escapeHtml(location.name)}</option>`)
+        ].join('');
+        if (availableLocations.some((location) => location.code === previous)) {
+            newPrimaryLocation.value = previous;
+        }
+    }
+
     async function loadDirectory() {
         const payload = await requestJson(`/api/masterdata/employees?effectiveDate=${encodeURIComponent(today())}`);
         directory = (payload.employees || []).map((employee) => ({
@@ -64,6 +85,8 @@
             employeeName: employee.employeeName,
             locations: employee.locations || []
         }));
+        availableLocations = payload.locations || [];
+        renderPrimaryLocationOptions();
     }
 
     function statusFor(employee) {
@@ -125,7 +148,11 @@
             employees = employeePayload.employees || [];
             employmentStatuses = new Map((statusPayload.employees || [])
                 .map((status) => [view.normalizeName(status.employeeName), status]));
-            await loadDirectory().catch((error) => console.warn('Canonieke employee-directory niet beschikbaar:', error));
+            await loadDirectory().catch((error) => {
+                availableLocations = [];
+                renderPrimaryLocationOptions();
+                console.warn('Canonieke employee-directory niet beschikbaar:', error);
+            });
             renderEmployees();
             setMessage('');
         } catch (error) {
@@ -155,9 +182,15 @@
         const name = newName.value.trim();
         const month = newMonth.value;
         const isContract = newType.value === 'contract';
+        const primaryLocationCode = newPrimaryLocation?.value || '';
         const existing = employees.find((employee) => view.normalizeName(employee.employeeName) === view.normalizeName(name));
         if (existing) {
             window.location.href = view.employeeHref(existing, directory);
+            return;
+        }
+        if (!primaryLocationCode) {
+            setMessage('Kies een primaire locatie voor de medewerker.', 'error');
+            newPrimaryLocation?.focus();
             return;
         }
 
@@ -170,7 +203,8 @@
                     employmentType: isContract ? 'contract' : 'flex',
                     startsOn: startDate,
                     endsOn: isContract ? (newContractStop.value || null) : null,
-                    weeklyHours: isContract ? Number(newHours.value) : 0
+                    weeklyHours: isContract ? Number(newHours.value) : 0,
+                    primaryLocationCode
                 })
             });
 
@@ -220,6 +254,7 @@
 
     newMonth.value = currentMonth();
     newBankMonth.value = currentMonth();
+    renderPrimaryLocationOptions();
     updateInitialContractFields();
 
     document.addEventListener('authready', (event) => {
