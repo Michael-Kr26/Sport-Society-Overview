@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="employee-settings.css?v=20260903-low-fatigue-v2">
     <script src="auth-ui.js?v=20260903-low-fatigue-v2" defer></script>
     <script src="employee-view-model.js?v=20260903-low-fatigue-v2" defer></script>
-    <script src="employee-settings.js?v=20260903-low-fatigue-v2" defer></script>
+    <script src="employee-settings.js?v=20260904-primary-location" defer></script>
     <title>Sport Society - Medewerkers</title>
 </head>
 <body data-admin-page>
@@ -33,12 +33,17 @@
                 <div class="employee-create-heading">
                     <div>
                         <h3>Nieuwe medewerker</h3>
-                        <p>Maak de medewerker aan. Contractgegevens worden alleen gevraagd wanneer vaste uren worden gekozen.</p>
+                        <p>Maak de medewerker aan. Kies direct de primaire vestiging; contractgegevens worden alleen gevraagd wanneer vaste uren worden gekozen.</p>
                     </div>
                     <button type="button" class="sso-button sso-button--text" id="cancel-add-employee">Sluiten</button>
                 </div>
                 <form id="add-employee-form" class="employee-add-form">
                     <label class="sso-field">Naam<input class="sso-input" type="text" id="new-employee-name" maxlength="120" required></label>
+                    <label class="sso-field">Primaire locatie
+                        <select class="sso-input" id="new-employee-primary-location" required>
+                            <option value="">Locaties laden...</option>
+                        </select>
+                    </label>
                     <label class="sso-field">Actief vanaf<input class="sso-input" type="month" id="new-employee-month" required></label>
                     <label class="sso-field">Startstand urenbank<input class="sso-input" type="number" id="new-employee-bank" min="-1000" max="1000" step="0.25" value="0"></label>
                     <label class="sso-field">Startmaand urenbank<input class="sso-input" type="month" id="new-employee-bank-month" required></label>
