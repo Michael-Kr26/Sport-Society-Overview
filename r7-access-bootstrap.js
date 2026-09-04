@@ -10,7 +10,7 @@ const {
     roleAllows
 } = require('./lib/roster-access');
 const { listEmployeeLocations, replaceEmployeeLocations } = require('./lib/employee-locations');
-const { createEmployee, listEmployees } = require('./lib/employee-masterdata');
+const { createEmployee, listActiveLocations, listEmployees } = require('./lib/employee-masterdata');
 
 const expressPath = require.resolve('express');
 const originalExpress = require('express');
@@ -164,7 +164,11 @@ app.get('/api/access/roster-policy', async (req, res) => {
 
 app.get('/api/masterdata/employees', adminMasterdataRoute(async (req, res) => {
     const effectiveDate = effectiveDateFromRequest(req);
-    res.json({ employees: await listEmployees(db, effectiveDate), effectiveDate });
+    const [employees, locations] = await Promise.all([
+        listEmployees(db, effectiveDate),
+        listActiveLocations(db)
+    ]);
+    res.json({ employees, locations, effectiveDate });
 }));
 
 app.post('/api/masterdata/employees', adminMasterdataRoute(async (req, res, user) => {
@@ -174,6 +178,7 @@ app.post('/api/masterdata/employees', adminMasterdataRoute(async (req, res, user
         startsOn: req.body.startsOn,
         endsOn: req.body.endsOn,
         weeklyHours: req.body.weeklyHours,
+        primaryLocationCode: req.body.primaryLocationCode,
         actorUserId: user.id
     });
     res.status(result.created ? 201 : 200).json({
