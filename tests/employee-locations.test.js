@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const sqlite3 = require('sqlite3').verbose();
 const { migrateR1Masterdata } = require('../lib/masterdata-r1b');
+const { createEmployee } = require('../lib/employee-masterdata');
 const { listEmployeeLocations, replaceEmployeeLocations } = require('../lib/employee-locations');
 
 function openDb() {
@@ -23,6 +24,44 @@ function get(db, sql, params = []) {
 function close(db) {
     return new Promise((resolve, reject) => db.close((error) => error ? reject(error) : resolve()));
 }
+
+test('nieuwe medewerker krijgt uitsluitend de gekozen primaire locatie', async () => {
+    const db = openDb();
+    try {
+        await migrateR1Masterdata(db);
+        const created = await createEmployee(db, {
+            displayName: 'Nieuwe Testmedewerker',
+            employmentType: 'flex',
+            startsOn: '2026-09-04',
+            weeklyHours: 0,
+            primaryLocationCode: 'BVE'
+        });
+        const locations = await listEmployeeLocations(db, created.employee.employeeId, '2026-09-04');
+        assert.equal(locations.primaryLocationCode, 'BVE');
+        assert.deepEqual(locations.eligibleLocationCodes, ['BVE']);
+        assert.notEqual(locations.primaryLocationCode, 'AVE');
+    } finally {
+        await close(db);
+    }
+});
+
+test('nieuwe medewerker kan niet zonder primaire locatie worden aangemaakt', async () => {
+    const db = openDb();
+    try {
+        await migrateR1Masterdata(db);
+        await assert.rejects(
+            createEmployee(db, {
+                displayName: 'Zonder Locatie',
+                employmentType: 'flex',
+                startsOn: '2026-09-04',
+                weeklyHours: 0
+            }),
+            (error) => error.status === 400 && error.code === 'PRIMARY_LOCATION_REQUIRED'
+        );
+    } finally {
+        await close(db);
+    }
+});
 
 test('medewerkerlocaties bewaren historie en sturen primaire/inzetbare locaties', async () => {
     const db = openDb();
@@ -87,4 +126,5 @@ test('medewerkerdetail laadt locatie-editor en R7 exposeert Admin-API zonder nie
     assert.match(ui, /Primaire locatie/);
     assert.match(ui, /Inzetbaar op/);
     assert.match(ui, /eligibleLocationCodes/);
+    assert.doesNotMatch(ui, /settings\.locations\[0\]\?\.code/);
 });
