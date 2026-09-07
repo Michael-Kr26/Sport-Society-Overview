@@ -3,7 +3,8 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { activeLocationScopes } = require('./lib/roster-access');
-const { analyzeHours, analyzeStaffing, shadowParity } = require('./lib/roster-operations');
+const { analyzeHours, shadowParity } = require('./lib/roster-operations');
+const { analyzeStaffingWithCurrentStandard } = require('./lib/current-staffing-standard');
 
 const expressPath = require.resolve('express');
 const originalExpress = require('express');
@@ -24,12 +25,11 @@ const DB_PATH = path.join(__dirname, 'data', 'sport-society.db');
 const db = new sqlite3.Database(DB_PATH);
 db.configure('busyTimeout', 5000);
 
-// R8-schema en coverage seed worden vóór serverstart gemigreerd. Runtime-API's
-// lezen en analyseren daarna alleen het voorbereide schema; dit voorkomt dat
-// R8 tijdens bootstrap opnieuw met andere SQLite-writers concurreert.
+// R8-schema en de actuele bezettingsstandaard worden vóór serverstart gemigreerd.
+// Runtime-API's lezen en analyseren daarna uitsluitend het voorbereide schema.
 const operations = {
     ready: Promise.resolve(),
-    analyzeStaffing: (options) => analyzeStaffing(db, options),
+    analyzeStaffing: (options) => analyzeStaffingWithCurrentStandard(db, options),
     analyzeHours: (options) => analyzeHours(db, options),
     shadowParity: (options) => shadowParity(db, options)
 };
@@ -69,8 +69,9 @@ function mergeStaffingAnalyses(analyses, allowedLocations) {
         singleCoverage: total.singleCoverage + Number(analysis.summary?.singleCoverage || 0),
         otherIssues: total.otherIssues + Number(analysis.summary?.otherIssues || 0),
         sufficient: total.sufficient + Number(analysis.summary?.sufficient || 0),
-        underHours: Math.round((total.underHours + Number(analysis.summary?.underHours || 0)) * 100) / 100
-    }), { noCoverage: 0, singleCoverage: 0, otherIssues: 0, sufficient: 0, underHours: 0 });
+        underHours: Math.round((total.underHours + Number(analysis.summary?.underHours || 0)) * 100) / 100,
+        missingEmployeeHours: Math.round((total.missingEmployeeHours + Number(analysis.summary?.missingEmployeeHours || 0)) * 100) / 100
+    }), { noCoverage: 0, singleCoverage: 0, otherIssues: 0, sufficient: 0, underHours: 0, missingEmployeeHours: 0 });
     const first = analyses[0] || {};
     return {
         ...first,
@@ -83,7 +84,12 @@ function mergeStaffingAnalyses(analyses, allowedLocations) {
             lessonLocations: [...new Set(analyses.flatMap((analysis) => analysis.rules?.lessonLocations || []))],
             singleCoverageExceptionCount: analyses.reduce(
                 (sum, analysis) => sum + Number(analysis.rules?.singleCoverageExceptionCount || 0), 0
-            )
+            ),
+            currentStandardVersion: first.rules?.currentStandardVersion || null,
+            currentStandardLabel: first.rules?.currentStandardLabel || null,
+            structuralCoverageOnly: analyses.every((analysis) => analysis.rules?.structuralCoverageOnly),
+            pendingStandards: analyses.flatMap((analysis) => analysis.rules?.pendingStandards || []),
+            coverageStandard: analyses.flatMap((analysis) => analysis.rules?.coverageStandard || [])
         }
     };
 }
