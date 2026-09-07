@@ -278,8 +278,9 @@ test('historische lessen of huidige bezetting maken geen structurele norm buiten
         });
         assert.ok(result.rows.length > 0);
         assert.ok(result.rows.every((row) => row.startTime >= '16:00'));
-        assert.equal(result.rules.pendingStandards.length, 1);
-        assert.equal(result.rules.pendingStandards[0].daypart, 'morning');
+        assert.equal(result.rules.pendingStandards.length, 4);
+        assert.ok(result.rules.pendingStandards.every((item) => item.daypart === 'morning'));
+        assert.deepEqual(result.rules.pendingStandards.map((item) => item.weekday), [1, 2, 3, 4]);
     } finally {
         await close(db);
     }
