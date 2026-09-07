@@ -9,6 +9,7 @@
     const results = byId('staffing-results');
     const resultCount = byId('staffing-result-count');
     const rulesGrid = byId('active-rules-grid');
+    const WEEKDAYS = ['', 'ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
     const escapeHtml = (value) => String(value ?? '')
         .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -66,29 +67,56 @@
         if (locationFilter.value && !allowed.includes(locationFilter.value)) locationFilter.value = '';
     }
 
-    function renderRules(data) {
-        const evening = data.rules?.eveningPeak || {};
-        const lessonLocations = data.rules?.lessonLocations || [];
-        const schedules = Object.entries(data.rules?.standardSchedules || {});
-        const cards = [
-            `<article><strong>Roosterbron</strong><p>Alleen de nieuwste gepubliceerde Rooster V2-versies tellen mee.</p></article>`,
-            `<article><strong>Avondpiek</strong><p>${evening.enabled ? `${escapeHtml(evening.start)}–${escapeHtml(evening.end)} · minimaal ${Number(evening.minimum || 0)}` : 'Niet actief'}</p></article>`,
-            `<article><strong>Groepslesregel</strong><p>${lessonLocations.length ? `${escapeHtml(lessonLocations.join(', '))} hebben extra lesdekking.` : 'Geen extra lesminimum actief.'}</p></article>`,
-            `<article><strong>Enkele-bezetting uitzonderingen</strong><p>${Number(data.rules?.singleCoverageExceptionCount || 0)} actief binnen de gekozen vestiging(en).</p></article>`
-        ];
-        for (const [location, schedule] of schedules) {
-            cards.push(`<article><strong>${escapeHtml(location)}</strong><p>Standaardvensters uit database · ${escapeHtml(schedule)}</p></article>`);
+    function coverageCards(coverage = []) {
+        const byLocation = new Map();
+        for (const item of coverage) {
+            if (!byLocation.has(item.location)) byLocation.set(item.location, []);
+            byLocation.get(item.location).push(item);
         }
+        return [...byLocation.entries()].map(([location, windows]) => {
+            const schedule = windows.map((item) => {
+                const minimum = Number(item.hardMinimum || 0);
+                return `${WEEKDAYS[item.weekday] || item.weekday} ${item.startTime}–${item.endTime} · ${minimum} medewerker${minimum === 1 ? '' : 's'}`;
+            }).join('<br>');
+            return `<article><strong>${escapeHtml(location)}</strong><p>${schedule}</p></article>`;
+        });
+    }
+
+    function pendingCard(pending = []) {
+        if (!pending.length) return '';
+        const byLocation = new Map();
+        for (const item of pending) {
+            if (!byLocation.has(item.location)) byLocation.set(item.location, []);
+            byLocation.get(item.location).push(item);
+        }
+        const text = [...byLocation.entries()].map(([location, items]) => {
+            const days = items.map((item) => WEEKDAYS[item.weekday] || item.weekday).join(', ');
+            return `${location}: ochtendnorm ${days} nog niet vastgesteld`;
+        }).join(' · ');
+        return `<article><strong>Nog vast te stellen</strong><p>${escapeHtml(text)}. Hiervoor wordt bewust geen minimum aangenomen.</p></article>`;
+    }
+
+    function renderRules(data) {
+        const coverage = data.rules?.coverageStandard || [];
+        const pending = data.rules?.pendingStandards || [];
+        const version = data.rules?.currentStandardVersion;
+        const label = data.rules?.currentStandardLabel || 'Huidige bezettingsstandaard';
+        const cards = [
+            `<article><strong>${escapeHtml(label)}</strong><p>${version ? `Versie ${escapeHtml(version)} · ` : ''}structurele minima komen uit de database en niet uit het bestaande rooster.</p></article>`,
+            `<article><strong>Roosterbron</strong><p>Alleen de nieuwste gepubliceerde Rooster V2-versies tellen als daadwerkelijk ingepland.</p></article>`,
+            pendingCard(pending),
+            ...coverageCards(coverage)
+        ].filter(Boolean);
         rulesGrid.innerHTML = cards.join('');
     }
 
     function renderSummary(data) {
         const cards = [
-            [data.summary?.noCoverage || 0, 'Blokken zonder medewerker', 'is-danger'],
-            [data.summary?.singleCoverage || 0, 'Kwetsbare enkele bezetting', 'is-warning'],
+            [data.summary?.noCoverage || 0, 'Benodigde blokken zonder medewerker', 'is-danger'],
+            [data.summary?.singleCoverage || 0, 'Enkele bezetting onder hogere norm', 'is-warning'],
             [data.summary?.otherIssues || 0, 'Overige aandachtspunten', 'is-warning'],
-            [data.summary?.sufficient || 0, 'Voldoende blokken', 'is-ok'],
-            [`${Number(data.summary?.underHours || 0).toLocaleString('nl-NL')} u`, 'Onderbezette tijd', 'is-danger']
+            [data.summary?.sufficient || 0, 'Voldoende gedekte blokken', 'is-ok'],
+            [`${Number(data.summary?.missingEmployeeHours || 0).toLocaleString('nl-NL')} u`, 'Ontbrekende personeelsuren', 'is-danger']
         ];
         summary.innerHTML = cards.map(([value, label, className]) => `
             <article class="summary-card ${className}">
@@ -112,12 +140,15 @@
                 ? `<span class="muted">Les: ${escapeHtml(row.activeLessons.map((lesson) => lesson.name).join(', '))}</span>`
                 : '<span class="muted">Geen groepsles actief</span>';
             const reasons = (row.reasons || []).map((reason) => `<li>${escapeHtml(reason)}</li>`).join('');
+            const required = Number(row.requiredEmployees ?? row.hardMinimum ?? 0);
+            const present = row.employees?.length || 0;
+            const shortage = Number(row.shortageEmployees || 0);
             return `
                 <article class="staffing-row is-${escapeHtml(row.status)}">
                     <div class="staffing-date"><strong>${escapeHtml(formatDate(row.date))}</strong><span class="muted">${escapeHtml(row.date)}</span></div>
                     <div class="staffing-location"><strong>${escapeHtml(row.location)}</strong>${lessonText}</div>
-                    <div><strong>${escapeHtml(row.startTime)}–${escapeHtml(row.endTime)}</strong><span class="muted">${row.standardShift ? 'Standaarddienst' : 'Analyseblok'}</span></div>
-                    <div><strong>${row.employees?.length || 0}</strong><span class="muted">${escapeHtml(employeeText + openText)}</span></div>
+                    <div><strong>${escapeHtml(row.startTime)}–${escapeHtml(row.endTime)}</strong><span class="muted">Structurele standaard</span></div>
+                    <div><strong>${present} / ${required}</strong><span class="muted">${escapeHtml(employeeText + openText)}${shortage ? ` · tekort ${shortage}` : ''}</span></div>
                     <div><span class="status-pill is-${escapeHtml(row.status)}">${escapeHtml(statusLabel(row.status))}</span></div>
                     <div class="staffing-reason">${reasons ? `<ul>${reasons}</ul>` : 'Geen aanvullende reden.'}</div>
                 </article>
